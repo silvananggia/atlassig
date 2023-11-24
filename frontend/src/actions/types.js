@@ -1,0 +1,1 @@
+export const FETCH_MARKER_FKTP = 'FETCH_MARKER_FKTP';
