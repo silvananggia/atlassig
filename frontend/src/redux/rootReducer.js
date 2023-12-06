@@ -1,8 +1,10 @@
 import { combineReducers } from 'redux';
-import mapReducer from './mapReducer';
+import fktpReducer from './fktpReducer';
+import fkrtlReducer from './fkrtlReducer';
 
 const rootReducer = combineReducers({
-  mapfktp: mapReducer,
+  mapfktp: fktpReducer,
+  mapfkrtl: fkrtlReducer,
   // other reducers...
 });
 

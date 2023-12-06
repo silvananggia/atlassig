@@ -18,20 +18,17 @@ import { Translate } from "ol/interaction";
 import Collection from "ol/Collection";
 import Icon from "ol/style/Icon";
 import Overlay from "ol/Overlay";
-import {
-  Circle as CircleStyle,
-  Fill,
-  Stroke,
-  Style,
-} from "ol/style.js";
+import { Circle as CircleStyle, Fill, Stroke, Style } from "ol/style.js";
 import Box from "@mui/material/Box";
 import FloatingButton from "./EmbedFloatingButton";
 import LayerGroup from "ol/layer/Group";
-
+import PermDeviceInformationOutlinedIcon from "@mui/icons-material/PermDeviceInformationOutlined";
 import Typography from "@mui/material/Typography";
 import MyLocationOutlinedIcon from "@mui/icons-material/MyLocationOutlined";
 import Slider from "@mui/material/Slider";
-import { fetchMarkers } from "../../actions/mapActions";
+import { fetchMarkersFKTP } from "../../actions/fktpActions";
+import { fetchMarkersFKRTL } from "../../actions/fkrtlActions";
+import GeoJSON from "ol/format/GeoJSON";
 
 const MapComponent = (props) => {
   const bingApiKey =
@@ -43,6 +40,7 @@ const MapComponent = (props) => {
   const [lon, setLot] = useState(Number(searchParams.get("lon")));
   const [faskes, setFaskes] = useState(searchParams.get("faskes"));
   const [showFloatingButton, setShowFloatingButton] = useState(false);
+  const [showFloatingButton2, setShowFloatingButton2] = useState(false);
   const [userMarker, setUserMarker] = useState(null);
 
   const [userLocation, setUserLocation] = useState([0, 0]);
@@ -55,18 +53,179 @@ const MapComponent = (props) => {
   const [markerLayer, setMarkerLayer] = useState(null);
   const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.7);
   const [markersLoaded, setMarkersLoaded] = useState(false);
+  const [showFKTPMark, setShowFKTPMark] = useState(false);
+  const [showFKRTLMark, setShowFKRTLMark] = useState(false);
 
   const centerMap = [lon, lat]; // Move this line above its usage
-  const zoomLevel = 15;
+  const zoomLevel = 12;
+  const circleRadius =
+    faskes === "fktp" ? 2000 : faskes === "fkrtl" ? 5000 : "";
+
+  const potentialLayerUrl =
+    faskes === "fktp"
+      ? "potential/{z}/{x}/{-y}.png"
+      : faskes === "fkrtl"
+      ? "potential_fkrtl/{z}/{x}/{-y}.png"
+      : "";
 
   useEffect(() => {
-    props.loadmarker();
+    props.loadmarkerfktp(lat, lon);
+    props.loadmarkerfkrtl(lat, lon);
   }, []);
 
-  const markerList = useSelector((state) => state.mapfktp.markerlist);
+  const markerListFKTP = useSelector((state) => state.mapfktp.markerlist);
+  const markerListFKRTL = useSelector((state) => state.mapfkrtl.markerlist);
 
   const handleLayerSelectClick = () => {
     setShowFloatingButton((prevState) => !prevState);
+  };
+
+  const handleLayerSelectClick2 = () => {
+    setShowFloatingButton2((prevState) => !prevState);
+  };
+
+  const handleFktpSwitchChange = () => {
+    // Only proceed if markers have been loaded and map is available
+
+    if (map) {
+      const overlayGroup = map
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Overlay");
+
+      const markerFKTPLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "MarkerFKTP");
+      if (showFKTPMark) {
+        // Remove the potential layer from the overlay group
+        overlayGroup.getLayers().remove(markerFKTPLayer);
+      } else {
+        //console.log(markerListFKTP);
+        // Your existing code for processing markers
+        if (markerListFKTP) {
+          //console.log(markerListFKTP);
+          const vectorSource = new VectorSource();
+          const newMarkerFKTPLayer = new VectorLayer({
+            source: vectorSource,
+            title: "MarkerFKTP",
+          });
+
+          const features = new GeoJSON().readFeatures(markerListFKTP);
+          //console.log(features);
+          features.forEach((feature) => {
+            const coordinates = feature.getGeometry().getCoordinates();
+
+            const markerFeature = new Feature({
+              geometry: new Point(coordinates),
+            });
+
+            // Style for the marker
+            const markerStyle = new Style({
+              image: new Icon({
+                anchor: [0.5, 1],
+                src: "images/m2.png",
+                zIndex: 2,
+              }),
+            });
+
+            markerFeature.setStyle(markerStyle);
+
+            const circleRadiusMeters = 2000; // 2 kilometers
+            const circleGeometry = new Circle(coordinates, circleRadiusMeters);
+            const circleFeature = new Feature(circleGeometry);
+            const circleStyle = new Style({
+              fill: new Fill({
+                color: "rgba(0, 0, 255, 0.2)", // Blue circle with 20% opacity
+              }),
+              stroke: new Stroke({
+                color: "rgba(0, 0, 255, 0.7)", // Blue border with 70% opacity
+                width: 2,
+              }),
+            });
+            circleFeature.setStyle(circleStyle);
+            vectorSource.addFeatures([markerFeature, circleFeature]);
+          });
+
+          overlayGroup.getLayers().push(newMarkerFKTPLayer);
+        }
+      }
+      // Update the showPotentialLayer state
+      setShowFKTPMark((prevState) => !prevState);
+    }
+    // You can add additional logic here if needed
+  };
+
+  const handleFkrtlSwitchChange = () => {
+    // Only proceed if markers have been loaded and map is available
+    if (map) {
+      const overlayGroup = map
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Overlay");
+
+      const markerFKRTLLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "MarkerFKRTL");
+      if (showFKRTLMark) {
+        // Remove the potential layer from the overlay group
+        overlayGroup.getLayers().remove(markerFKRTLLayer);
+      } else {
+        // Your existing code for processing markers
+        if (markerListFKRTL) {
+          const vectorSource = new VectorSource();
+          const newMarkerFKRTLLayer = new VectorLayer({
+            source: vectorSource,
+            title: "MarkerFKRTL",
+          });
+
+          const featuresFKRTL = new GeoJSON().readFeatures(markerListFKRTL);
+          //console.log(features);
+          featuresFKRTL.forEach((feature) => {
+            const coordinates = feature.getGeometry().getCoordinates();
+
+            // Create a marker feature
+            const markerFeature = new Feature({
+              geometry: new Point(coordinates),
+            });
+
+            // Style for the marker
+            const markerStyle = new Style({
+              image: new Icon({
+                anchor: [0.5, 1],
+                src: "images/m3.png",
+                zIndex: 3,
+              }),
+            });
+
+            markerFeature.setStyle(markerStyle);
+
+            const circleRadiusMeters = 5000; // 2 kilometers circleRadiusMeters);
+            const circleGeometry = new Circle(coordinates, circleRadiusMeters);
+            const circleFeature = new Feature(circleGeometry);
+            const circleStyle = new Style({
+              fill: new Fill({
+                color: "rgba(0, 255, 0, 0.2)", // Green circle with 20% opacity
+              }),
+              stroke: new Stroke({
+                color: "rgba(0, 255, 0, 0.7)", // Green border with 70% opacity
+                width: 2,
+              }),
+            });
+            circleFeature.setStyle(circleStyle);
+            vectorSource.addFeatures([markerFeature, circleFeature]);
+          });
+
+          //  map.addLayer(markerFKTPLayer);
+          // Add the potential layer to the overlay group
+          overlayGroup.getLayers().push(newMarkerFKRTLLayer);
+        }
+      }
+      // Update the showPotentialLayer state
+      setShowFKRTLMark((prevState) => !prevState);
+    }
+    // You can add additional logic here if needed
   };
 
   const basemapOptions = [
@@ -119,7 +278,7 @@ const MapComponent = (props) => {
       } else {
         basemapLayer = new TileLayer({
           source: new OSM(),
-           zIndex: 1,
+          zIndex: 1,
         });
       }
 
@@ -140,62 +299,6 @@ const MapComponent = (props) => {
       }
     }
   };
-  useEffect(() => {
-    // Only proceed if markers have been loaded and map is available
-    if (markersLoaded && map) {
-      // Your existing code for processing markers
-      if (markerList && markerList.length > 0) {
-        const vectorSource = new VectorSource();
-        const vectorLayer = new VectorLayer({
-          source: vectorSource,
-        });
-  
-    
-
-        markerList.forEach((location) => {
-          const coordinates = fromLonLat([
-            parseFloat(location.longitude),
-            parseFloat(location.latitude),
-          ]);
-  
-          // Create a marker feature
-          const markerFeature = new Feature({
-            geometry: new Point(coordinates),
-          });
-  
-          // Style for the marker
-          const markerStyle = new Style({
-            image: new Icon({
-              anchor: [0.5, 1],
-              src: "images/m2.png",
-              zIndex: 2,
-            }),
-          });
-
-         markerFeature.setStyle(markerStyle);
-         
-          const circleRadiusMeters = 2000; // 2 kilometers
-          const circleGeometry = new Circle(coordinates, circleRadiusMeters);
-          const circleFeature = new Feature(circleGeometry);
-          const circleStyle =  new Style({
-            fill: new Fill({
-              color: "rgba(0, 0, 255, 0.2)", // Blue circle with 20% opacity
-            }),
-            stroke: new Stroke({
-              color: "rgba(0, 0, 255, 0.7)", // Blue border with 70% opacity
-              width: 2,
-            }),
-          })
-          circleFeature.setStyle(circleStyle);
-          vectorSource.addFeatures([markerFeature,circleFeature]);
-        });
-        
-        map.addLayer(vectorLayer);
-
-      }
-    }
-  }, [markersLoaded, map, markerList]);
-      
 
   useEffect(() => {
     const map = new Map({
@@ -221,7 +324,7 @@ const MapComponent = (props) => {
                 attributions: "",
                 minZoom: 2,
                 maxZoom: 10,
-                url: "potential/{z}/{x}/{-y}.png",
+                url: potentialLayerUrl,
                 tileSize: [384, 384],
               }),
             }),
@@ -237,6 +340,26 @@ const MapComponent = (props) => {
 
     setMap(map);
     setMarkersLoaded(true);
+    // Create the circle feature with a 2-kilometer radius
+    const additionalCircleFeature = new Feature({
+      geometry: new Circle(centerMap, 2000), // Radius in meters (2 kilometers)
+    });
+
+    additionalCircleFeature.setStyle(
+      new Style({
+        image: new CircleStyle({
+          radius: 6,
+          zIndex: 1,
+          fill: new Fill({
+            color: "#3399CC",
+          }),
+          stroke: new Stroke({
+            color: "#fff",
+            width: 2,
+          }),
+        }),
+      })
+    );
 
     const userMarkerSource = new VectorSource();
     const userMarkerLayer = new VectorLayer({
@@ -271,7 +394,7 @@ const MapComponent = (props) => {
     const markerSource = new VectorSource();
     const markerLayer = new VectorLayer({
       source: markerSource,
-      zIndex: 2,
+      zIndex: 4,
     });
 
     map.addLayer(markerLayer);
@@ -289,28 +412,37 @@ const MapComponent = (props) => {
       })
     );
 
-
-    const cRadiusMeters = 2000; // 2 kilometers
-    const cGeometry = new Circle(centerMap, cRadiusMeters);
-    const cFeature = new Feature(cGeometry);
-    const cStyle =  new Style({
-      fill: new Fill({
-        color: "rgba(0, 0, 255, 0.2)", // Blue circle with 20% opacity
-      }),
-      stroke: new Stroke({
-        color: "rgba(0, 0, 255, 0.7)", // Blue border with 70% opacity
-        width: 2,
-      }),
-    })
-    cFeature.setStyle(cStyle);
-
-    markerSource.addFeature(markerFeature,cFeature);
+    markerSource.addFeature(markerFeature);
     markerLayer.setZIndex(2);
     setMarkerFeature(markerFeature);
     setMarkerSource(markerSource);
     setMarkerLayer(markerLayer);
     setMarkerPosition(centerMap);
 
+    const circleSource = new VectorSource();
+    const circleLayer = new VectorLayer({
+      source: circleSource,
+      zIndex: 2,
+    });
+
+    const circleFeature = new Feature({
+      geometry: new Circle(fromLonLat(centerMap), circleRadius),
+    });
+
+    // Style for the circular feature
+    const circleStyle = new Style({
+      fill: new Fill({
+        color: "rgba(255, 0, 0, 0.2)", // Red circle with 20% opacity
+      }),
+      stroke: new Stroke({
+        color: "rgba(255, 0, 0, 0.7)", // Red border with 70% opacity
+        width: 2,
+      }),
+    });
+
+    circleFeature.setStyle(circleStyle);
+    circleSource.addFeature(circleFeature);
+    map.addLayer(circleLayer);
 
     const markerOverlay = new Overlay({
       element: document.getElementById("marker-overlay"),
@@ -358,7 +490,7 @@ const MapComponent = (props) => {
         });
 
         userMarkerFeature.getGeometry().setCoordinates(coordinates);
-  
+
         setUserLocation(lonLat);
       });
     }
@@ -374,6 +506,7 @@ const MapComponent = (props) => {
       >
         <MyLocationOutlinedIcon className="img" />
       </button>
+
       <div
         className="layer-select-embed"
         id={selectedBasemap}
@@ -388,8 +521,25 @@ const MapComponent = (props) => {
           potentialLayerOpacity={potentialLayerOpacity} // Pass potentialLayerOpacity
           handlePotentialLayerOpacityChange={handlePotentialLayerOpacityChange} // Pass handlePotentialLayerOpacityChange
           faskesType={faskes}
+          showFKTPMark={showFKTPMark}
+          showFKRTLMark={showFKRTLMark}
+          handleFktpSwitchChange={handleFktpSwitchChange}
+          handleFkrtlSwitchChange={handleFkrtlSwitchChange}
         />
       </div>
+
+      <div className="layer-select-embed2" onClick={handleLayerSelectClick2}>
+        <PermDeviceInformationOutlinedIcon fontSize="medium" />
+      </div>
+
+      <div className="basemap-select2 hidden">
+        <div className="embed-floating-button2">
+          <div className="legend-box">
+            <img src="images/legend-fkrtl.png" width="225px" height="350px" />
+          </div>
+        </div>
+      </div>
+
       <div className="coordinate-box-embed">
         <p className="label">
           Latitude: {markerPosition[1].toFixed(6)}, Longitude:{" "}
@@ -405,11 +555,13 @@ const MapComponent = (props) => {
 const mapStateToProps = (state) => {
   return {
     mapfktp: state.mapfktp,
+    mapfkrtl: state.mapfkrtl,
   };
 };
 const mapDispatchToProps = (dispatch) => {
   return {
-    loadmarker: () => dispatch(fetchMarkers()),
+    loadmarkerfktp: (lat, lon) => dispatch(fetchMarkersFKTP(lat, lon)),
+    loadmarkerfkrtl: (lat, lon) => dispatch(fetchMarkersFKRTL(lat, lon)),
   };
 };
 

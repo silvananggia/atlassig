@@ -1,12 +1,16 @@
 import axios from "../api/axios";
 
-const getFKTP = () => {
-  return axios.get(`/fktp`);
+const getFKTP = (lat,lon) => {
+  return axios.get(`/fktp`, {
+    params: {
+      lat,
+      lon,
+    },
+  });
 };
 
 const FKTPService = {
   getFKTP,
-
 };
 
 export default FKTPService;

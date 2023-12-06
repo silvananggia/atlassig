@@ -1,0 +1,19 @@
+const router = require('express-promise-router')();
+const fktpController = require('../controllers/fktp.controller');
+
+
+router.post('/fktp', fktpController.createProduct);
+
+
+router.get('/fktp', fktpController.listAllFktp);
+
+
+router.get('/fktp/:id', fktpController.findProductById);
+
+
+router.put('/fktp/:id', fktpController.updateProductById);
+
+
+router.delete('/fktp/:id', fktpController.deleteProductById);
+
+module.exports = router;

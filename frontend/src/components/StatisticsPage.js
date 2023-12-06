@@ -11,6 +11,7 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import { faker } from '@faker-js/faker';
+import Box from "@mui/material/Box";
 
 ChartJS.register(
   CategoryScale,
@@ -27,7 +28,7 @@ const StatisticsPage = () => {
     plugins: {
       title: {
         display: true,
-        text: 'Chart.js Bar Chart - Stacked',
+        text: 'Chart',
       },
     },
     responsive: true,
@@ -65,10 +66,10 @@ const StatisticsPage = () => {
   };
 
   return (
-    <div>
-      <h1>Statistics Page</h1>
+    <Box className="contentRoot">
+      <h1>Statistik</h1>
       <Bar options={options} data={data} /> {/* Remove the semicolon here */}
-    </div>
+    </Box>
   );
 };
 

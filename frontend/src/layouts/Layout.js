@@ -154,6 +154,7 @@ const itemsList = [
             <MenuIcon />
           </IconButton>
           <img src={bpjsLogo} alt="BPJS Logo" style={{ height: 24 }} />
+          <Box sx={{ flexGrow: 1 }} />
           {auth && (
             <div>
               <IconButton
@@ -166,17 +167,17 @@ const itemsList = [
               >
                 <AccountCircle />
               </IconButton>
-              <Menu
+               <Menu
                 id="menu-appbar"
                 anchorEl={anchorEl}
                 anchorOrigin={{
                   vertical: 'top',
-                  horizontal: 'right',
+                  horizontal: 'right', // Set the horizontal origin to 'right'
                 }}
                 keepMounted
                 transformOrigin={{
                   vertical: 'top',
-                  horizontal: 'right',
+                  horizontal: 'right', // Set the horizontal origin to 'right'
                 }}
                 open={Boolean(anchorEl)}
                 onClose={handleClose}

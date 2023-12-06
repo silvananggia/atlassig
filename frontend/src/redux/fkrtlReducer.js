@@ -1,5 +1,5 @@
 // mapReducer.js
-import { FETCH_MARKER_FKTP } from "../actions/types";
+import { FETCH_MARKER_FKRTL } from "../actions/types";
 
 const initialState = {
   loading: true,
@@ -8,11 +8,11 @@ const initialState = {
   errmessage: "",
 };
 
-function mapReducer(state = initialState, action) {
+function fkrtlReducer(state = initialState, action) {
   const { type, payload } = action;
 
   switch (type) {
-    case FETCH_MARKER_FKTP:
+    case FETCH_MARKER_FKRTL:
       return {
         ...state,
         loading: false,
@@ -26,4 +26,4 @@ function mapReducer(state = initialState, action) {
   }
 }
 
-export default mapReducer;
+export default fkrtlReducer;

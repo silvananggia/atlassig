@@ -8,7 +8,11 @@ const FloatingButton = ({
   changeBasemap,
   potentialLayerOpacity,
   handlePotentialLayerOpacityChange,
-  faskesType
+  faskesType,
+  showFKTPMark, // Add the FKTP switch state
+  showFKRTLMark,
+  handleFktpSwitchChange, // Add the handler for FKTP switch change
+  handleFkrtlSwitchChange,
 }) => {
   return (
     <div className="embed-floating-button">
@@ -29,11 +33,13 @@ const FloatingButton = ({
       </div>
       
       <Typography fontSize={12}>
-      <Switch /> Titik FKTP
+      <Switch checked={showFKTPMark} onChange={handleFktpSwitchChange} /> Titik FKTP
       </Typography>
+      {faskesType !== "fktp" && (
       <Typography fontSize={12}>
-      <Switch /> Titik FKRTL
+      <Switch checked={showFKRTLMark} onChange={handleFkrtlSwitchChange} /> Titik FKRTL
       </Typography>
+      )}
       <Divider/>
       <Typography id="opacity-slider-label" fontSize={12}>
         Peta Dasar :

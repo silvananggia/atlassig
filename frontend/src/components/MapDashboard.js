@@ -620,10 +620,15 @@ const MapComponent = () => {
         <Tabs
           value={value}
           onChange={handleChange}
-          indicatorColor="secondary"
           textColor="inherit"
           variant="fullWidth"
           aria-label="full width tabs example"
+          TabIndicatorProps={{
+            sx: {
+              backgroundColor: 'red',
+            },
+          }}
+          
         >
           <Tab label="FKTP" {...a11yProps(0)} />
           <Tab label="FKRTL" {...a11yProps(1)} />
@@ -635,10 +640,10 @@ const MapComponent = () => {
         onChangeIndex={handleChangeIndex}
       >
         <TabPanel value={value} index={0} dir={theme.direction}>
-          Item One
+          List Data FKTP
         </TabPanel>
         <TabPanel value={value} index={1} dir={theme.direction}>
-          Item Two
+          List Data FKRTL
         </TabPanel>
 
       </SwipeableViews>
