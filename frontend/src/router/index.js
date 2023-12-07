@@ -6,6 +6,7 @@ import Layout from '../layouts/Layout';
 import LoginPage from '../components/Login';
 import MapPage from '../components/MapDashboard';
 import EmbedPage from '../components/embed/MapEmbed';
+import EmbedCabangPage from '../components/embed/MapEmbedCabang';
 import EmbedPage2 from '../components/embed/MapEmbed2';
 import StaisticsPage from '../components/StatisticsPage';
 
@@ -15,6 +16,7 @@ function MyRouter() {
 <Routes>
 <Route path="login" element={<LoginPage />} />
 <Route path="embed" element={<EmbedPage />} />
+<Route path="embedCabang" element={<EmbedCabangPage />} />
 <Route path="embed2" element={<EmbedPage2 />} />
 
 <Route path="/" element={<Layout />}>

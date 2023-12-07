@@ -24,11 +24,20 @@ import FloatingButton from "./EmbedFloatingButton";
 import LayerGroup from "ol/layer/Group";
 import PermDeviceInformationOutlinedIcon from "@mui/icons-material/PermDeviceInformationOutlined";
 import Typography from "@mui/material/Typography";
+import Card from "@mui/material/Card";
+import CardActions from "@mui/material/CardActions";
+import CardContent from "@mui/material/CardContent";
+import CardMedia from "@mui/material/CardMedia";
+import Button from "@mui/material/Button";
 import MyLocationOutlinedIcon from "@mui/icons-material/MyLocationOutlined";
+import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
 import Slider from "@mui/material/Slider";
-import { fetchMarkersFKTP } from "../../actions/fktpActions";
-import { fetchMarkersFKRTL } from "../../actions/fkrtlActions";
+import { fetchFKTPCabang } from "../../actions/fktpActions";
+import { fetchFKRTLCabang } from "../../actions/fkrtlActions";
+import { fetchCenterCabang } from "../../actions/filterActions";
 import GeoJSON from "ol/format/GeoJSON";
+import TextField from '@mui/material/TextField';
+import Autocomplete from '@mui/material/Autocomplete';
 
 const MapComponent = (props) => {
   const bingApiKey =
@@ -39,6 +48,7 @@ const MapComponent = (props) => {
   const [lat, setLat] = useState(Number(searchParams.get("lat")));
   const [lon, setLot] = useState(Number(searchParams.get("lon")));
   const [faskes, setFaskes] = useState(searchParams.get("faskes"));
+  const [kodecabang, setKodeCabang] = useState(searchParams.get("cabang"));
   const [showFloatingButton, setShowFloatingButton] = useState(false);
   const [showFloatingButton2, setShowFloatingButton2] = useState(false);
   const [userMarker, setUserMarker] = useState(null);
@@ -55,9 +65,10 @@ const MapComponent = (props) => {
   const [markersLoaded, setMarkersLoaded] = useState(false);
   const [showFKTPMark, setShowFKTPMark] = useState(false);
   const [showFKRTLMark, setShowFKRTLMark] = useState(false);
+  const [showDetailBox, setShowDetailBox] = useState(false);
 
-  const centerMap = [lon, lat]; // Move this line above its usage
-  const zoomLevel = 12;
+  const centerMap = [13124075.715923082,-277949.29803053016]; 
+  const zoomLevel = 10;
   const circleRadius =
     faskes === "fktp" ? 2000 : faskes === "fkrtl" ? 5000 : "";
 
@@ -67,14 +78,31 @@ const MapComponent = (props) => {
       : faskes === "fkrtl"
       ? "potential_fkrtl/{z}/{x}/{-y}.png"
       : "";
-
+      const testWilayah = [
+        { label: 'Aceh' },
+        { label: 'Palembang',},];
   useEffect(() => {
-    props.loadmarkerfktp(lat, lon);
-    props.loadmarkerfkrtl(lat, lon);
+    props.loadmarkerfktp(kodecabang);
+    props.loadmarkerfkrtl(kodecabang);
+    props.loadcentercabang(kodecabang);
+
+    
   }, []);
 
   const markerListFKTP = useSelector((state) => state.mapfktp.markerlist);
   const markerListFKRTL = useSelector((state) => state.mapfkrtl.markerlist);
+  const centerCabang = useSelector((state) => state.mapfilter.coordinate);
+
+  if (centerCabang){
+   
+    map.getView().animate({
+      center: centerCabang,
+      duration: 1000, // Animation duration in milliseconds
+      zoom: 9,
+    });
+    
+  }
+
 
   const handleLayerSelectClick = () => {
     setShowFloatingButton((prevState) => !prevState);
@@ -82,6 +110,11 @@ const MapComponent = (props) => {
 
   const handleLayerSelectClick2 = () => {
     setShowFloatingButton2((prevState) => !prevState);
+  };
+
+  const closeDetailBox = () => {
+    setShowDetailBox(false);
+    // map.getView().setZoom(zoomLevel);
   };
 
   const handleFktpSwitchChange = () => {
@@ -112,8 +145,10 @@ const MapComponent = (props) => {
           });
 
           const features = new GeoJSON().readFeatures(markerListFKTP);
+          
           //console.log(features);
           features.forEach((feature) => {
+            //console.log(feature.id_);
             const coordinates = feature.getGeometry().getCoordinates();
 
             const markerFeature = new Feature({
@@ -131,6 +166,9 @@ const MapComponent = (props) => {
 
             markerFeature.setStyle(markerStyle);
 
+        
+           
+            
             const circleRadiusMeters = 2000; // 2 kilometers
             const circleGeometry = new Circle(coordinates, circleRadiusMeters);
             const circleFeature = new Feature(circleGeometry);
@@ -144,12 +182,17 @@ const MapComponent = (props) => {
               }),
             });
             circleFeature.setStyle(circleStyle);
+
             vectorSource.addFeatures([markerFeature, circleFeature]);
           });
 
+ 
+            
           overlayGroup.getLayers().push(newMarkerFKTPLayer);
         }
       }
+
+   
       // Update the showPotentialLayer state
       setShowFKTPMark((prevState) => !prevState);
     }
@@ -332,7 +375,7 @@ const MapComponent = (props) => {
         }),
       ],
       view: new View({
-        center: fromLonLat(centerMap),
+        center: centerMap,
         zoom: zoomLevel,
         maxZoom: 20,
       }),
@@ -340,6 +383,7 @@ const MapComponent = (props) => {
 
     setMap(map);
     setMarkersLoaded(true);
+    
     // Create the circle feature with a 2-kilometer radius
     const additionalCircleFeature = new Feature({
       geometry: new Circle(centerMap, 2000), // Radius in meters (2 kilometers)
@@ -391,65 +435,30 @@ const MapComponent = (props) => {
     userMarkerLayer.setZIndex(1);
     setUserMarkerFeature(userMarkerFeature);
 
-    const markerSource = new VectorSource();
-    const markerLayer = new VectorLayer({
-      source: markerSource,
-      zIndex: 4,
+    map.on("singleclick", (event) => {
+      const clickedFeature = map.forEachFeatureAtPixel(
+        event.pixel,
+        function(feature, layer) {
+          return { feature, layer };
+        }
+      );
+    
+      if (clickedFeature ) {
+        console.log(clickedFeature);
+        const featureId = clickedFeature.feature.getId();
+    
+          const layerName = clickedFeature.layer.get("title");
+    
+          console.log("Clicked Feature ID:", featureId);
+          console.log("Layer Name:", layerName);
+    
+          map.getView().setCenter(centerCabang);
+          map.getView().setZoom(14);
+          setShowDetailBox(true);
+   
+      }
     });
 
-    map.addLayer(markerLayer);
-
-    const markerFeature = new Feature({
-      geometry: new Point(fromLonLat(centerMap)),
-    });
-    markerFeature.setStyle(
-      new Style({
-        image: new Icon({
-          anchor: [0.5, 1],
-          src: "images/m1.png",
-          zIndex: 3,
-        }),
-      })
-    );
-
-    markerSource.addFeature(markerFeature);
-    markerLayer.setZIndex(2);
-    setMarkerFeature(markerFeature);
-    setMarkerSource(markerSource);
-    setMarkerLayer(markerLayer);
-    setMarkerPosition(centerMap);
-
-    const circleSource = new VectorSource();
-    const circleLayer = new VectorLayer({
-      source: circleSource,
-      zIndex: 2,
-    });
-
-    const circleFeature = new Feature({
-      geometry: new Circle(fromLonLat(centerMap), circleRadius),
-    });
-
-    // Style for the circular feature
-    const circleStyle = new Style({
-      fill: new Fill({
-        color: "rgba(255, 0, 0, 0.2)", // Red circle with 20% opacity
-      }),
-      stroke: new Stroke({
-        color: "rgba(255, 0, 0, 0.7)", // Red border with 70% opacity
-        width: 2,
-      }),
-    });
-
-    circleFeature.setStyle(circleStyle);
-    circleSource.addFeature(circleFeature);
-    map.addLayer(circleLayer);
-
-    const markerOverlay = new Overlay({
-      element: document.getElementById("marker-overlay"),
-      positioning: "bottom-center",
-      offset: [0, -20],
-    });
-    map.addOverlay(markerOverlay);
 
     const userMarkerOverlay = new Overlay({
       element: document.getElementById("user-marker-overlay"),
@@ -474,6 +483,8 @@ const MapComponent = (props) => {
         setUserLocation(lonLat);
       });
     }
+
+   
     return () => {};
   }, []);
 
@@ -540,14 +551,58 @@ const MapComponent = (props) => {
         </div>
       </div>
 
-      <div className="coordinate-box-embed">
-        <p className="label">
-          Latitude: {markerPosition[1].toFixed(6)}, Longitude:{" "}
-          {markerPosition[0].toFixed(6)} | User Latitude:{" "}
-          {userLocation[1].toFixed(6)}, User Longitude:{" "}
-          {userLocation[0].toFixed(6)}
-        </p>
+      <div className="filter-box">
+        <div className="button-container">
+          <TuneOutlinedIcon fontSize="medium" />
+          <div className="label">Filter</div>
+          
+        </div>
       </div>
+
+      <div className="filter-content hidden">
+        Filter
+<br></br>
+        <Autocomplete
+      disablePortal
+      id="combo-box-demo"
+      options={testWilayah}
+      sx={{ width: 200 }}
+      renderInput={(params) => <TextField {...params} label="Wilayah" />}
+    />
+      </div>
+
+      {showDetailBox && (
+        <div className="detail-box" onClick={closeDetailBox}>
+          <Card sx={{ maxWidth: 345 }}>
+           {/*  <CardMedia
+              component="img"
+              alt="green iguana"
+              height="140"
+              image="images/Kantor-BPJS.jpg"
+            /> */}
+            <CardContent>
+              <Typography gutterBottom variant="h5" component="div">
+              LHOONG 
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+               Jenis : Puskesmas
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+               Kode Faskes : 7625
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+               Alamat : JL. B.ACEH - MEULABOH KM.52
+              </Typography>
+            </CardContent>
+            <CardActions>
+              <Button size="small">Detail</Button>
+              <Button size="small" onClick={closeDetailBox}>
+                Close
+              </Button>
+            </CardActions>
+          </Card>
+        </div>
+      )}
     </Box>
   );
 };
@@ -556,12 +611,14 @@ const mapStateToProps = (state) => {
   return {
     mapfktp: state.mapfktp,
     mapfkrtl: state.mapfkrtl,
+    mapfilter: state.mapfilter,
   };
 };
 const mapDispatchToProps = (dispatch) => {
   return {
-    loadmarkerfktp: (lat, lon) => dispatch(fetchMarkersFKTP(lat, lon)),
-    loadmarkerfkrtl: (lat, lon) => dispatch(fetchMarkersFKRTL(lat, lon)),
+    loadmarkerfktp: (kodecabang) => dispatch(fetchFKTPCabang(kodecabang)),
+    loadmarkerfkrtl: (kodecabang) => dispatch(fetchFKRTLCabang(kodecabang)),
+    loadcentercabang: (kodecabang) => dispatch(fetchCenterCabang(kodecabang)),
   };
 };
 

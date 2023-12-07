@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "ol/ol.css";
 import { Map, View } from "ol";
+import { connect, useDispatch, useSelector } from "react-redux";
 import TileLayer from "ol/layer/Tile";
 import BingMaps from "ol/source/BingMaps";
 import OSM from "ol/source/OSM";
@@ -35,7 +36,7 @@ import { useTheme } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
-
+import { fetchFKTPList } from "../actions/fktpActions";
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -71,13 +72,14 @@ function a11yProps(index) {
 }
 
 
-const MapComponent = () => {
+const MapComponent = (props) => {
   const centerMap = [118.0149, -2.5489];
   const zoomLevel = 6;
   const bingApiKey =
     "Asz37fJVIXH4CpaK90Ohf9bPbV39RCX1IQ1LP4fMm4iaDN5gD5USHfqmgdFY5BrA";
 
   const [map, setMap] = useState(null);
+  const dispatch = useDispatch();
   const [showFloatingButton, setShowFloatingButton] = useState(false);
   const [showOverlayList, setShowOverlayList] = useState(false);
   const [userMarker, setUserMarker] = useState(null);
@@ -91,6 +93,8 @@ const MapComponent = () => {
   const [additionalMarker, setAdditionalMarker] = useState(null);
   const [showDetailBox, setShowDetailBox] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const theme = useTheme();
   const [value, setValue] = React.useState(0);
 
@@ -118,7 +122,11 @@ const MapComponent = () => {
     setShowDetailBox(false);
     // map.getView().setZoom(zoomLevel);
   };
+  useEffect(() => {
+    props.loadfktp(page,limit);
 
+    
+  }, []);
   const togglePotentialLayer = () => {
     if (map) {
       const overlayGroup = map
@@ -641,6 +649,12 @@ const MapComponent = () => {
       >
         <TabPanel value={value} index={0} dir={theme.direction}>
           List Data FKTP
+
+          {/* {props.mapfktp.markerlist && props.mapfktp.markerlist.map((item, index) => (
+  <div key={index}>
+    {item.nmppk}
+  </div>
+))} */}
         </TabPanel>
         <TabPanel value={value} index={1} dir={theme.direction}>
           List Data FKRTL
@@ -653,4 +667,16 @@ const MapComponent = () => {
   );
 };
 
-export default MapComponent;
+const mapStateToProps = (state) => {
+  return {
+    mapfktp: state.mapfktp,
+  };
+};
+const mapDispatchToProps = (dispatch) => {
+  return {
+    loadfktp: (page,limit) => dispatch(fetchFKTPList(page,limit)),
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(MapComponent);
+

@@ -2,18 +2,12 @@ const router = require('express-promise-router')();
 const fkrtlController = require('../controllers/fkrtl.controller');
 
 
-router.post('/fkrtl', fkrtlController.createProduct);
 
+router.get('/fkrtl/:lat/:lon', fkrtlController.listAllFkrtl);
+router.get('/fkrtl/:id', fkrtlController.detailFKRTL);
 
-router.get('/fkrtl', fkrtlController.listAllFkrtl);
+//listCabangFKRTL
+router.get('/fkrtl-cabang/:id', fkrtlController.listCabangFKRTL);
 
-
-router.get('/fkrtl/:id', fkrtlController.findProductById);
-
-
-router.put('/fkrtl/:id', fkrtlController.updateProductById);
-
-
-router.delete('/fkrtl/:id', fkrtlController.deleteProductById);
 
 module.exports = router;

@@ -41,6 +41,7 @@ const RedisStore = new connectRedis({
 const index = require('./routes/index');
 const fktpRoute = require('./routes/fktp.routes');
 const fkrtlRoute = require('./routes/fkrtl.routes');
+const filterRoute = require('./routes/filter.routes');
 const authRoute = require('./routes/auth.routes');
 
 app.use(express.urlencoded({ extended: true }));
@@ -51,6 +52,7 @@ app.use(cors());
 app.use(index);
 app.use('/api/', fktpRoute);
 app.use('/api/', fkrtlRoute);
+app.use('/api/', filterRoute);
 app.use('/api/', authRoute);
 
 module.exports = app;
