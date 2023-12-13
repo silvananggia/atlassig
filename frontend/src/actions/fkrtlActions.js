@@ -1,6 +1,7 @@
 import {
   FETCH_MARKER_FKRTL,
   FETCH_FKRTL_CABANG,
+  FETCH_FKRTL_KEDEPUTIAN,
   FETCH_FKRTL_LIST,
   FETCH_FKRTL_DETAIL,
 } from "./types";
@@ -24,6 +25,18 @@ export const fetchFKRTLCabang = (id) => async (dispatch) => {
     const res = await FKRTLService.getFKRTLCabang(id);
     dispatch({
       type: FETCH_FKRTL_CABANG,
+      payload: res.data.data,
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+export const fetchFKRTLKedeputian = (id) => async (dispatch) => {
+  try {
+    const res = await FKRTLService.getFKRTLKedeputian(id);
+    dispatch({
+      type: FETCH_FKRTL_KEDEPUTIAN,
       payload: res.data.data,
     });
   } catch (err) {

@@ -2,6 +2,7 @@
 import {
   FETCH_MARKER_FKTP,
   FETCH_FKTP_CABANG,
+  FETCH_FKTP_KEDEPUTIAN,
   FETCH_FKTP_LIST,
   FETCH_FKTP_DETAIL,
 } from "./types";
@@ -25,6 +26,19 @@ export const fetchFKTPCabang = (id) => async (dispatch) => {
     const res = await FKTPService.getFKTPCabang(id);
     dispatch({
       type: FETCH_FKTP_CABANG,
+      payload: res.data.data,
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+
+export const fetchFKTPKedeputian = (id) => async (dispatch) => {
+  try {
+    const res = await FKTPService.getFKTPKedeputian(id);
+    dispatch({
+      type: FETCH_FKTP_KEDEPUTIAN,
       payload: res.data.data,
     });
   } catch (err) {

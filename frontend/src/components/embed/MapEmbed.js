@@ -8,6 +8,7 @@ import { fetchEmbedFaskes } from "../../actions/accessActions";
 import MapCalonFaskes from "./Map";
 import MapPublik from "./MapPublik";
 import MapCabang from "./MapCabang";
+import MapKedeputian from "./MapKedeputian";
 
 const MapComponent = () => {
   const dispatch = useDispatch();
@@ -42,7 +43,7 @@ const MapComponent = () => {
             faskes={accessEmbed.data.faskes}
           />
         ) : accessEmbed.data.level === "Kedeputian" ? (
-          <MapCabang
+          <MapKedeputian
             kodeKedeputian={accessEmbed.data.kodeKedeputian}
             faskes={accessEmbed.data.faskes}
           />

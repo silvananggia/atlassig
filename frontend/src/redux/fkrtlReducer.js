@@ -1,5 +1,5 @@
 // mapReducer.js
-import { FETCH_MARKER_FKRTL, FETCH_FKRTL_CABANG } from "../actions/types";
+import { FETCH_MARKER_FKRTL, FETCH_FKRTL_CABANG, FETCH_FKRTL_KEDEPUTIAN } from "../actions/types";
 
 const initialState = {
   loading: true,
@@ -20,7 +20,15 @@ function fkrtlReducer(state = initialState, action) {
         fkrtllist: payload,
         fkrtlobj: {},
       };
-      case FETCH_FKRTL_CABANG:
+    case FETCH_FKRTL_CABANG:
+      return {
+        ...state,
+        loading: false,
+        errmessage: "",
+        fkrtllist: payload,
+        fkrtlobj: {},
+      };
+      case FETCH_FKRTL_KEDEPUTIAN:
       return {
         ...state,
         loading: false,

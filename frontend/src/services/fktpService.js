@@ -16,12 +16,17 @@ const getFKTPCabang = (id) => {
   return axios.get(`/fktp-cabang/${id}`);
 };
 
+const getFKTPKedeputian = (id) => {
+  return axios.get(`/fktp-kedeputian/${id}`);
+};
+
 
 
 const FKTPService = {
   getFKTP,
   getFKTPDetail,
   getFKTPCabang,
+  getFKTPKedeputian,
   getFKTPList,
 };
 

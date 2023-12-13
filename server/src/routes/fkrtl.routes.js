@@ -8,6 +8,7 @@ router.get('/fkrtl/:id', fkrtlController.detailFKRTL);
 
 //listCabangFKRTL
 router.get('/fkrtl-cabang/:id', fkrtlController.listCabangFKRTL);
+router.get('/fkrtl-kedeputian/:id', fkrtlController.listKedeputianFKRTL);
 
 
 module.exports = router;

@@ -1,5 +1,5 @@
 // mapReducer.js
-import { FETCH_CENTER_CABANG, FETCH_BBOX_CABANG } from "../actions/types";
+import { FETCH_CENTER_CABANG, FETCH_BBOX_CABANG ,FETCH_CENTER_KEDEPUTIAN, FETCH_BBOX_KEDEPUTIAN } from "../actions/types";
 
 const initialState = {
   loading: true,
@@ -23,6 +23,22 @@ function fktpReducer(state = initialState, action) {
       };
 
     case FETCH_BBOX_CABANG:
+      return {
+        ...state,
+        loading: false,
+        errmessage: "",
+        dataobj: payload,
+      };
+
+      case FETCH_CENTER_KEDEPUTIAN:
+      return {
+        ...state,
+        loading: false,
+        errmessage: "",
+        coordinate: payload,
+      };
+
+    case FETCH_BBOX_KEDEPUTIAN:
       return {
         ...state,
         loading: false,

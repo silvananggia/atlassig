@@ -9,6 +9,7 @@ router.get('/fktp/:id', fktpController.detailFKTP);
 
 //listCabangFKTP
 router.get('/fktp-cabang/:id', fktpController.listCabangFKTP);
+router.get('/fktp-kedeputian/:id', fktpController.listKedeputianFKTP);
 
 
 module.exports = router;

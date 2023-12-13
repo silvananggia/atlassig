@@ -13,6 +13,15 @@ const getCenterCabang = (id) => {
 };
 
 
+const getBBOXKedeputian = (id) => {
+  return axios.get(`/bbox-kedeputian/${id}`);
+};
+
+const getCenterKedeputian = (id) => {
+  return axios.get(`/center-kedeputian/${id}`);
+};
+
+
 
 const FilterService = {
   getBBOXKabupaten,

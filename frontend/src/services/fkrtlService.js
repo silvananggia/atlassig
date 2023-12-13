@@ -16,12 +16,17 @@ const getFKRTLCabang = (id) => {
   return axios.get(`/fkrtl-cabang/${id}`);
 };
 
+const getFKRTLKedeputian = (id) => {
+  return axios.get(`/fkrtl-kedeputian/${id}`);
+};
+
 
 const FKRTLService = {
   getFKRTLList,
   getFKRTL,
   getFKRTLDetail,
-  getFKRTLCabang
+  getFKRTLCabang,
+  getFKRTLKedeputian,
 };
 
 export default FKRTLService;
