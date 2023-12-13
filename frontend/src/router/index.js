@@ -4,20 +4,23 @@ import { Route, Routes } from 'react-router-dom';
 
 import Layout from '../layouts/Layout';
 import LoginPage from '../components/Login';
-import MapPage from '../components/MapDashboard';
+import MapPage from '../components/dashboard/MapDashboard';
 import EmbedPage from '../components/embed/MapEmbed';
-import EmbedCabangPage from '../components/embed/MapEmbedCabang';
-import EmbedPage2 from '../components/embed/MapEmbed2';
-import StaisticsPage from '../components/StatisticsPage';
+import EmbedCabangPage from '../components/embed/MapCabang';
+import EmbedPublikPage from '../components/embed/MapPublik';
+import StaisticsPage from '../components/statistic/StatisticsPage';
+import NotFound from '../components/NotFound';
 
 function MyRouter() {
   return (
 
 <Routes>
 <Route path="login" element={<LoginPage />} />
-<Route path="embed" element={<EmbedPage />} />
+<Route path="embed/:code" element={<EmbedPage />} />
 <Route path="embedCabang" element={<EmbedCabangPage />} />
-<Route path="embed2" element={<EmbedPage2 />} />
+<Route path="embedPublik" element={<EmbedPublikPage />} />
+
+
 
 <Route path="/" element={<Layout />}>
     <Route index element={<MapPage />} />
@@ -25,6 +28,8 @@ function MyRouter() {
     <Route path="statistic" element={<StaisticsPage />} />
     
 </Route>
+
+<Route path="*" element={<NotFound/>} />
 </Routes>
   );
 }

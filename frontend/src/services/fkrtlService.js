@@ -1,5 +1,9 @@
 import axios from "../api/axios";
 
+const getFKRTLList = (page,limit) => {
+  return axios.get(`/fkrtl/${page}/${limit}`);
+};
+
 const getFKRTL = (lat,lon) => {
   return axios.get(`/fkrtl/${lat}/${lon}`);
 };
@@ -14,6 +18,7 @@ const getFKRTLCabang = (id) => {
 
 
 const FKRTLService = {
+  getFKRTLList,
   getFKRTL,
   getFKRTLDetail,
   getFKRTLCabang

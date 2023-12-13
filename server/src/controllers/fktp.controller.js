@@ -139,7 +139,7 @@ exports.detailFKTP = async (req, res) => {
     }
 
     const result = await db.query(`
-    SELECT fktp.fktpid AS id, ST_X(ST_SetSRID(coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(coordinat, 4326)) AS lat, faskes1id AS faskesid, alamatppk, nmppk, jenisfaskes
+    SELECT fktp.fktpid AS id, ST_X(ST_SetSRID(coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(coordinat, 4326)) AS lat, faskes1id AS faskesid, kwppk, kcppk, alamatppk, nmppk, jenisfaskes
     FROM fktp
     WHERE fktp.fktpid=$1 AND fktp.status='aktif'
     `,[id]);

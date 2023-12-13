@@ -1,7 +1,11 @@
-import { FETCH_MARKER_FKRTL, FETCH_FKRTL_CABANG } from "./types";
+import {
+  FETCH_MARKER_FKRTL,
+  FETCH_FKRTL_CABANG,
+  FETCH_FKRTL_LIST,
+  FETCH_FKRTL_DETAIL,
+} from "./types";
 
 import FKRTLService from "../services/fkrtlService";
-
 
 export const fetchMarkersFKRTL = (lat, lon) => async (dispatch) => {
   try {
@@ -10,7 +14,6 @@ export const fetchMarkersFKRTL = (lat, lon) => async (dispatch) => {
       type: FETCH_MARKER_FKRTL,
       payload: res.data.data,
     });
-    
   } catch (err) {
     console.error(err);
   }
@@ -23,7 +26,30 @@ export const fetchFKRTLCabang = (id) => async (dispatch) => {
       type: FETCH_FKRTL_CABANG,
       payload: res.data.data,
     });
-    
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+export const fetchFKRTLList = (page, limit) => async (dispatch) => {
+  try {
+    const res = await FKRTLService.getFKRTLList(page, limit);
+    dispatch({
+      type: FETCH_FKRTL_LIST,
+      payload: res.data.data,
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+export const fetchFKRTLDetail = (id) => async (dispatch) => {
+  try {
+    const res = await FKRTLService.getFKRTLDetail(id);
+    dispatch({
+      type: FETCH_FKRTL_DETAIL,
+      payload: res.data.data,
+    });
   } catch (err) {
     console.error(err);
   }

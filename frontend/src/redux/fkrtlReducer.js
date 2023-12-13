@@ -3,8 +3,8 @@ import { FETCH_MARKER_FKRTL, FETCH_FKRTL_CABANG } from "../actions/types";
 
 const initialState = {
   loading: true,
-  markerlist: [],
-  markerobj: {},
+  fkrtllist: [],
+  fkrtlobj: {},
   errmessage: "",
 };
 
@@ -17,16 +17,16 @@ function fkrtlReducer(state = initialState, action) {
         ...state,
         loading: false,
         errmessage: "",
-        markerlist: payload,
-        markerobj: {},
+        fkrtllist: payload,
+        fkrtlobj: {},
       };
       case FETCH_FKRTL_CABANG:
       return {
         ...state,
         loading: false,
         errmessage: "",
-        markerlist: payload,
-        markerobj: {},
+        fkrtllist: payload,
+        fkrtlobj: {},
       };
 
     default:

@@ -114,7 +114,7 @@ exports.detailFKRTL = async (req, res) => {
     }
 
     const result = await db.query(`
-    SELECT fkrtl.fkrtlid AS id, ST_X(ST_SetSRID(coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(coordinat, 4326)) AS lat, faskes1id AS faskesid, alamatppk, nmppk, jenisfaskes
+    SELECT fkrtl.fkrtlid AS id, ST_X(ST_SetSRID(coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(coordinat, 4326)) AS lat, faskes2id AS faskesid,kwppk,kcppk,pelayanancanggih, alamatppk, nmppk, kelasrs
     FROM fkrtl
     WHERE fkrtl.fkrtlid=$1 AND fkrtl.status='aktif'
     `,[id]);

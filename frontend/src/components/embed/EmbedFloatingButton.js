@@ -53,8 +53,8 @@ const FloatingButton = ({
               id={option.key}
               onClick={() => changeBasemap(option.key)}
             ></div>
-            <div className={`label ${basemap === option.key ? "active" : ""}`}>
-              {option.label}
+            <div className={`label-basemap ${basemap === option.key ? "active" : ""}`}>
+            <Typography fontSize={10} align="center"> {option.label}</Typography>
             </div>{" "}
             {/* Label below div */}
           </div>

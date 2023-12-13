@@ -1,10 +1,10 @@
 // mapReducer.js
-import { FETCH_MARKER_FKTP, FETCH_FKTP_CABANG,FETCH_FKTP_LIST } from "../actions/types";
+import { FETCH_MARKER_FKTP, FETCH_FKTP_CABANG,FETCH_FKTP_LIST,FETCH_FKTP_DETAIL } from "../actions/types";
 
 const initialState = {
   loading: true,
-  markerlist: [],
-  markerobj: {},
+  fktplist: [],
+  fktpobj: {},
   errmessage: "",
 };
 
@@ -17,24 +17,31 @@ function fktpReducer(state = initialState, action) {
         ...state,
         loading: false,
         errmessage: "",
-        markerlist: payload,
-        markerobj: {},
+        fktplist: payload,
+        fktpobj: {},
       };
     case FETCH_FKTP_CABANG:
       return {
         ...state,
         loading: false,
         errmessage: "",
-        markerlist: payload,
-        markerobj: {},
+        fktplist: action.payload,
+        fktpobj: {},
       };
     case FETCH_FKTP_LIST:
       return {
         ...state,
         loading: false,
         errmessage: "",
-        markerlist: payload,
-        markerobj: {},
+        fktplist: action.payload,
+        fktpobj: {},
+      };
+      case FETCH_FKTP_DETAIL:
+      return {
+        ...state,
+        loading: false,
+        errmessage: "",
+        fktpobj: action.payload,
       };
 
     default:

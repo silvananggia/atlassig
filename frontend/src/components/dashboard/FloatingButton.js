@@ -1,6 +1,7 @@
 // FloatingButton.js
 
 import React from "react";
+import Typography from "@mui/material/Typography";
 
 const FloatingButton = ({ basemapOptions, basemap, changeBasemap }) => {
   return (

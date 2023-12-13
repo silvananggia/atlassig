@@ -14,21 +14,26 @@ body {
 
 .map {
   width: 100%;
-  height: calc(100vh - 65px); 
+  height: 100vh;
+  //height: calc(100vh - 65px);
 }
 
+.map-dashboard {
+  width: 100%;
+  //height: 100vh;
+  height: calc(100vh - 65px);
+}
 
 .ol-zoom {
-  top:unset;
-  bottom: 40px;
+  bottom: unset;
+  top: 20px;
   left: unset;
   right: 8px;
-} 
+}
 
 /* .ol-zoom{
   left: 20px;
 } */
-
 
 /* FloatingButton.css */
 
@@ -43,24 +48,21 @@ body {
   padding: 5px;
   border-radius: 5px;
   z-index: 1000;
-  
 }
-
 
 .layer-select {
   position: absolute;
   bottom: 30px;
   left: 20px;
   background-color: white;
-  border: 2px solid #000;
+  border: 1px solid #000;
   padding: 10px;
   border-radius: 5px;
   z-index: 1000;
-  height : 75px;
-  width : 75px;
-
+  height: 75px;
+  width: 75px;
 }
-.basemap-select{
+.basemap-select {
   display: none;
 }
 
@@ -72,49 +74,53 @@ body {
   display: block;
 }
 
-
 .button-container {
   text-align: center; /* Center the content horizontally */
 }
 
 .button-container .image {
   position: relative;
-  
+
   background-color: white;
   border: 1px solid #ccc;
   margin: 5px;
   border-radius: 5px;
   z-index: 1000;
-  height : 55px;
-  width : 55px;
+  height: 55px;
+  width: 55px;
   cursor: pointer;
 }
 
 .button-container .image.active {
-
   border: 2px solid #1a73e8;
-
 }
 
-.active { 
+.active {
   color: #1a73e8; /* Change this to your desired text color */
   /* Add any other styles you want for the active element */
 }
 
 .label {
-  text-align: center; /* Center the label text */
+  text-align: justify; /* Center the label text */
   font-size: 12px; /* Adjust the font size as needed */
   margin-top: 5px; /* Add some spacing between the div and the label */
 }
 
+.table-card {
+  width: 100%;
+  border-collapse: collapse;
 
+  td {
+    vertical-align: top;
+    /* Add any other styles you need for your table cells */
+  }
+}
 
 .detail-box {
   position: absolute; /* Position it absolutely on the map */
-  top: 30px; /* Adjust the top distance as needed */
+  top: 20px; /* Adjust the top distance as needed */
   right: 10px; /* Adjust the left distance as needed */
-  z-index: 1000; /* Ensure it's above other map elements */
-width: 300px;
+  z-index: 100; /* Ensure it's above other map elements */
 }
 
 .filter-box {
@@ -123,10 +129,9 @@ width: 300px;
   border-radius: 5px; /* Rounded corners */
   padding: 10px; /* Padding inside the box */
   position: absolute; /* Position it absolutely on the map */
-  top: 20px; /* Adjust the top distance as needed */
+  top: 160px; /* Adjust the top distance as needed */
   left: 20px; /* Adjust the left distance as needed */
   z-index: 1000; /* Ensure it's above other map elements */
-
 }
 
 .filter-content {
@@ -140,9 +145,8 @@ width: 300px;
   width: 300px;
   height: 300px;
   z-index: 1000; /* Ensure it's above other map elements */
-display: none;
+  display: none;
 }
-
 
 .filter-content:hover {
   display: block;
@@ -152,66 +156,53 @@ display: none;
   display: block;
 }
 #map-switch-satellite {
-  background-size:cover;
+  background-size: cover;
   background-image: url(https://media.maptiler.com/old/img/cloud/slider/hybrid.png);
 }
 
 #map-switch-basic {
-  background-size:cover;
+  background-size: cover;
   background-image: url(https://media.maptiler.com/old/img/cloud/slider/basic-v2.png);
 }
 
 #map-switch-topography {
-  background-size:cover;
+  background-size: cover;
   background-image: url(https://media.maptiler.com/img/dataviz_1e8a1fdcb1.png);
 }
 
 #map-switch-default {
-  background-size:cover;
+  background-size: cover;
   background-image: url(https://media.maptiler.com/old/img/cloud/slider/streets-v2-light.png);
-}
-
-.coordinate-box-embed {
-  background-color: white;
-  text-align: center;
-  padding: 0 10px 0 10px;
-  border-radius: 2px;
-  position: absolute; /* Position it absolutely on the map */
-  top: 5px; /* Adjust the top distance as needed */
-  left: 20px; /* Adjust the left distance as needed */
-  z-index: 100; /* Ensure it's above other map elements */
 }
 
 .embed-floating-button {
   position: absolute;
- 
-  bottom: 20px;
+  top: 20px;
   left: 20px;
   width: 230px;
-  height: 220px;
+  height: 250px;
   background-color: white;
   border: 1px solid #ccc;
   padding: 5px;
   border-radius: 5px;
   z-index: 1000;
-  
 }
 
-.basemap-option{
+.basemap-option {
   display: inline-flex;
 }
 
 .layer-select-embed {
   position: absolute;
-  bottom: 20px;
+  top: 20px;
   left: 20px;
   background-color: white;
   border: 1px solid #000;
   padding: 10px;
   border-radius: 5px;
   z-index: 1000;
-  height : 25px;
-  width : 25px;
+  height: 25px;
+  width: 25px;
 }
 
 /* Show the filter-box when the overlay-select element is hovered */
@@ -219,30 +210,27 @@ display: none;
   display: block;
 }
 
-
 .button-container-embed {
   text-align: center; /* Center the content horizontally */
 }
 
 .button-container-embed .image {
   position: relative;
-  
+
   background-color: white;
   border: 1px solid #ccc;
   margin: 5px;
   border-radius: 5px;
   z-index: 1000;
-  height : 45px;
-  width : 45px;
+  height: 45px;
+  width: 45px;
   cursor: pointer;
 }
 
 .button-container-embed .image.active {
-
   border: 2px solid #1a73e8;
-
 }
-.opacity-slider{
+.opacity-slider {
   padding: 0 10px 0 10px;
 }
 .overlay-box {
@@ -251,9 +239,9 @@ display: none;
   border-radius: 5px; /* Rounded corners */
   padding: 10px; /* Padding inside the box */
   position: absolute; /* Position it absolutely on the map */
-  bottom: 110px; /* Adjust the top distance as needed */
+  top: 20px; /* Adjust the top distance as needed */
   left: 20px; /* Adjust the left distance as needed */
-  z-index: 1000; /* Ensure it's above other map elements */
+  z-index: 100000; /* Ensure it's above other map elements */
   display: none;
 }
 
@@ -265,23 +253,22 @@ display: none;
   display: block;
 }
 
-
 .overlay-select {
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: white;
   position: absolute;
-  bottom: 110px;
+  top: 20px;
   left: 20px;
-  border: 2px solid #000;
+  border: 1px solid #000;
   padding: 10px;
   border-radius: 5px;
   z-index: 1000;
-  height : 75px;
-  width : 75px;
+  height: 55px;
+  width: 55px;
 }
 
 .center-geolocation-button {
   position: absolute;
-  bottom: 90px;
+  top: 5rem;
   right: 8px;
   display: block;
   margin: 1px;
@@ -293,13 +280,13 @@ display: none;
   text-align: center;
   height: 1.375em;
   width: 1.375em;
-  line-height: .4em;
+  line-height: 0.4em;
   background-color: var(--ol-background-color);
   border: none;
   border-radius: 2px;
 }
 
-.center-geolocation-button .img{
+.center-geolocation-button .img {
   font-size: 16px;
 }
 .center-geolocation-button:hover {
@@ -329,7 +316,7 @@ display: none;
   cursor: pointer;
   text-align: right;
   padding: 10px;
-  background: #274C8B;
+  background: #274c8b;
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
   z-index: 100;
   right: 40px;
@@ -339,54 +326,187 @@ display: none;
 
 .caret {
   display: inline-block;
- color: #fff;
+  color: #fff;
 }
 
-.sidebar-content {
-  padding: 20px 0 10px 0;
-  z-index: 1000;
-}
-
-
-.layer-select-embed2 {
+.legend-button-embed {
   position: absolute;
-  bottom: 80px;
+  top: 80px;
   left: 20px;
   background-color: white;
   border: 1px solid #000;
   padding: 10px;
   border-radius: 5px;
-  z-index: 100;
-  height : 25px;
-  width : 25px;
+  z-index: 10;
+  height: 25px;
+  width: 25px;
 }
 
 /* Show the filter-box when the overlay-select element is hovered */
-.layer-select-embed2:hover + .basemap-select2 {
-  display: block;
-}
 
-
-.basemap-select2{
-  display: none;
-}
-
-.basemap-select2:hover {
-  display: block;
-}
-
-.embed-floating-button2 {
+.legend-box-embed {
   position: absolute;
- 
-  bottom: 80px;
+
+  bottom: 20px;
+  right: 10px;
+  width: 220px;
+  height: 350px;
+  background-color: white;
+  border: 1px solid #ccc;
+  padding: 5px;
+  border-radius: 5px;
+  z-index: 1000;
+}
+
+.legend-button {
+  position: absolute;
+  top: 80px;
   left: 20px;
+  background-color: white;
+  border: 1px solid #000;
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 1000;
+  height: 55px;
+  width: 55px;
+}
+
+/* Show the filter-box when the overlay-select element is hovered */
+
+.legend-box {
+  position: absolute;
+
+  bottom: 20px;
+  right: 10px;
   width: 250px;
   height: 350px;
   background-color: white;
   border: 1px solid #ccc;
   padding: 5px;
   border-radius: 5px;
-  z-index: 100;
-  
+  z-index: 1000;
 }
 
+.layer-select-embed3 {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background-color: white;
+  border: 1px solid #000;
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 100;
+  height: 25px;
+  width: 25px;
+}
+
+/* Show the filter-box when the overlay-select element is hovered */
+.layer-select-embed3:hover + .basemap-select3 {
+  display: block;
+}
+
+.basemap-select3 {
+  display: none;
+}
+
+.basemap-select3:hover {
+  display: block;
+}
+
+.coordinate-box-embed {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 100;
+  background-color: white;
+  text-align: justify;
+  padding: 0 10px 0 10px;
+  border-radius: 5px;
+  margin-right: 20px;
+}
+
+.filter-button {
+  position: absolute;
+  top: 140px;
+  left: 20px;
+  background-color: white;
+  border: 1px solid #000;
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 1000;
+  height: 55px;
+  width: 55px;
+}
+
+.filter-button-embed {
+  position: absolute;
+  top: 140px;
+  left: 20px;
+  background-color: white;
+  border: 1px solid #000;
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 10;
+  height: 25px;
+  width: 25px;
+}
+
+@media (max-width: 420px) {
+  .center-geolocation-button {
+    top: 6rem;
+    height: 2.12em;
+    width: 2.12em;
+  }
+}
+
+.sidebar-filter {
+  width: 400px;
+  position: fixed;
+  top: 0;
+  left: -400px;
+  height: 100vh;
+  background: #fff;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+  transition: left 0.3s;
+  z-index: 1000;
+  overflow-y: scroll;
+}
+
+.sidebar-filter.open {
+  left: 0;
+  z-index: 1000;
+}
+.sidebar-header {
+  width: 100%;
+  position: relative;
+  padding-top: 10px;
+  padding-left: 10px;
+  top: 0px;
+  height: 40px;
+  background: linear-gradient(to right, #0F816F, #274C8B);
+
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+  color: #fff;
+}
+
+.sidebar-footer {
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  height: 50px;
+  padding: 10px 0  10px 0;
+align-items: center;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+  background: white;
+}
+
+.sidebar-content {
+  position: absolute;
+  padding-top: 30px;
+  
+  width: 100%;
+  top: 40px;
+  bottom: 40px;
+  overflow-y: auto;
+ 
+}

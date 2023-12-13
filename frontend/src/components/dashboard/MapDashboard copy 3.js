@@ -36,7 +36,7 @@ import { useTheme } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
-import { fetchFKTPList } from "../actions/fktpActions";
+import { fetchFKTPList } from "../../actions/fktpActions";
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -484,21 +484,7 @@ const MapComponent = (props) => {
       setUserLocation(lonLat);
     });
 
-    markerFeature.on("change", () => {
-      const coordinates = markerFeature.getGeometry().getCoordinates();
-      const lonLat = toLonLat(coordinates);
-      markerOverlay.setPosition(coordinates);
-      setMarkerPosition(lonLat);
-
-      window.parent.postMessage(
-        {
-          type: "MarkerPosition",
-          latitude: lonLat[1],
-          longitude: lonLat[0],
-        },
-        "http://localhost:8000"
-      );
-    });
+   
 
     // Get the device's current location and zoom to it
     if ("geolocation" in navigator) {
@@ -650,11 +636,11 @@ const MapComponent = (props) => {
         <TabPanel value={value} index={0} dir={theme.direction}>
           List Data FKTP
 
-          {/* {props.mapfktp.markerlist && props.mapfktp.markerlist.map((item, index) => (
+          {/*  {props.mapfktp.markerlist && props.mapfktp.markerlist.map((item, index) => (
   <div key={index}>
     {item.nmppk}
   </div>
-))} */}
+))}  */}
         </TabPanel>
         <TabPanel value={value} index={1} dir={theme.direction}>
           List Data FKRTL

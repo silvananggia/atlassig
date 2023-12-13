@@ -8,9 +8,9 @@ const pool = new Pool({
   connectionString,
 });
 
-pool.on("connect", () => {
+/* pool.on("connect", () => {
   console.log("Koneksi DB Berhasil!");
-});
+}); */
 
 module.exports = {
   query: (text, params) => pool.query(text, params),
