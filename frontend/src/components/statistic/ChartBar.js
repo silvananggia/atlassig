@@ -1,18 +1,6 @@
-// FloatingButton.js
-
 import React from "react";
-import Typography from "@mui/material/Typography";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { faker } from '@faker-js/faker';
 
 ChartJS.register(
   CategoryScale,
@@ -23,7 +11,7 @@ ChartJS.register(
   Legend
 );
 
-const chartBar = () => {
+const ChartBar = ({ title, apiData }) => {
   const options = {
     responsive: true,
     plugins: {
@@ -32,34 +20,43 @@ const chartBar = () => {
       },
       title: {
         display: true,
-        text: 'Chart.js Bar Chart',
+        text: title,
       },
     },
   };
-  
-  const labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July'];
-  
- const data = {
+
+  // Extracting labels and data from API response
+  const labels = apiData.map(item => item.jenisfaskes);
+  const dataValues = apiData.map(item => parseInt(item.count, 10));
+
+  // Define an array of colors to be used for each label
+  const colors = [
+    'rgba(255, 99, 132, 0.5)',
+    'rgba(54, 162, 235, 0.5)',
+    'rgba(255, 206, 86, 0.5)',
+    // Add more colors as needed
+  ];
+
+  // Assign a color to each label dynamically
+  const backgroundColors = labels.map((label, index) => colors[index % colors.length]);
+
+  const chartData = {
     labels,
     datasets: [
       {
-        label: 'Dataset 1',
-        data: labels.map(() => faker.datatype.number({ min: 0, max: 1000 })),
-        backgroundColor: 'rgba(255, 99, 132, 0.5)',
-      },
-      {
-        label: 'Dataset 2',
-        data: labels.map(() => faker.datatype.number({ min: 0, max: 1000 })),
-        backgroundColor: 'rgba(53, 162, 235, 0.5)',
+        
+        label: 'Healthcare Facilities',
+        data: dataValues,
+        backgroundColor: backgroundColors,
       },
     ],
   };
-  
+
   return (
-    <div >
-     <Bar options={options} data={data} /> 
+    <div>
+      <Bar options={options} data={chartData} />
     </div>
   );
 };
 
-export default chartBar;
+export default ChartBar;

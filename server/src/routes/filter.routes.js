@@ -17,10 +17,14 @@ router.get('/center-kedeputian/:id', filterController.centerKedeputian);
 router.get('/autowilayah/:id', filterController.autowilayah);
 router.get('/wilayahadmin/:pro/:kab/:kec', filterController.wilayahadmin);
 router.get('/wilayahadmin-canggih/:pro/:kab/:kec/:id', filterController.wilayahadminCanggih);
-router.get('/filter-fktp/:pro/:kab/:kec/:kdkc/:kddep/:rmax/:rmin/:nmppk/:alamatppk', filterController.filterFKTP);
-router.get('/filter-fkrtl/:pro/:kab/:kec/:kdkc/:kddep/:krs/:canggih/:nmppk/:alamatppk', filterController.filterFKTP);
+router.get('/filter-fktp/:pro/:kab/:kec/:kdkc/:kddep/:rmax/:rmin/:nmppk/:alamatppk', filterController.filterTitikFKTP);
+router.get('/filter-fkrtl/:pro/:kab/:kec/:kdkc/:kddep/:krs/:canggih/:jenis/:nmppk/:alamatppk', filterController.filterTitikFKRTL);
+ 
+router.get('/filter-fktp-list/:nmppk', filterController.filterFKTP);
+router.get('/filter-fkrtl-list/:pro/:kab/:kec/:kdkc/:kddep/:krs/:canggih/:nmppk/:alamatppk', filterController.filterFKRTL);
 
-
-
+//countJenisFKRTL
+router.get('/count-jenis-fkrtl/:pro/:kab/:kec/:kdkc/:kddep', filterController.countJenisFKRTL);
+router.get('/count-jenis-fktp/:pro/:kab/:kec/:kdkc/:kddep', filterController.countJenisFKTP);
 
 module.exports = router;

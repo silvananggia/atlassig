@@ -123,7 +123,12 @@ export default function MiniDrawer({ children }) {
 
 const itemsList = [
   {
-    text: 'Map',
+    text: 'FKTP',
+    icon: <BrandingWatermarkIcon />,
+    onClick: () => navigate('/'),
+  },
+  {
+    text: 'FKRTL',
     icon: <BrandingWatermarkIcon />,
     onClick: () => navigate('/'),
   },

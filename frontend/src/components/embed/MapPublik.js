@@ -24,7 +24,7 @@ import Collection from "ol/Collection";
 import Icon from "ol/style/Icon";
 import Overlay from "ol/Overlay";
 import { Circle as CircleStyle, Fill, Stroke, Style } from "ol/style.js";
-import Box from "@mui/material/Box";
+import {Box,Grid} from "@mui/material";
 import FloatingButton from "./EmbedFloatingButton";
 import LayerGroup from "ol/layer/Group";
 import PermDeviceInformationOutlinedIcon from "@mui/icons-material/PermDeviceInformationOutlined";
@@ -42,7 +42,19 @@ import {
   fetchMarkersFKRTL,
   fetchFKRTLDetail,
 } from "../../actions/fkrtlActions";
+import {
+  fetchAutoWilayah,
+  fetchFilterFKTPList,
+  fetchFilterFKRTLList,
+} from "../../actions/filterActions";
 import GeoJSON from "ol/format/GeoJSON";
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
+import CardFaskes from "./CardFaskes";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Divider from "@mui/material/Divider";
+import ListItemText from "@mui/material/ListItemText";
 
 const MapComponent = ({ faskes }) => {
   const dispatch = useDispatch();
@@ -68,7 +80,13 @@ const MapComponent = ({ faskes }) => {
   const [showDetailBox, setShowDetailBox] = useState(false);
   const [activeFaskes, setActiveFaskes] = useState("");
   const [showLegend, setShowLegend] = useState(false);
-
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [showSidebarData, setShowSidebarData] = useState(false);
+  const [selectedWilayah, setselectedWilayah] = useState();
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedKabId, setSelectedKabId] = useState(null);
+  const [selectedKecId, setSelectedKecId] = useState(null);
+  const [selectedProvId, setSelectedProvId] = useState(null);
   const circleRadius =
     faskes === "fktp" ? 2000 : faskes === "fkrtl" ? 5000 : "";
 
@@ -90,7 +108,13 @@ const MapComponent = ({ faskes }) => {
   const markerListFKRTL = useSelector((state) => state.mapfkrtl.fkrtllist);
   const detailFKTP = useSelector((state) => state.mapfktp.fktpobj);
   const detailFKRTL = useSelector((state) => state.mapfktp.fkrtlobj);
+  const listWilayah = useSelector((state) => state.mapfilter.wilayahlist);
+  const listFilterFKTP = useSelector((state) => state.mapfilter.datalistfktp);
+  const listFilterFKRTL = useSelector((state) => state.mapfilter.datalistfkrtl);
 
+  const toggleSidebar = () => {
+    setShowSidebarData((prevSidebarOpen) => !prevSidebarOpen);
+  };
   const handleLayerSelectClick = () => {
     setShowFloatingButton((prevState) => !prevState);
   };
@@ -679,18 +703,51 @@ const MapComponent = ({ faskes }) => {
     });
   };
 
-  const cardHeaderStyle = {
-    background: "linear-gradient(to right, #0F816F, #274C8B)", // Adjust gradient colors as needed
-    color: "white", // Set text color to contrast with the background
+
+  const handleSubmit = () => {
+    dispatch(
+      fetchFilterFKRTLList(
+        selectedProvId,
+        selectedKabId,
+        selectedKecId,
+        "null",
+        "null",
+        "nan",
+        "nan",
+        "null",
+        "null"
+      )
+    );
+    toggleSidebar(true);
   };
 
-  const titleStyle = {
-    fontSize: "1.2rem", // Set the desired font size for the title
+  const handleSelectWilayah = (event, selectedOption) => {
+    console.log("Selected Option:", selectedOption);
+    if (selectedOption) {
+      const { kec_id, kab_id, prov_id } = selectedOption;
+      console.log("Kecamatan ID:", kec_id);
+      console.log("Kabupaten ID:", kab_id);
+      console.log("Provinsi ID:", prov_id);
+
+      setSelectedKecId(kec_id);
+      setSelectedKabId(kab_id);
+      setSelectedProvId(prov_id);
+    }
   };
 
-  const subheaderStyle = {
-    fontSize: "0.8rem", // Set the desired font size for the subheader
-    color: "lightgray",
+  const handleInputWilayahChange = (event, value) => {
+    if (value.length >= 3) {
+      dispatch(fetchAutoWilayah(value));
+    } else {
+      //dispatch(fetchAutoWilayah([]));
+    }
+  };
+  const handleListClick = (index) => {
+    setSelectedItem(index);
+    const selectedId = listFilterFKRTL[index]?.id;
+    console.log(selectedId);
+    dispatch(fetchFKRTLDetail(selectedId));
+    setActiveFaskes("FKRTL");
   };
 
   return (
@@ -703,6 +760,46 @@ const MapComponent = ({ faskes }) => {
       >
         <MyLocationOutlinedIcon className="img" />
       </button>
+
+      <div className="searchbar-embed">
+        <Box sx={{ m: 1 }}>
+          <Grid container spacing={0.5}>
+            <Grid item xs={8}>
+              <Autocomplete
+                noOptionsText={"Data Tidak Ditemukan"}
+                size={"small"}
+                fullWidth
+                id="combo-box-demo"
+                value={selectedWilayah}
+                onChange={handleSelectWilayah}
+                inputValue={selectedWilayah}
+                onInputChange={handleInputWilayahChange}
+                options={listWilayah || []}
+                getOptionLabel={(option) => option.disp}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Masukan minimal 3 karakter"
+                    defaultValue=""
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={4}>
+              <Button
+                variant="contained"
+                fullWidth
+                size="medium"
+                onClick={() => {
+                  handleSubmit(); // Call the submission function
+                }}
+              >
+                Terapkan
+              </Button>
+            </Grid>
+          </Grid>
+        </Box>
+      </div>
 
       <div
         className="layer-select-embed"
@@ -743,11 +840,11 @@ const MapComponent = ({ faskes }) => {
         </div>
       )}
 
-     <div className="filter-button-embed">
+{/*       <div className="filter-button-embed">
         <div className="button-container">
           <TuneOutlinedIcon fontSize="medium" />
         </div>
-      </div>
+      </div> */}
 
       <div className="layer-select-embed3" onClick={handleLayerSelectClick2}>
         <InfoOutlinedIcon fontSize="medium" />
@@ -770,86 +867,76 @@ const MapComponent = ({ faskes }) => {
         </div>
       </div>
 
-      {showDetailBox && (
-        <div className="detail-box" onClick={closeDetailBox}>
-          <Card sx={{ maxWidth: 350 }}>
-            <CardHeader
-              title={detailFKTP[0].nmppk}
-              subheader={
-                activeFaskes + ` | KODE FASKES : ${detailFKTP[0].faskesid}`
-              }
-              style={cardHeaderStyle}
-              titleTypographyProps={{ style: titleStyle }}
-              subheaderTypographyProps={{ style: subheaderStyle }}
-            />
-            <CardContent>
-              <Typography fontSize={12}>
-                <table className="table-card">
-                  <tbody>
-                    <tr>
-                      <td style={{ width: "150px" }}>
-                        <strong>KEDEPUTIAN WILAYAH</strong>
-                      </td>
-                      <td>
-                        <strong>:</strong>
-                      </td>
-                      <td>{detailFKTP[0].kwppk}</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <strong>KANTOR CABANG</strong>
-                      </td>
-                      <td>
-                        <strong>:</strong>
-                      </td>
-                      <td>{detailFKTP[0].kcppk}</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <strong>
-                          {activeFaskes === "FKRTL" ? "KELAS RS" : "JENIS"}
-                        </strong>
-                      </td>
-                      <td>
-                        <strong>:</strong>
-                      </td>
-                      <td>
-                        {activeFaskes === "FKRTL"
-                          ? detailFKTP[0].kelasrs
-                          : detailFKTP[0].jenisfaskes}
-                      </td>
-                    </tr>
-                    {activeFaskes === "FKRTL" ? (
-                      <tr>
-                        <td>
-                          <strong>PELAYANAN CANGGIH</strong>
-                        </td>
-                        <td>
-                          <strong>:</strong>
-                        </td>
-                        <td>{detailFKTP[0].pelayanancanggih}</td>
-                      </tr>
-                    ) : null}
-                    <tr>
-                      <td>
-                        <strong>ALAMAT</strong>
-                      </td>
-                      <td>
-                        <strong>:</strong>
-                      </td>
-                      <td>{detailFKTP[0].alamatppk}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button size="small" onClick={closeDetailBox}>
-                Tutup
-              </Button>
-            </CardActions>
-          </Card>
+      <div className={`sidebar-data ${showSidebarData ? "open" : ""}`}>
+        <div className="sidebar-header">
+          <Typography>Daftar Faskes</Typography>
+          <div className="sidebar-data-toggle" onClick={toggleSidebar}>
+            {showSidebarData ? (
+              <span className="caret">&#x25C0;</span>
+            ) : (
+              <span className="caret">&#x25B6;</span>
+            )}
+          </div>
         </div>
+
+        {/* Sidebar content goes here */}
+        <div className="sidebar-content">
+          <List
+            sx={{
+              width: "100%",
+              bgcolor: "background.paper",
+            }}
+          >
+            <Divider />
+            {listFilterFKRTL && listFilterFKRTL.length > 0
+              ? listFilterFKRTL.map((item, index) => (
+                  <div key={index}>
+                    <ListItem
+                      alignItems="flex-start"
+                      sx={{
+                        height: 100,
+                        transition: "background-color 0.3s",
+                        backgroundColor:
+                          selectedItem === index ? "lightgrey" : "transparent", // Apply different color for selected item
+                        "&:hover": {
+                          bgcolor: "lightgrey", // Change the color on hover
+                        },
+                      }}
+                      onClick={() => handleListClick(index)}
+                    >
+                      <ListItemText
+                        primary={item.nmppk}
+                        secondary={
+                          <React.Fragment>
+                            <Typography
+                              sx={{ display: "inline" }}
+                              component="span"
+                              variant="body2"
+                              color="text.primary"
+                            >
+                              {item.jenisfaskes} | Kode Faskes {item.faskesid}
+                            </Typography>
+                            <Typography fontSize={10}>
+                              {item.alamatppk}
+                            </Typography>
+                          </React.Fragment>
+                        }
+                      />
+                    </ListItem>
+                    <Divider />
+                  </div>
+                ))
+              : "Data Tidak Ditemukan"}
+          </List>
+        </div>
+      </div>
+
+      {showDetailBox && (
+        <CardFaskes
+          detailFKTP={detailFKTP}
+          activeFaskes={activeFaskes}
+          closeDetailBox={closeDetailBox}
+        />
       )}
     </Box>
   );

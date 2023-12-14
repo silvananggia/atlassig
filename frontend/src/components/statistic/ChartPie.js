@@ -9,7 +9,18 @@ import { faker } from '@faker-js/faker';
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const chartBar = () => {
-  
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom',
+      },
+      title: {
+        display: true,
+        text: 'Perbandingan Jumlah Fasilitas Kesehatan',
+      },
+    },
+  };
   const data = {
     labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
     datasets: [
@@ -39,7 +50,7 @@ const chartBar = () => {
 
   return (
     <div >
-     <Pie data={data} />
+     <Pie  options={options} data={data} />
     </div>
   );
 };

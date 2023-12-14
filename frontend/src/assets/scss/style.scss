@@ -294,40 +294,9 @@ body {
   border: 0.5px solid #000;
 }
 
-.sidebar {
-  width: 400px;
-  position: fixed;
-  top: 0;
-  right: -400px;
-  height: 100vh;
-  background: #fff;
-  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
-  transition: right 0.3s;
-  z-index: 1000;
-}
 
-.sidebar.open {
-  right: 0;
-  z-index: 1000;
-}
 
-.sidebar-toggle {
-  position: relative;
-  cursor: pointer;
-  text-align: right;
-  padding: 10px;
-  background: #274c8b;
-  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
-  z-index: 100;
-  right: 40px;
-  width: 40px;
-  top: 50vh;
-}
 
-.caret {
-  display: inline-block;
-  color: #fff;
-}
 
 .legend-button-embed {
   position: absolute;
@@ -459,6 +428,30 @@ body {
   }
 }
 
+
+
+
+
+
+.sidebar-filter-dashboard {
+  width: 400px;
+  position: fixed;
+  top: 67px;
+  left: -400px;
+  height: 90vh;
+  background: #fff;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+  transition: left 0.3s;
+  z-index: 1000;
+  overflow-y: scroll;
+}
+
+.sidebar-filter-dashboard.open {
+  left: 70px;
+  z-index: 1000;
+}
+
+
 .sidebar-filter {
   width: 400px;
   position: fixed;
@@ -483,7 +476,7 @@ body {
   padding-left: 10px;
   top: 0px;
   height: 40px;
-  background: linear-gradient(to right, #0F816F, #274C8B);
+  background: linear-gradient(to right, #0f816f, #274c8b);
 
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
   color: #fff;
@@ -494,8 +487,8 @@ body {
   position: absolute;
   bottom: 0;
   height: 50px;
-  padding: 10px 0  10px 0;
-align-items: center;
+  padding: 10px 0 10px 0;
+  align-items: center;
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
   background: white;
 }
@@ -503,10 +496,57 @@ align-items: center;
 .sidebar-content {
   position: absolute;
   padding-top: 30px;
-  
+
   width: 100%;
-  top: 40px;
-  bottom: 40px;
+  top: 50px;
+  bottom: 70px;
   overflow-y: auto;
- 
+}
+
+
+.sidebar-data {
+  width: 400px;
+  position: fixed;
+  top: 0;
+  left: -400px;
+  height: 100vh;
+  background: #fff;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+  transition: left 0.3s;
+  z-index: 1000;
+  overflow-y: scroll;
+}
+
+.sidebar-data.open {
+  left: 0;
+  z-index: 10000;
+}
+
+.sidebar-data-toggle {
+  position: absolute;
+  cursor: pointer;
+  text-align: right;
+  padding: 10px;
+  right: 20px;
+  width: 40px;
+  top: 0px;
+}
+
+.caret {
+  display: inline-block;
+  color: #fff;
+}
+
+
+.searchbar-embed {
+  position: absolute;
+  top: 20px;
+  left: 80px;
+  background-color: white;
+  border: 1px solid #000;
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 10;
+  height: 55px;
+  width: 400px;
 }

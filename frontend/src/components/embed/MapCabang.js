@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import { connect, useDispatch, useSelector } from "react-redux";
 import "ol/ol.css";
 import "ol-ext/dist/ol-ext.css";
@@ -19,8 +18,6 @@ import Point from "ol/geom/Point";
 import Circle from "ol/geom/Circle";
 import { fromLonLat, toLonLat } from "ol/proj";
 import { defaults as defaultControls } from "ol/control";
-import { Translate } from "ol/interaction";
-import Collection from "ol/Collection";
 import Icon from "ol/style/Icon";
 import Overlay from "ol/Overlay";
 import { Circle as CircleStyle, Fill, Stroke, Style } from "ol/style.js";
@@ -29,45 +26,47 @@ import FloatingButton from "./EmbedFloatingButton";
 import LayerGroup from "ol/layer/Group";
 import PermDeviceInformationOutlinedIcon from "@mui/icons-material/PermDeviceInformationOutlined";
 import Typography from "@mui/material/Typography";
-import Card from "@mui/material/Card";
-import CardActions from "@mui/material/CardActions";
-import CardContent from "@mui/material/CardContent";
-import CardHeader from "@mui/material/CardHeader";
 import Button from "@mui/material/Button";
 import MyLocationOutlinedIcon from "@mui/icons-material/MyLocationOutlined";
 import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
-import Slider from "@mui/material/Slider";
 import { fetchFKTPCabang, fetchFKTPDetail } from "../../actions/fktpActions";
 import { fetchFKRTLCabang, fetchFKRTLDetail } from "../../actions/fkrtlActions";
 import {
   fetchCenterCabang,
   fetchBBOXCabang,
+  fetchAutoWilayah,
+  fetchJenisFKRTL,
+  fetchJenisFKTP,
+  fetchFilterFKTPList,
+  fetchFilterFKRTLList,
 } from "../../actions/filterActions";
 import GeoJSON from "ol/format/GeoJSON";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Divider from "@mui/material/Divider";
+import ListItemText from "@mui/material/ListItemText";
+
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import FormGroup from "@mui/material/FormGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import { Switch } from "@mui/material";
+import CardFaskes from "./CardFaskes";
 const MapComponent = ({ faskes, kodeCabang }) => {
   const dispatch = useDispatch();
   const bingApiKey =
     "Asz37fJVIXH4CpaK90Ohf9bPbV39RCX1IQ1LP4fMm4iaDN5gD5USHfqmgdFY5BrA";
-  const [searchParams] = useSearchParams();
 
   const [map, setMap] = useState(null);
+
   const [showFloatingButton, setShowFloatingButton] = useState(false);
   const [showFloatingButton2, setShowFloatingButton2] = useState(false);
-  const [userMarker, setUserMarker] = useState(null);
 
   const [userLocation, setUserLocation] = useState([0, 0]);
   const [selectedBasemap, setSelectedBasemap] = useState("map-switch-default");
-  const [showPotentialLayer, setShowPotentialLayer] = useState(false);
   const [userMarkerFeature, setUserMarkerFeature] = useState(null);
-  const [markerFeature, setMarkerFeature] = useState(null);
-  const [markerSource, setMarkerSource] = useState(null);
-  const [markerLayer, setMarkerLayer] = useState(null);
+
   const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.7);
   const [markersLoaded, setMarkersLoaded] = useState(false);
   const [showFKTPMark, setShowFKTPMark] = useState(false);
@@ -76,6 +75,24 @@ const MapComponent = ({ faskes, kodeCabang }) => {
   const [activeFaskes, setActiveFaskes] = useState("");
   const [showLegend, setShowLegend] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [showSidebarData, setShowSidebarData] = useState(false);
+  const [selectedWilayah, setselectedWilayah] = useState();
+  const listKelasRS = ["A", "B", "C", "D", "nan"];
+  const listCanggih = ["Cathlab", "Sarana Radioterapi", "Sarana Kemoterapi", "nan"];
+
+  //input
+  const [inputNama, setInputNama] = useState(null);
+  const [inputAlamat, setInputAlamat] = useState(null);
+  const [inputJenis, setInputJenis] = useState([]);
+  const [inputwilayah, setInputWilayah] = useState(null);
+  const [inputRasio, setInputRasio] = useState(false);
+  const [inputKelasRS, setInputKelasRS] = useState([]);
+  const [inputCanggih, setInputCanggih] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedKabId, setSelectedKabId] = useState(null);
+  const [selectedKecId, setSelectedKecId] = useState(null);
+  const [selectedProvId, setSelectedProvId] = useState(null);
+  //endinput
 
   const centerMap = [13124075.715923082, -277949.29803053016];
   const zoomLevel = 10;
@@ -86,12 +103,15 @@ const MapComponent = ({ faskes, kodeCabang }) => {
       : faskes === "fkrtl"
       ? "../potential_fkrtl/{z}/{x}/{-y}.png"
       : "";
-  const testWilayah = [{ label: "Aceh" }, { label: "Palembang" }];
+
   useEffect(() => {
     dispatch(fetchFKTPCabang(kodeCabang));
     dispatch(fetchFKRTLCabang(kodeCabang));
     dispatch(fetchCenterCabang(kodeCabang));
     dispatch(fetchBBOXCabang(kodeCabang));
+    dispatch(fetchJenisFKRTL());
+    dispatch(fetchJenisFKTP());
+    //dispatch(fetchAutoWilayah(""));
   }, [dispatch, kodeCabang]);
 
   const centerCabang = useSelector((state) => state.mapfilter.coordinate);
@@ -99,8 +119,34 @@ const MapComponent = ({ faskes, kodeCabang }) => {
   const markerListFKTP = useSelector((state) => state.mapfktp.fktplist);
   const markerListFKRTL = useSelector((state) => state.mapfkrtl.fkrtllist);
   const detailFKTP = useSelector((state) => state.mapfktp.fktpobj);
-  const detailFKRTL = useSelector((state) => state.mapfktp.fkrtlobj);
+  const detailFKRTL = useSelector((state) => state.mapfkrtl.fkrtlobj);
+  const jenisFKRTL = useSelector((state) => state.mapfilter.jenisfkrtl);
+  const jenisFKTP = useSelector((state) => state.mapfilter.jenisfktp);
+  const listWilayah = useSelector((state) => state.mapfilter.wilayahlist);
+  const listFilterFKTP = useSelector((state) => state.mapfilter.datalistfktp);
+  const listFilterFKRTL = useSelector((state) => state.mapfilter.datalistfkrtl);
 
+  const handleInputWilayahChange = (event, value) => {
+    if (value.length >= 3) {
+      dispatch(fetchAutoWilayah(value));
+    } else {
+      //dispatch(fetchAutoWilayah([]));
+    }
+  };
+
+  const handleSelectWilayah = (event, selectedOption) => {
+    console.log('Selected Option:', selectedOption);
+    if (selectedOption) {
+      const { kec_id, kab_id, prov_id } = selectedOption;
+      console.log('Kecamatan ID:', kec_id);
+      console.log('Kabupaten ID:', kab_id);
+      console.log('Provinsi ID:', prov_id);
+  
+      setSelectedKecId(kec_id);
+      setSelectedKabId(kab_id);
+      setSelectedProvId(prov_id);
+    }
+  };
   useEffect(() => {
     if (centerCabang && map) {
       map.getView().animate({
@@ -113,6 +159,10 @@ const MapComponent = ({ faskes, kodeCabang }) => {
 
   const handleLayerSelectClick = () => {
     setShowFloatingButton((prevState) => !prevState);
+  };
+
+  const toggleSidebar = () => {
+    setShowSidebarData((prevSidebarOpen) => !prevSidebarOpen);
   };
 
   const handleLayerSelectClick2 = () => {
@@ -325,8 +375,8 @@ const MapComponent = ({ faskes, kodeCabang }) => {
   };
 
   const basemapOptions = [
-    { key: "map-switch-default", label: "Default" },
-    { key: "map-switch-basic", label: "Bing Maps" },
+    { key: "map-switch-default", label: "Plain" },
+    { key: "map-switch-basic", label: "Road" },
     { key: "map-switch-satellite", label: "Imagery" },
     { key: "map-switch-topography", label: "Topography" },
   ];
@@ -694,19 +744,64 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     });
   };
 
-  const cardHeaderStyle = {
-    background: "linear-gradient(to right, #0F816F, #274C8B)", // Adjust gradient colors as needed
-    color: "white", // Set text color to contrast with the background
+  const handleJenisChange = (item) => {
+    const isChecked = inputJenis.includes(item);
+
+    if (isChecked) {
+      setInputJenis((prev) => prev.filter((value) => value !== item));
+    } else {
+      setInputJenis((prev) => [...prev, item]);
+    }
   };
 
-  const titleStyle = {
-    fontSize: "1.2rem", // Set the desired font size for the title
+  const handleKelasRSChange = (item) => {
+    const isChecked = inputJenis.includes(item);
+
+    if (isChecked) {
+      setInputKelasRS((prev) => prev.filter((value) => value !== item));
+    } else {
+      setInputKelasRS((prev) => [...prev, item]);
+    }
   };
 
-  const subheaderStyle = {
-    fontSize: "0.8rem", // Set the desired font size for the subheader
-    color: "lightgray",
+  const handleCanggihChange = (item) => {
+    const isChecked = inputCanggih.includes(item);
+
+    if (isChecked) {
+      setInputCanggih((prev) => prev.filter((value) => value !== item));
+    } else {
+      setInputCanggih((prev) => [...prev, item]);
+    }
   };
+
+  const handleListClick = (index) => {
+    setSelectedItem(index);
+    const selectedId = listFilterFKRTL[index]?.id;
+    console.log(selectedId);
+    dispatch(fetchFKRTLDetail(selectedId));
+    setActiveFaskes("FKRTL");
+    
+  };
+
+  const handleSubmit = () => {
+    
+    const formData = new FormData();
+
+    formData.append("nmppk", inputNama);
+    formData.append("alamatppk", inputAlamat);
+    formData.append("jenisfaskes", inputJenis);
+    formData.append("inputwilayah", inputwilayah);
+    formData.append("inputRasio", inputRasio);
+    formData.append("krs", inputKelasRS);
+    formData.append("canggih", inputCanggih);
+
+    console.log(formData);
+    //dispatch(fetchFilterFKRTLList(pro,kab,kec,kdkc,kddep,krs,canggih,nmppk,alamatppk));
+    
+    dispatch(fetchFilterFKRTLList(selectedProvId,selectedKabId,selectedKecId,"null","null","nan",inputCanggih,inputNama,inputAlamat));
+    toggleSidebar(true);
+  };
+
   return (
     <Box className="contentRoot">
       <div id="map" className="map"></div>
@@ -769,7 +864,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
         </div>
         <div className="sidebar-content">
           <Grid container spacing={2}>
-          <Grid item xs={12}>
+            <Grid item xs={12}>
               <Box
                 sx={{
                   padding: 1,
@@ -781,6 +876,8 @@ const MapComponent = ({ faskes, kodeCabang }) => {
                   variant="outlined"
                   size={"small"}
                   fullWidth
+                  value={inputNama}
+                  onChange={(e) => setInputNama(e.target.value)}
                 />
               </Box>
             </Grid>
@@ -796,64 +893,102 @@ const MapComponent = ({ faskes, kodeCabang }) => {
                   variant="outlined"
                   size={"small"}
                   fullWidth
+                  value={inputAlamat}
+                  onChange={(e) => setInputAlamat(e.target.value)}
                 />
               </Box>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12}>
               <Box
                 sx={{
                   padding: 1,
+                  marginTop: -3,
                 }}
               >
-                <Typography>Jenis Faskes</Typography>
+                <Typography fontWeight="fontWeightBold" variant="body2">
+                  Jenis Faskes
+                </Typography>
               </Box>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12}>
               <Box
                 sx={{
                   padding: 1,
+                  marginTop: -3,
                 }}
               >
                 <FormGroup>
-                  <FormControlLabel
-                    control={<Checkbox defaultChecked />}
-                    label="Rumah Sakit"
-                  />
-                  <FormControlLabel
-                    control={<Checkbox defaultChecked />}
-                    label="Rumah Sakit"
-                  />
-                  <FormControlLabel
-                    control={<Checkbox defaultChecked />}
-                    label="Rumah Sakit"
-                  />
+                  {faskes === "fktp"
+                    ? jenisFKTP.map((item, index) => (
+                        <div key={index}>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={inputJenis.includes(item.jenisfaskes)}
+                                onChange={() =>
+                                  handleJenisChange(item.jenisfaskes)
+                                }
+                              />
+                            }
+                            label={item.jenisfaskes}
+                          />
+                        </div>
+                      ))
+                    : jenisFKRTL.map((item, index) => (
+                        <div key={index}>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={inputJenis.includes(item.jenisfaskes)}
+                                onChange={() =>
+                                  handleJenisChange(item.jenisfaskes)
+                                }
+                              />
+                            }
+                            label={item.jenisfaskes}
+                          />
+                        </div>
+                      ))}
                 </FormGroup>
               </Box>
             </Grid>
-            
-            <Grid item xs={4}>
+
+            <Grid item xs={12}>
               <Box
                 sx={{
                   padding: 1,
+                  marginTop: -3,
                 }}
               >
-                <Typography>Wilayah</Typography>
+                <Typography fontWeight="fontWeightBold" variant="body2">
+                  Wilayah
+                </Typography>
               </Box>
             </Grid>
-            <Grid item xs={8}>
+            <Grid item xs={12}>
               <Box
                 sx={{
                   padding: 1,
+                  marginTop: -3,
                 }}
               >
                 <Autocomplete
-                  disablePortal
+                  noOptionsText={"Data Tidak Ditemukan"}
                   size={"small"}
                   fullWidth
                   id="combo-box-demo"
-                  options={testWilayah}
+                  value={selectedWilayah}
+                  onChange={handleSelectWilayah}
+                  inputValue={selectedWilayah}
+                  onInputChange={handleInputWilayahChange}
+                  options={listWilayah || []}
+                   getOptionLabel={(option) => option.disp}
                   renderInput={(params) => (
-                    <TextField {...params} label="Wilayah" />
+                    <TextField
+                      {...params}
+                      label="Masukan minimal 3 karakter"
+                      defaultValue=""
+                    />
                   )}
                 />
               </Box>
@@ -862,53 +997,109 @@ const MapComponent = ({ faskes, kodeCabang }) => {
               <Box
                 sx={{
                   padding: 1,
+                  marginTop: -3,
                 }}
               >
-                <Typography>Rasio Dokter</Typography>
+                <Typography fontWeight="fontWeightBold" variant="body2">
+                  Rasio Dokter
+                </Typography>
               </Box>
             </Grid>
             <Grid item xs={8}>
               <Box
                 sx={{
                   padding: 1,
+                  marginTop: -3,
                 }}
               >
-               <Typography fontSize={12}>  {"< 5000"} <Switch /> {">= 5000"}</Typography> 
+                <Typography fontSize={12}>
+                  {" "}
+                  {"< 5000"} <Switch /> {">= 5000"}
+                </Typography>
               </Box>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12}>
               <Box
                 sx={{
                   padding: 1,
+                  marginTop: -3,
                 }}
               >
-                <Typography>Kelas RS</Typography>
+                <Typography fontWeight="fontWeightBold" variant="body2">
+                  Kelas RS
+                </Typography>
               </Box>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12}>
               <Box
                 sx={{
                   padding: 1,
+                  marginTop: -3,
                 }}
               >
-                <FormGroup>
-                  <FormControlLabel
-                    control={<Checkbox defaultChecked />}
-                    label="A"
-                  />
-                  <FormControlLabel
-                    control={<Checkbox defaultChecked />}
-                    label="B"
-                  />
-                  <FormControlLabel
-                    control={<Checkbox defaultChecked />}
-                    label="C"
-                  />
-                  <FormControlLabel
-                    control={<Checkbox defaultChecked />}
-                    label="D"
-                  />
-                </FormGroup>
+                <Grid
+                  container
+                  wrap="nowrap"
+                  spacing={8}
+                  sx={{ overflow: "auto" }}
+                >
+                  <Grid item xs={1}>
+                    <Typography>
+                      {" "}
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={inputKelasRS.includes("A")}
+                            onChange={() => handleKelasRSChange("A")}
+                          />
+                        }
+                        label="A"
+                      />
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={1}>
+                    <Typography>
+                      {" "}
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={inputKelasRS.includes("B")}
+                            onChange={() => handleKelasRSChange("B")}
+                          />
+                        }
+                        label="B"
+                      />
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={1}>
+                    <Typography>
+                      {" "}
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={inputKelasRS.includes("C")}
+                            onChange={() => handleKelasRSChange("C")}
+                          />
+                        }
+                        label="C"
+                      />
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={1}>
+                    <Typography>
+                      {" "}
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={inputKelasRS.includes("D")}
+                            onChange={() => handleKelasRSChange("D")}
+                          />
+                        }
+                        label="D"
+                      />
+                    </Typography>
+                  </Grid>
+                </Grid>
               </Box>
             </Grid>
             <Grid item xs={12}>
@@ -917,138 +1108,171 @@ const MapComponent = ({ faskes, kodeCabang }) => {
                   padding: 1,
                 }}
               >
-                <Typography fon>Pelayanan Canggih</Typography>
+                <Typography fontWeight="fontWeightBold" variant="body2">
+                  Pelayanan Canggih
+                </Typography>
               </Box>
             </Grid>
             <Grid item xs={12}>
               <Box
                 sx={{
                   padding: 1,
+                  marginTop: -3,
                 }}
               >
                 <FormGroup>
                   <FormControlLabel
-                    control={<Checkbox defaultChecked />}
+                    control={
+                      <Checkbox
+                        checked={inputCanggih.includes("Cathlab")}
+                        onChange={() => handleCanggihChange("Cathlab")}
+                      />
+                    }
                     label="Cathlab"
                   />
                   <FormControlLabel
-                    control={<Checkbox defaultChecked />}
+                    control={
+                      <Checkbox
+                        checked={inputCanggih.includes("Sarana Radioterapi")}
+                        onChange={() =>
+                          handleCanggihChange("Sarana Radioterapi")
+                        }
+                      />
+                    }
                     label="Sarana Radioterapi"
                   />
                   <FormControlLabel
-                    control={<Checkbox defaultChecked />}
+                    control={
+                      <Checkbox
+                        checked={inputCanggih.includes("Sarana Kemoterapi")}
+                        onChange={() =>
+                          handleCanggihChange("Sarana Kemoterapi")
+                        }
+                      />
+                    }
                     label="Sarana Kemoterapi"
                   />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={inputCanggih.includes("nan")}
+                        onChange={() =>
+                          handleCanggihChange("nan")
+                        }
+                      />
+                    }
+                    label="Tanpa Pelayanan Canggih"
+                  />
                 </FormGroup>
+                
               </Box>
             </Grid>
           </Grid>
         </div>
         <div className="sidebar-footer">
-          <Box  sx={{ m: 1}}>
-          <Grid container spacing={0.5}  >
-            <Grid item xs={6}>
-     
-                <Button variant="contained" fullWidth onClick={handleFilterClick}>Tutup</Button>
-           
+          <Box sx={{ m: 1 }}>
+            <Grid container spacing={0.5}>
+              <Grid item xs={6}>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={handleFilterClick}
+                >
+                  Tutup
+                </Button>
+              </Grid>
+              <Grid item xs={6}>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  size="medium"
+                  onClick={() => {
+                    handleSubmit(); // Call the submission function
+                  }}
+                >
+                  Terapkan
+                </Button>
+              </Grid>
             </Grid>
-            <Grid item xs={6}>
-    
-                <Button variant="contained" fullWidth size="medium"  onClick={handleFilterClick}>Terapkan</Button>
-             
-            </Grid>
-          </Grid>
+
+            
           </Box>
-         
         </div>
       </div>
 
+      <div className={`sidebar-data ${showSidebarData ? "open" : ""}`}>
+              <div className="sidebar-header">
+                <Typography>Daftar Faskes</Typography>
+                <div className="sidebar-data-toggle" onClick={toggleSidebar}>
+                  {showSidebarData ? (
+                    <span className="caret">&#x25C0;</span>
+                  ) : (
+                    <span className="caret">&#x25B6;</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Sidebar content goes here */}
+              <div className="sidebar-content">
+                <List
+                  sx={{
+                    width: "100%",
+                    bgcolor: "background.paper",
+                  }}
+                >
+                  <Divider />
+                  {listFilterFKRTL && listFilterFKRTL.length > 0
+                    ? listFilterFKRTL.map((item, index) => (
+                        <div key={index}>
+                          <ListItem
+                            alignItems="flex-start"
+                            sx={{
+                              height: 100,
+                              transition: "background-color 0.3s",
+                              backgroundColor:
+                                selectedItem === index
+                                  ? "lightgrey"
+                                  : "transparent", // Apply different color for selected item
+                              "&:hover": {
+                                bgcolor: "lightgrey", // Change the color on hover
+                              },
+                            }}
+                            onClick={() => handleListClick(index)}
+                          >
+                            <ListItemText
+                              primary={item.nmppk}
+                              secondary={
+                                <React.Fragment>
+                                  <Typography
+                                    sx={{ display: "inline" }}
+                                    component="span"
+                                    variant="body2"
+                                    color="text.primary"
+                                  >
+                                    {item.jenisfaskes} | Kode Faskes{" "}
+                                    {item.faskesid}
+                                  </Typography>
+                                  <Typography fontSize={10}>
+                                    {item.alamatppk}
+                                  </Typography>
+                                </React.Fragment>
+                              }
+                            />
+                          </ListItem>
+                          <Divider />
+                        </div>
+                      ))
+                    : "Data Tidak Ditemukan"}
+                </List>
+              </div>
+            </div>
+
       {showDetailBox && (
-        <div className="detail-box" onClick={closeDetailBox}>
-          <Card sx={{ maxWidth: 345 }}>
-            {/*  <CardMedia
-              component="img"
-              alt="green iguana"
-              height="140"
-              image="images/Kantor-BPJS.jpg"
-            /> */}
-            <CardHeader
-              title={detailFKTP[0].nmppk}
-              subheader={
-                activeFaskes + ` | KODE FASKES : ${detailFKTP[0].faskesid}`
-              }
-              style={cardHeaderStyle}
-              titleTypographyProps={{ style: titleStyle }}
-              subheaderTypographyProps={{ style: subheaderStyle }}
-            />
-            <CardContent>
-              <Typography fontSize={12}>
-                <table className="table-card">
-                  <tbody>
-                    <tr>
-                      <td style={{ width: "150px" }}>
-                        <strong>KEDEPUTIAN WILAYAH</strong>
-                      </td>
-                      <td>
-                        <strong>:</strong>
-                      </td>
-                      <td>{detailFKTP[0].kwppk}</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <strong>KANTOR CABANG</strong>
-                      </td>
-                      <td>
-                        <strong>:</strong>
-                      </td>
-                      <td>{detailFKTP[0].kcppk}</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <strong>
-                          {activeFaskes === "FKRTL" ? "KELAS RS" : "JENIS"}
-                        </strong>
-                      </td>
-                      <td>
-                        <strong>:</strong>
-                      </td>
-                      <td>
-                        {activeFaskes === "FKRTL"
-                          ? detailFKTP[0].kelasrs
-                          : detailFKTP[0].jenisfaskes}
-                      </td>
-                    </tr>
-                    {activeFaskes === "FKRTL" ? (
-                      <tr>
-                        <td>
-                          <strong>PELAYANAN CANGGIH</strong>
-                        </td>
-                        <td>
-                          <strong>:</strong>
-                        </td>
-                        <td>{detailFKTP[0].pelayanancanggih}</td>
-                      </tr>
-                    ) : null}
-                    <tr>
-                      <td>
-                        <strong>ALAMAT</strong>
-                      </td>
-                      <td>
-                        <strong>:</strong>
-                      </td>
-                      <td>{detailFKTP[0].alamatppk}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button size="small" onClick={closeDetailBox}>
-                Tutup
-              </Button>
-            </CardActions>
-          </Card>
-        </div>
+        <CardFaskes
+          detailFKTP={detailFKTP}
+          activeFaskes={activeFaskes}
+          closeDetailBox={closeDetailBox}
+        />
       )}
     </Box>
   );
