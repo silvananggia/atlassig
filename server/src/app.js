@@ -19,7 +19,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set("trust proxy", 1);
 
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: true,
   credentials: true,
 }));
 
@@ -54,12 +54,7 @@ app.use(
     },
   })
 );
-app.get('/test-redis-session', (req, res) => {
-  // Set a session variable
-  req.session.exampleVar = 'Hello, Redis!';
 
-  res.send('Session variable set. Check Redis to verify.');
-});
 
 //Route
 const index = require("./routes/index");
