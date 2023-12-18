@@ -1,22 +1,29 @@
 import axios from "../api/axios";
 
-const login = (email,password) => {
+const login = (email, password) => {
   console.log(email);
   return axios.post(`/login`, {
     email,
     password,
-});
+  }, {
+    withCredentials: true,
+  });
 };
 
+
 const checkAuth = () => {
-  return axios.get(`/checkAuth`
+  return axios.get(`/checkAuth`, {
+    withCredentials: true,
+  }
   );
   
 };
 
 
 const logout = () => {
-  return axios.get(`/logout`
+  return axios.get(`/logout`, {
+    withCredentials: true,
+  }
   );
   
 };

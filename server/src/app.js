@@ -19,7 +19,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set("trust proxy", 1);
 
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: 'http://172.23.73.42',
   credentials: true,
 }));
 
