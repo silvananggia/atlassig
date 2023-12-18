@@ -7,10 +7,10 @@ import {
   FETCH_AUTO_WILAYAH,
   FETCH_JENIS_FKRTL,
   FETCH_JENIS_FKTP,
-  FETCH_FILTER_FKTP_LIST,
-  FETCH_FILTER_FKRTL_LIST,
-  FETCH_COUNT_FKRTL,
-  FETCH_COUNT_FKTP,
+  FETCH_CABANG,
+
+
+  
 } from "../actions/types";
 
 const initialState = {
@@ -18,8 +18,10 @@ const initialState = {
   datalist: [],
   jenisfktp: [],
   jenisfkrtl: [],
-  datalistfktp: [],
+  
   datalistfkrtl: [],
+  datalistfilter: [],
+  cabanglist: [],
   dataobj: {},
   errmessage: "",
   coordinate: "",
@@ -69,6 +71,13 @@ function fktpReducer(state = initialState, action) {
         errmessage: "",
         wilayahlist: payload,
       };
+      case FETCH_CABANG:
+        return {
+          ...state,
+          loading: false,
+          errmessage: "",
+          cabanglist: payload,
+        };
     case FETCH_JENIS_FKRTL:
       return {
         ...state,
@@ -83,34 +92,8 @@ function fktpReducer(state = initialState, action) {
         errmessage: "",
         jenisfktp: payload,
       };
-      case FETCH_FILTER_FKTP_LIST:
-      return {
-        ...state,
-        loading: false,
-        errmessage: "",
-        datalistfktp: payload,
-      };
-      case FETCH_FILTER_FKRTL_LIST:
-      return {
-        ...state,
-        loading: false,
-        errmessage: "",
-        datalistfkrtl: payload,
-      };
-      case FETCH_COUNT_FKTP:
-      return {
-        ...state,
-        loading: false,
-        errmessage: "",
-        datalistfktp: payload,
-      };
-      case FETCH_COUNT_FKRTL:
-      return {
-        ...state,
-        loading: false,
-        errmessage: "",
-        datalistfkrtl: payload,
-      };
+      
+      
     default:
       return state;
   }

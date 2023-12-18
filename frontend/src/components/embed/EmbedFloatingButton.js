@@ -13,9 +13,10 @@ const FloatingButton = ({
   showFKRTLMark,
   handleFktpSwitchChange, // Add the handler for FKTP switch change
   handleFkrtlSwitchChange,
+  leftPosition
 }) => {
   return (
-    <div className="embed-floating-button">
+    <div className="embed-floating-button" style={{ left: leftPosition }}>
       <Typography id="opacity-slider-label" fontSize={12}>
         Peta Potensi {faskesType.toUpperCase()}: 
       </Typography>{" "}

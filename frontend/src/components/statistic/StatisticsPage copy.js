@@ -14,7 +14,7 @@ import {
   Grid,
 } from "@mui/material";
 
-import { fetchAutoWilayah, fetchCabang } from "../../actions/filterActions";
+import { fetchAutoWilayah } from "../../actions/filterActions";
 import {
   fetchCountJenisFKRTL,
   fetchCountFKRTL,
@@ -31,131 +31,74 @@ const StatisticsPage = () => {
   const [selectedKabId, setSelectedKabId] = useState(null);
   const [selectedKecId, setSelectedKecId] = useState(null);
   const [selectedProvId, setSelectedProvId] = useState(null);
-  const [selectedCabang, setselectedCabang] = useState();
   const [dataPie, setDataPie] = useState([]);
-  const [inputKodeCabang, setInputKodeCabang] = useState(null);
-  const [inputKodeDeputi, setInputKodeDeputi] = useState(null);
-  const [isFiltered, setIsFiltered] = useState(false);
 
   const listWilayah = useSelector((state) => state.mapfilter.wilayahlist);
   const dataJenisFKTP = useSelector((state) => state.mapfktp.datalistfktp);
   const dataJenisFKRTL = useSelector((state) => state.mapfkrtl.datalistfkrtl);
   const dataFKTP = useSelector((state) => state.mapfktp.totalfktp);
   const dataFKRTL = useSelector((state) => state.mapfkrtl.totalfkrtl);
-  const listCabang = useSelector((state) => state.mapfilter.cabanglist);
 
-  const listKedeputian = [
-    "01",
-    "02",
-    "03",
-    "04",
-    "05",
-    "06",
-    "07",
-    "08",
-    "09",
-    "10",
-    "11",
-    "12",
-  ];
-
-  useEffect(() => {
-    if (!isFiltered) {
-      handleResetFilter();
-    }
-  }, []);
-
-  const handleKedeputianChange = (event, value) => {
-    setInputKodeDeputi(value);
-  };
-
-  const handleInputCabangChange = (event, value) => {
-    if (value.length >= 2) {
-      dispatch(fetchCabang(value));
-    } else {
-      //dispatch(fetchAutoWilayah([]));
-    }
-  };
-
-  const handleSelectCabang = (event, selectedOption) => {
-    if (selectedOption) {
-      const { kodecab } = selectedOption;
-
-      setInputKodeCabang(kodecab);
-    }
-  };
   const handleSubmit = () => {
-    const sanitizedSelectedProvId = selectedProvId ?? "null";
-    const sanitizedSelectedKabId = selectedKabId ?? "null";
-    const sanitizedSelectedKecId = selectedKecId ?? "null";
-    const sanitizedKodeCabang = inputKodeCabang ?? "null";
-    const sanitizedKodeDeputi = inputKodeDeputi ?? "null";
+    /*  dispatch(
+      fetchFilterFKRTLList(
+        selectedProvId,
+        selectedKabId,
+        selectedKecId,
+       
+      )
+    ); */
 
     dispatch(
       fetchCountJenisFKRTL(
-        sanitizedSelectedProvId,
-        sanitizedSelectedKabId,
-        sanitizedSelectedKecId,
-        sanitizedKodeCabang,
-        sanitizedKodeDeputi
+        selectedProvId,
+        selectedKabId,
+        selectedKecId,
+        "null",
+        "null"
       )
     );
 
     dispatch(
       fetchCountJenisFKTP(
-        sanitizedSelectedProvId,
-        sanitizedSelectedKabId,
-        sanitizedSelectedKecId,
-        sanitizedKodeCabang,
-        sanitizedKodeDeputi
+        selectedProvId,
+        selectedKabId,
+        selectedKecId,
+        "null",
+        "null"
       )
     );
 
     dispatch(
       fetchCountFKRTL(
-        sanitizedSelectedProvId,
-        sanitizedSelectedKabId,
-        sanitizedSelectedKecId,
-        sanitizedKodeCabang,
-        sanitizedKodeDeputi
+        selectedProvId,
+        selectedKabId,
+        selectedKecId,
+        "null",
+        "null"
       )
     );
 
     dispatch(
       fetchCountFKTP(
-        sanitizedSelectedProvId,
-        sanitizedSelectedKabId,
-        sanitizedSelectedKecId,
-        sanitizedKodeCabang,
-        sanitizedKodeDeputi
+        selectedProvId,
+        selectedKabId,
+        selectedKecId,
+        "null",
+        "null"
       )
     );
 
-    if (dataFKTP && dataFKTP.length > 0 && dataFKRTL && dataFKRTL.length > 0) {
+    if(dataFKTP && dataFKTP.length > 0 && dataFKRTL && dataFKRTL.length > 0){
       setDataPie([dataFKTP[0].count, dataFKRTL[0].count]);
     }
-    setIsFiltered(true);
-  };
-
-  const handleResetFilter = () => {
-    dispatch(fetchCountJenisFKRTL("null", "null", "null", "null", "null"));
-
-    dispatch(fetchCountJenisFKTP("null", "null", "null", "null", "null"));
-
-    dispatch(fetchCountFKRTL("null", "null", "null", "null", "null"));
-
-    dispatch(fetchCountFKTP("null", "null", "null", "null", "null"));
-
-    if (dataFKTP && dataFKTP.length > 0 && dataFKRTL && dataFKRTL.length > 0) {
-      setDataPie([dataFKTP[0].count, dataFKRTL[0].count]);
-    }
-
-    setIsFiltered(false);
-    setInputKodeDeputi(null);
+    
   };
 
 
-  
+  useEffect(()=>{
+
+  },[dataFKTP])
   const handleSelectWilayah = (event, selectedOption) => {
     console.log("Selected Option:", selectedOption);
     if (selectedOption) {
@@ -167,7 +110,7 @@ const StatisticsPage = () => {
       setSelectedKecId(kec_id);
       setSelectedKabId(kab_id);
       setSelectedProvId(prov_id);
-      //handleSubmit();
+      handleSubmit();
     }
   };
 
@@ -198,7 +141,8 @@ const StatisticsPage = () => {
       <h1>Statistik</h1>
 
       <Grid container spacing={2}>
-        <Grid item xs={6} md={3}>
+        <Grid item xs={6} md={4}>
+          <Box p={2}>
             <Autocomplete
               noOptionsText={"Data Tidak Ditemukan"}
               size={"small"}
@@ -218,49 +162,11 @@ const StatisticsPage = () => {
                 />
               )}
             />
+          </Box>
         </Grid>
-        <Grid item xs={6} md={1}>
-          
-            <Autocomplete
-              id="kedeputian-autocomplete"
-              options={listKedeputian}
-              value={inputKodeDeputi}
-              onChange={handleKedeputianChange}
-              renderInput={(params) => (
-                <TextField {...params} label="Kedeputian" size="small" />
-              )}
-            />
-          
-        </Grid>
-
-        <Grid item xs={6} md={3}>
-       
-            <Autocomplete
-              disablePortal
-              noOptionsText={"Data Tidak Ditemukan"}
-              size={"small"}
-              fullWidth
-              id="combo-box-demo"
-              value={selectedCabang}
-              onChange={handleSelectCabang}
-              inputValue={selectedCabang}
-              onInputChange={handleInputCabangChange}
-              options={listCabang || []}
-              getOptionLabel={(option) => option.namacabang}
-              style={{ zindex: 1000000, left: 0 }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Kantor Cabang | Masukan Minimal 2 Karakter"
-                  defaultValue=""
-                />
-              )}
-            />
-        </Grid>
-
         <Grid item xs={6} md={2}>
-       
-             <Button
+          <Box p={2}>
+            {/* <Button
                 variant="contained"
                 fullWidth
                 size="medium"
@@ -269,24 +175,15 @@ const StatisticsPage = () => {
                 }}
               >
                 Terapkan
-              </Button> 
-         
+              </Button> */}
+          </Box>
         </Grid>
-
-        <Grid item xs={6} md={2}>
-          
-          {isFiltered && (
-              <Button variant="contained" fullWidth onClick={handleResetFilter}>
-                Hapus Filter
-              </Button>
-            )}
-          
+        <Grid item xs={6} md={4}>
+          <Box p={2}></Box>
         </Grid>
-
-
       </Grid>
 
-      <Grid container sx={{ paddingTop: 3 }}>
+       <Grid container spacing={2}>
         <Grid item xs={6} md={4}>
           <Box p={2}>
             <Card sx={{ maxWidth: 350 }}>
@@ -297,29 +194,19 @@ const StatisticsPage = () => {
                 titleTypographyProps={{ style: titleStyle }}
                 subheaderTypographyProps={{ style: subheaderStyle }}
               />
-              <CardContent>
-                <Typography
-                  style={{ display: "inline-block" }}
-                  sx={{ fontWeight: "bold" }}
-                  fontSize={32}
-                >
-                  {" "}
-                  {dataFKTP.length > 0 ? dataFKTP[0].count : 0}{" "}
-                </Typography>{" "}
-                <Typography
-                  style={{ display: "inline-block" }}
-                  sx={{ fontWeight: "regular" }}
-                >
-                  {" "}
-                  {} Faskes
-                </Typography>
+               <CardContent>
+                <Typography   style={{display: 'inline-block'}} sx={{ fontWeight: 'bold' }} fontSize={32}> {
+                dataFKTP.length> 0?
+                dataFKTP[0].count:0} </Typography> {" "}
+                <Typography   style={{display: 'inline-block'}} sx={{ fontWeight: 'regular' }}> {
+               } Faskes</Typography>
               </CardContent>
             </Card>
           </Box>
         </Grid>
         <Grid item xs={6} md={4}>
           <Box p={2}>
-            <Card sx={{ maxWidth: 350 }}>
+          <Card sx={{ maxWidth: 350 }}>
               <CardHeader
                 title="Total FKRTL"
                 subheader={"Fasilitas Kesehatan Rujukan Tingkat Lanjut"}
@@ -328,31 +215,21 @@ const StatisticsPage = () => {
                 subheaderTypographyProps={{ style: subheaderStyle }}
               />
               <CardContent>
-                <Typography
-                  style={{ display: "inline-block" }}
-                  sx={{ fontWeight: "bold" }}
-                  fontSize={32}
-                >
-                  {" "}
-                  {dataFKRTL.length > 0 ? dataFKRTL[0].count : 0}{" "}
-                </Typography>{" "}
-                <Typography
-                  style={{ display: "inline-block" }}
-                  sx={{ fontWeight: "regular" }}
-                >
-                  {" "}
-                  {} Faskes
-                </Typography>
+                <Typography   style={{display: 'inline-block'}} sx={{ fontWeight: 'bold' }} fontSize={32}> {
+                dataFKRTL.length> 0?
+                dataFKRTL[0].count:0} </Typography> {" "}
+                <Typography   style={{display: 'inline-block'}} sx={{ fontWeight: 'regular' }}> {
+               } Faskes</Typography>
               </CardContent>
             </Card>
           </Box>
         </Grid>
         <Grid item xs={2} md={2}>
-          <PieChart dataPie={dataPie} />
+            <PieChart dataPie={dataPie} />
         </Grid>
       </Grid>
-
-      <Grid container sx={{ paddingTop: 3 }}>
+ 
+      <Grid container sx={{paddingTop: 3}}>
         <Grid item md={6}>
           <Box p={1}>
             <BarChart
@@ -361,7 +238,7 @@ const StatisticsPage = () => {
             />
           </Box>
         </Grid>
-        <Grid item md={6}>
+        <Grid item  md={6}>
           <Box p={1}>
             <BarChart
               title="JenisFasilitas Kesehatan Rujukan Tingkat Lanjut"
@@ -369,12 +246,12 @@ const StatisticsPage = () => {
             />
           </Box>
         </Grid>
-        {/*  <Grid item xs={2} md={2}>
+       {/*  <Grid item xs={2} md={2}>
           <Box p={1}>
             <PieChart dataPie={dataPie}/>
           </Box>
         </Grid>*/}
-      </Grid>
+      </Grid> 
     </Box>
   );
 };

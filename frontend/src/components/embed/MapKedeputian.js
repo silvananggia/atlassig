@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import { connect, useDispatch, useSelector } from "react-redux";
 import "ol/ol.css";
 import "ol-ext/dist/ol-ext.css";
@@ -19,55 +18,65 @@ import Point from "ol/geom/Point";
 import Circle from "ol/geom/Circle";
 import { fromLonLat, toLonLat } from "ol/proj";
 import { defaults as defaultControls } from "ol/control";
-import { Translate } from "ol/interaction";
-import Collection from "ol/Collection";
 import Icon from "ol/style/Icon";
 import Overlay from "ol/Overlay";
 import { Circle as CircleStyle, Fill, Stroke, Style } from "ol/style.js";
-import { Box, Grid } from "@mui/material";
+import { Box, Grid, formControlClasses } from "@mui/material";
 import FloatingButton from "./EmbedFloatingButton";
 import LayerGroup from "ol/layer/Group";
 import PermDeviceInformationOutlinedIcon from "@mui/icons-material/PermDeviceInformationOutlined";
 import Typography from "@mui/material/Typography";
-import Card from "@mui/material/Card";
-import CardActions from "@mui/material/CardActions";
-import CardContent from "@mui/material/CardContent";
-import CardHeader from "@mui/material/CardHeader";
 import Button from "@mui/material/Button";
 import MyLocationOutlinedIcon from "@mui/icons-material/MyLocationOutlined";
 import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
-import Slider from "@mui/material/Slider";
-import { fetchFKTPKedeputian, fetchFKTPDetail } from "../../actions/fktpActions";
-import { fetchFKRTLKedeputian, fetchFKRTLDetail } from "../../actions/fkrtlActions";
+import {
+  fetchFKTPKedeputian,
+  fetchFKTPDetail,
+  fetchFilterFKTP,
+  fetchFilterFKTPList,
+} from "../../actions/fktpActions";
+import {
+  fetchFKRTLKedeputian,
+  fetchFKRTLDetail,
+  fetchFilterFKRTLList,
+  fetchFilterFKRTL,
+} from "../../actions/fkrtlActions";
 import {
   fetchCenterKedeputian,
   fetchBBOXKedeputian,
+  fetchAutoWilayah,
+  fetchJenisFKRTL,
+  fetchJenisFKTP,
 } from "../../actions/filterActions";
 import GeoJSON from "ol/format/GeoJSON";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Divider from "@mui/material/Divider";
+import ListItemText from "@mui/material/ListItemText";
+
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import FormGroup from "@mui/material/FormGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import { Switch } from "@mui/material";
+import Alert from "@mui/material/Alert";
+import Stack from "@mui/material/Stack";
+import CardFaskes from "./CardFaskes";
 const MapComponent = ({ faskes, kodeKedeputian }) => {
   const dispatch = useDispatch();
   const bingApiKey =
     "Asz37fJVIXH4CpaK90Ohf9bPbV39RCX1IQ1LP4fMm4iaDN5gD5USHfqmgdFY5BrA";
-  const [searchParams] = useSearchParams();
 
   const [map, setMap] = useState(null);
+
   const [showFloatingButton, setShowFloatingButton] = useState(false);
   const [showFloatingButton2, setShowFloatingButton2] = useState(false);
-  const [userMarker, setUserMarker] = useState(null);
 
   const [userLocation, setUserLocation] = useState([0, 0]);
   const [selectedBasemap, setSelectedBasemap] = useState("map-switch-default");
-  const [showPotentialLayer, setShowPotentialLayer] = useState(false);
   const [userMarkerFeature, setUserMarkerFeature] = useState(null);
-  const [markerFeature, setMarkerFeature] = useState(null);
-  const [markerSource, setMarkerSource] = useState(null);
-  const [markerLayer, setMarkerLayer] = useState(null);
+
   const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.7);
   const [markersLoaded, setMarkersLoaded] = useState(false);
   const [showFKTPMark, setShowFKTPMark] = useState(false);
@@ -76,9 +85,45 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
   const [activeFaskes, setActiveFaskes] = useState("");
   const [showLegend, setShowLegend] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [showSidebarData, setShowSidebarData] = useState(false);
+  const [selectedWilayah, setselectedWilayah] = useState();
+
+  //input
+  const [inputNama, setInputNama] = useState(null);
+  const [inputAlamat, setInputAlamat] = useState(null);
+  const [inputJenis, setInputJenis] = useState([]);
+  const [inputrmin, setInputRmin] = useState(null);
+  const [inputrmax, setInputRmax] = useState(null);
+  const [inputRasio, setInputRasio] = useState({
+    "< 5000": true,
+    ">= 5000": true,
+  });
+  const [inputKelasRS, setInputKelasRS] = useState(["A", "B", "C", "D"]);
+  const [isFiltered, setIsFiltered] = useState(false);
+
+  const [inputCanggih, setInputCanggih] = useState([
+    "Cathlab",
+    "Sarana Radioterapi",
+    "Sarana Kemoterapi",
+    "None,nan",
+  ]);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedKabId, setSelectedKabId] = useState(null);
+  const [selectedKecId, setSelectedKecId] = useState(null);
+  const [selectedProvId, setSelectedProvId] = useState(null);
+  //endinput
 
   const centerMap = [13124075.715923082, -277949.29803053016];
   const zoomLevel = 10;
+  const listKelasRS = ["A", "B", "C", "D"];
+  const listCanggih = [
+    { name: "Cathlab", value: "Cathlab" },
+    { name: "Sarana Radioterapi", value: "Sarana Radioterapi" },
+    { name: "Sarana Kemoterapi", value: "Sarana Kemoterapi" },
+    { name: "Tanpa Pelayanan Canggih", value: "None,nan" },
+  ];
+
+  const listRasio = ["< 5000", ">= 5000"];
 
   const potentialLayerUrl =
     faskes === "fktp"
@@ -86,12 +131,19 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
       : faskes === "fkrtl"
       ? "../potential_fkrtl/{z}/{x}/{-y}.png"
       : "";
-  const testWilayah = [{ label: "Aceh" }, { label: "Palembang" }];
+
   useEffect(() => {
     dispatch(fetchFKTPKedeputian(kodeKedeputian));
     dispatch(fetchFKRTLKedeputian(kodeKedeputian));
     dispatch(fetchCenterKedeputian(kodeKedeputian));
     dispatch(fetchBBOXKedeputian(kodeKedeputian));
+    if (faskes === "fkrtl") {
+      dispatch(fetchJenisFKRTL());
+    } else {
+      dispatch(fetchJenisFKTP());
+    }
+
+    //dispatch(fetchAutoWilayah(""));
   }, [dispatch, kodeKedeputian]);
 
   const centerKedeputian = useSelector((state) => state.mapfilter.coordinate);
@@ -99,8 +151,66 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
   const markerListFKTP = useSelector((state) => state.mapfktp.fktplist);
   const markerListFKRTL = useSelector((state) => state.mapfkrtl.fkrtllist);
   const detailFKTP = useSelector((state) => state.mapfktp.fktpobj);
-  const detailFKRTL = useSelector((state) => state.mapfktp.fkrtlobj);
+  const detailFKRTL = useSelector((state) => state.mapfkrtl.fkrtlobj);
+  const jenisFKRTL = useSelector((state) => state.mapfilter.jenisfkrtl);
+  const jenisFKTP = useSelector((state) => state.mapfilter.jenisfktp);
+  const listWilayah = useSelector((state) => state.mapfilter.wilayahlist);
+  const listFilterFKTP = useSelector((state) => state.mapfktp.fktpdatalist);
+  const listFilterFKRTL = useSelector((state) => state.mapfkrtl.fkrtldatalist);
 
+  useEffect(() => {
+    if (faskes === "fkrtl") {
+      if (
+        markerListFKRTL &&
+        markerListFKRTL != null &&
+        markerListFKRTL.features &&
+        markerListFKRTL.features.length > 0
+      ) {
+        FKRTLPointMarker();
+      }
+    } else {
+      if (
+        markerListFKTP &&
+        markerListFKTP != null &&
+        markerListFKTP.features &&
+        markerListFKTP.features.length > 0
+      ) {
+        FKTPPointMarker();
+      }
+    }
+  }, [markerListFKRTL, markerListFKTP]);
+
+  useEffect(() => {
+    if (jenisFKRTL) {
+      const initialInputJenis = jenisFKRTL.map((item) => item.jenisfaskes);
+      setInputJenis(initialInputJenis);
+    }
+  }, [jenisFKRTL]);
+
+  useEffect(() => {
+    if (jenisFKTP) {
+      const initialInputJenis = jenisFKTP.map((item) => item.jenisfaskes);
+      setInputJenis(initialInputJenis);
+    }
+  }, [jenisFKTP]);
+
+  const handleInputWilayahChange = (event, value) => {
+    if (value.length >= 3) {
+      dispatch(fetchAutoWilayah(value));
+    } else {
+      //dispatch(fetchAutoWilayah([]));
+    }
+  };
+
+  const handleSelectWilayah = (event, selectedOption) => {
+    if (selectedOption) {
+      const { kec_id, kab_id, prov_id } = selectedOption;
+
+      setSelectedKecId(kec_id);
+      setSelectedKabId(kab_id);
+      setSelectedProvId(prov_id);
+    }
+  };
   useEffect(() => {
     if (centerKedeputian && map) {
       map.getView().animate({
@@ -115,6 +225,10 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
     setShowFloatingButton((prevState) => !prevState);
   };
 
+  const toggleSidebar = () => {
+    setShowSidebarData((prevSidebarOpen) => !prevSidebarOpen);
+  };
+
   const handleLayerSelectClick2 = () => {
     setShowFloatingButton2((prevState) => !prevState);
   };
@@ -125,29 +239,70 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
 
   const handleFilterClick = () => {
     setShowSidebar((prevState) => !prevState);
+    setShowSidebarData(false);
   };
 
+  const handleResetFilter = () => {
+    if (faskes === "fkrtl") {
+      dispatch(fetchFKRTLKedeputian(kodeKedeputian));
+      removeFKRTLPointMarkerLayers();
+    } else {
+      dispatch(fetchFKTPKedeputian(kodeKedeputian));
+      removeFKTPPointMarkerLayers();
+    }
+
+    handleFilterClick();
+    resetInput();
+    closeDetailBox();
+    setIsFiltered(false);
+    resetInput();
+    setInputRasio({ "< 5000": true, ">= 5000": true });
+    setInputKelasRS(["A", "B", "C", "D"]);
+    setInputCanggih([
+      "Cathlab",
+      "Sarana Radioterapi",
+      "Sarana Kemoterapi",
+      "None,nan",
+    ]);
+    setSelectedKecId("null");
+    setSelectedKabId("null");
+    setSelectedProvId("null");
+  };
   const closeDetailBox = () => {
     setShowDetailBox(false);
 
-    // Check if the marker layer already exists
-    let markerLayer = map
-      .getLayers()
-      .getArray()
-      .find((layer) => layer.get("title") === "Marker");
+    if (map && map.getLayers()) {
+      let markerLayer = map
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Marker");
 
-    // Clear existing features from the marker layer
-    markerLayer.getSource().clear();
-    map.getView().animate({
-      center: centerKedeputian,
-      duration: 1000, // Animation duration in milliseconds
-      zoom: zoomLevel,
+      // Check if the markerLayer and its source exist
+      if (markerLayer && markerLayer.getSource()) {
+        // Clear existing features from the marker layer
+        markerLayer.getSource().clear();
+      }
+
+      map.getView().animate({
+        center: centerKedeputian,
+        duration: 1000, // Animation duration in milliseconds
+        zoom: zoomLevel,
+      });
+    }
+  };
+
+  const toggleShowFKTPMark = () => {
+    setShowFKTPMark((prevState) => {
+      if (!prevState) {
+        FKTPPointMarker();
+      } else {
+        removeFKTPPointMarkerLayers();
+      }
+      return !prevState;
     });
   };
 
-  const handleFktpSwitchChange = () => {
-    // Only proceed if markers have been loaded and map is available
-
+  const removeFKTPPointMarkerLayers = () => {
     if (map) {
       const overlayGroup = map
         .getLayers()
@@ -163,13 +318,39 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
         .getArray()
         .find((layer) => layer.get("title") === "RadiusFKTP");
 
-      if (showFKTPMark) {
-        // Remove the potential layer from the overlay group
+      // Remove the potential layers from the overlay group if they exist
+      if (markerFKTPLayer) {
         overlayGroup.getLayers().remove(markerFKTPLayer);
+      }
+      if (RadiusFKTPLayer) {
         overlayGroup.getLayers().remove(RadiusFKTPLayer);
-      } else {
-        if (markerListFKTP) {
-          //console.log(detailFKTP);
+      }
+    }
+  };
+  const FKTPPointMarker = () => {
+    if (map) {
+      const overlayGroup = map
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Overlay");
+
+      const markerFKTPLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "MarkerFKTP");
+
+      const RadiusFKTPLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "RadiusFKTP");
+
+      if (
+        markerListFKTP &&
+        markerListFKTP !== null &&
+        markerListFKTP.features &&
+        markerListFKTP.features.length > 0
+      ) {
+        if (!markerFKTPLayer || !RadiusFKTPLayer) {
           const vectorSource = new VectorSource();
           const newMarkerFKTPLayer = new VectorLayer({
             source: vectorSource,
@@ -182,60 +363,74 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
             title: "RadiusFKTP",
           });
 
-          const features = new GeoJSON().readFeatures(markerListFKTP);
-          //console.log(features);
-          features.forEach((feature) => {
-            const coordinates = feature.getGeometry().getCoordinates();
+          const featuresFKTP = new GeoJSON().readFeatures(markerListFKTP);
 
-            const markerFeature = new Feature({
-              geometry: new Point(coordinates),
-              id: feature.getId(),
+          if (featuresFKTP && featuresFKTP.length > 0) {
+            featuresFKTP.forEach((feature) => {
+              const coordinates = feature.getGeometry().getCoordinates();
+
+              // Create a marker feature
+              const markerFeature = new Feature({
+                geometry: new Point(coordinates),
+                id: feature.getId(),
+              });
+
+              // Style for the marker
+              const markerStyle = new Style({
+                image: new Icon({
+                  //anchor: [0.5, 1],
+                  src: "../images/m2.png",
+                  scale: 0.5,
+                  zIndex: 1000,
+                }),
+              });
+
+              markerFeature.setStyle(markerStyle);
+
+              const circleRadiusMeters = 2000; // 2 kilometers circleRadiusMeters);
+              const circleGeometry = new Circle(
+                coordinates,
+                circleRadiusMeters
+              );
+              const circleFeature = new Feature(circleGeometry);
+              const circleStyle = new Style({
+                fill: new Fill({
+                  color: "rgba(0, 0, 255, 0.1)",
+                }),
+                stroke: new Stroke({
+                  color: "rgba(0, 0, 255, 0.6)",
+                  width: 0.5,
+                }),
+                zIndex: 10,
+              });
+              circleFeature.setStyle(circleStyle);
+
+              newMarkerFKTPLayer.setZIndex(1000);
+              newRadiusFKTPLayer.setZIndex(10);
+              radiusSource.addFeatures([circleFeature]);
+              vectorSource.addFeatures([markerFeature]);
             });
 
-            // Style for the marker
-            const markerStyle = new Style({
-              image: new Icon({
-                // anchor: [0.5, 1],
-                src: "../images/m2.png",
-                scale: 0.5,
-                zIndex: 10000,
-              }),
-            });
-
-            markerFeature.setStyle(markerStyle);
-
-            const circleRadiusMeters = 2000; // 2 kilometers
-            const circleGeometry = new Circle(coordinates, circleRadiusMeters);
-            const circleFeature = new Feature(circleGeometry);
-            const circleStyle = new Style({
-              fill: new Fill({
-                color: "rgba(0, 0, 255, 0.1)",
-              }),
-              stroke: new Stroke({
-                color: "rgba(0, 0, 255, 0.6)",
-                width: 0.5,
-              }),
-              zIndex: 10,
-            });
-            circleFeature.setStyle(circleStyle);
-            newMarkerFKTPLayer.setZIndex(1000);
-            newRadiusFKTPLayer.setZIndex(10);
-            radiusSource.addFeatures([circleFeature]);
-            vectorSource.addFeatures([markerFeature]);
-          });
-
-          overlayGroup.getLayers().push(newMarkerFKTPLayer);
-          overlayGroup.getLayers().push(newRadiusFKTPLayer);
+            overlayGroup.getLayers().push(newMarkerFKTPLayer);
+            overlayGroup.getLayers().push(newRadiusFKTPLayer);
+          }
         }
       }
-      // Update the showPotentialLayer state
-      setShowFKTPMark((prevState) => !prevState);
     }
-    // You can add additional logic here if needed
   };
 
-  const handleFkrtlSwitchChange = () => {
-    // Only proceed if markers have been loaded and map is available
+  const toggleShowFKRTLMark = () => {
+    setShowFKRTLMark((prevState) => {
+      if (!prevState) {
+        FKRTLPointMarker();
+      } else {
+        removeFKRTLPointMarkerLayers();
+      }
+      return !prevState;
+    });
+  };
+
+  const removeFKRTLPointMarkerLayers = () => {
     if (map) {
       const overlayGroup = map
         .getLayers()
@@ -251,13 +446,41 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
         .getLayers()
         .getArray()
         .find((layer) => layer.get("title") === "RadiusFKRTL");
-      if (showFKRTLMark) {
-        // Remove the potential layer from the overlay group
+
+      // Remove the potential layers from the overlay group if they exist
+      if (markerFKRTLLayer) {
         overlayGroup.getLayers().remove(markerFKRTLLayer);
+      }
+      if (RadiusFKRTLLayer) {
         overlayGroup.getLayers().remove(RadiusFKRTLLayer);
-      } else {
-        // Your existing code for processing markers
-        if (markerListFKRTL) {
+      }
+    }
+  };
+
+  const FKRTLPointMarker = () => {
+    if (map) {
+      const overlayGroup = map
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Overlay");
+
+      const markerFKRTLLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "MarkerFKRTL");
+
+      const RadiusFKRTLLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "RadiusFKRTL");
+
+      if (
+        markerListFKRTL &&
+        markerListFKRTL !== null &&
+        markerListFKRTL.features &&
+        markerListFKRTL.features.length > 0
+      ) {
+        if (!markerFKRTLLayer || !RadiusFKRTLLayer) {
           const vectorSource = new VectorSource();
           const newMarkerFKRTLLayer = new VectorLayer({
             source: vectorSource,
@@ -269,64 +492,65 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
             source: radiusSource,
             title: "RadiusFKRTL",
           });
+
           const featuresFKRTL = new GeoJSON().readFeatures(markerListFKRTL);
-          //console.log(features);
-          featuresFKRTL.forEach((feature) => {
-            const coordinates = feature.getGeometry().getCoordinates();
 
-            // Create a marker feature
-            const markerFeature = new Feature({
-              geometry: new Point(coordinates),
-              id: feature.getId(),
+          if (featuresFKRTL && featuresFKRTL.length > 0) {
+            featuresFKRTL.forEach((feature) => {
+              const coordinates = feature.getGeometry().getCoordinates();
+
+              // Create a marker feature
+              const markerFeature = new Feature({
+                geometry: new Point(coordinates),
+                id: feature.getId(),
+              });
+
+              // Style for the marker
+              const markerStyle = new Style({
+                image: new Icon({
+                  //anchor: [0.5, 1],
+                  src: "../images/m3.png",
+                  scale: 0.5,
+                  zIndex: 1000,
+                }),
+              });
+
+              markerFeature.setStyle(markerStyle);
+
+              const circleRadiusMeters = 5000; // 5 kilometers circleRadiusMeters);
+              const circleGeometry = new Circle(
+                coordinates,
+                circleRadiusMeters
+              );
+              const circleFeature = new Feature(circleGeometry);
+              const circleStyle = new Style({
+                fill: new Fill({
+                  color: "rgba(56, 167, 203, 0.1)",
+                }),
+                stroke: new Stroke({
+                  color: "rgba(56, 167, 203, 0.6)",
+                  width: 0.5,
+                }),
+              });
+              circleFeature.setStyle(circleStyle);
+
+              newMarkerFKRTLLayer.setZIndex(10000);
+              newRadiusFKRTLLayer.setZIndex(100);
+              radiusSource.addFeatures([circleFeature]);
+              vectorSource.addFeatures([markerFeature]);
             });
 
-            // Style for the marker
-            const markerStyle = new Style({
-              image: new Icon({
-                //anchor: [0.5, 1],
-                src: "../images/m3.png",
-                scale: 0.5,
-                zIndex: 1000,
-              }),
-            });
-
-            markerFeature.setStyle(markerStyle);
-
-            const circleRadiusMeters = 5000; // 5 kilometers circleRadiusMeters);
-            const circleGeometry = new Circle(coordinates, circleRadiusMeters);
-            const circleFeature = new Feature(circleGeometry);
-            const circleStyle = new Style({
-              fill: new Fill({
-                color: "rgba(56, 167, 203, 0.1)",
-              }),
-              stroke: new Stroke({
-                color: "rgba(56, 167, 203, 0.6)",
-                width: 0.5,
-              }),
-            });
-            circleFeature.setStyle(circleStyle);
-
-            newMarkerFKRTLLayer.setZIndex(1000);
-            newRadiusFKRTLLayer.setZIndex(10);
-            radiusSource.addFeatures([circleFeature]);
-            vectorSource.addFeatures([markerFeature]);
-          });
-
-          //  map.addLayer(markerFKTPLayer);
-          // Add the potential layer to the overlay group
-          overlayGroup.getLayers().push(newMarkerFKRTLLayer);
-          overlayGroup.getLayers().push(newRadiusFKRTLLayer);
+            overlayGroup.getLayers().push(newMarkerFKRTLLayer);
+            overlayGroup.getLayers().push(newRadiusFKRTLLayer);
+          }
         }
       }
-      // Update the showPotentialLayer state
-      setShowFKRTLMark((prevState) => !prevState);
     }
-    // You can add additional logic here if needed
   };
 
   const basemapOptions = [
-    { key: "map-switch-default", label: "Default" },
-    { key: "map-switch-basic", label: "Bing Maps" },
+    { key: "map-switch-default", label: "Plain" },
+    { key: "map-switch-basic", label: "Road" },
     { key: "map-switch-satellite", label: "Imagery" },
     { key: "map-switch-topography", label: "Topography" },
   ];
@@ -377,27 +601,32 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
           source: new OSM(),
         });
       }
+      if (map && map.getLayers()) {
+        const basemapGroup = map
+          .getLayers()
+          .getArray()
+          .find((layer) => layer.get("title") === "Basemap");
 
-      const basemapGroup = map
-        .getLayers()
-        .getArray()
-        .find((layer) => layer.get("title") === "Basemap");
+        if (
+          bboxKedeputian &&
+          bboxKedeputian.features &&
+          bboxKedeputian.features.length > 0
+        ) {
+          const coords = bboxKedeputian.features[0].geometry.coordinates;
+          const f = new Feature({ geometry: new Polygon(coords) });
+          const crop = new Mask({
+            feature: f,
+            wrapX: true,
+            inner: false,
+          });
 
-      /* if (bboxCabang && bboxCabang.features && bboxCabang.features.length > 0) {
-        const coords = bboxCabang.features[0].geometry.coordinates;
-        const f = new Feature({ geometry: new Polygon(coords) });
-        const crop = new Mask({
-          feature: f,
-          wrapX: true,
-          inner: false,
-        });
+          basemapLayer.addFilter(crop);
+        }
 
-        basemapLayer.addFilter(crop);
-      } */
-
-      basemapGroup.getLayers().clear();
-      basemapGroup.getLayers().push(basemapLayer);
-      setSelectedBasemap(basemap);
+        basemapGroup.getLayers().clear();
+        basemapGroup.getLayers().push(basemapLayer);
+        setSelectedBasemap(basemap);
+      }
     }
   };
 
@@ -437,13 +666,14 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
       });
 
       potentialLayer.addFilter(crop);
-
-      const overlayGroup = map
-        .getLayers()
-        .getArray()
-        .find((layer) => layer.get("title") === "PotentialLayer");
-      overlayGroup.getLayers().clear();
-      overlayGroup.getLayers().push(potentialLayer);
+      if (map && map.getLayers()) {
+        const overlayGroup = map
+          .getLayers()
+          .getArray()
+          .find((layer) => layer.get("title") === "PotentialLayer");
+        overlayGroup.getLayers().clear();
+        overlayGroup.getLayers().push(potentialLayer);
+      }
     }
   }, [bboxKedeputian, map, potentialLayerUrl]);
 
@@ -604,7 +834,13 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
       setUserLocation(lonLat);
     });
 
-    return () => {};
+    if (faskes === "fkrtl") {
+      FKRTLPointMarker();
+      setShowFKRTLMark(true);
+    } else {
+      FKTPPointMarker();
+      setShowFKTPMark(true);
+    }
   }, []);
 
   const handleCenterGeolocation = () => {
@@ -684,7 +920,7 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
 
     markerFeature.setStyle(markerStyle);
     markerLayer.getSource().addFeature(markerFeature);
-    markerLayer.setZIndex(1000);
+    markerLayer.setZIndex(100000);
 
     // Animate the map to the new coordinates
     map.getView().animate({
@@ -694,18 +930,204 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
     });
   };
 
-  const cardHeaderStyle = {
-    background: "linear-gradient(to right, #0F816F, #274C8B)", // Adjust gradient colors as needed
-    color: "white", // Set text color to contrast with the background
+  const handleJenisChange = (item) => {
+    const isChecked = inputJenis.includes(item);
+
+    if (isChecked) {
+      setInputJenis((prev) => prev.filter((value) => value !== item));
+    } else {
+      setInputJenis((prev) => [...prev, item]);
+    }
   };
 
-  const titleStyle = {
-    fontSize: "1.2rem", // Set the desired font size for the title
+  const handleKelasRSChange = (kelas, event) => {
+    const updatedKelasRS = [...inputKelasRS];
+
+    if (event.target.checked) {
+      updatedKelasRS.push(kelas);
+    } else {
+      const index = updatedKelasRS.indexOf(kelas);
+      if (index !== -1) {
+        updatedKelasRS.splice(index, 1);
+      }
+    }
+
+    setInputKelasRS(updatedKelasRS);
   };
 
-  const subheaderStyle = {
-    fontSize: "0.8rem", // Set the desired font size for the subheader
-    color: "lightgray",
+  const handleCanggihChange = (item, event) => {
+    const updatedCanggih = [...inputCanggih];
+
+    if (event.target.checked) {
+      updatedCanggih.push(item);
+    } else {
+      const index = updatedCanggih.indexOf(item);
+      if (index !== -1) {
+        updatedCanggih.splice(index, 1);
+      }
+    }
+    setInputCanggih(updatedCanggih);
+  };
+
+  const handleRasioChange = (item) => {
+    setInputRasio((prevInputRasio) => {
+      let newInputRasio = { ...prevInputRasio };
+
+      // Toggle the checked state of the current item
+      newInputRasio[item] = !prevInputRasio[item];
+
+      // Check the conditions and update inputRmin and inputRmax accordingly
+      if (newInputRasio["< 5000"] && newInputRasio[">= 5000"]) {
+        setInputRmin(0);
+        setInputRmax(10000);
+      } else if (newInputRasio["< 5000"]) {
+        setInputRmin(0);
+        setInputRmax(5000);
+      } else if (newInputRasio[">= 5000"]) {
+        setInputRmin(5000);
+        setInputRmax(10000);
+      } else {
+        // If none of the conditions are met, you can set default values or handle it as needed
+        // For example, setting both to some default values like 0
+        setInputRmin(0);
+        setInputRmax(0);
+      }
+
+      return newInputRasio;
+    });
+  };
+
+  const handleListClick = (index) => {
+    setSelectedItem(index);
+
+    if (faskes === "fkrtl") {
+      const selectedId = listFilterFKRTL[index]?.id;
+      dispatch(fetchFKRTLDetail(selectedId));
+      setActiveFaskes("FKRTL");
+    } else {
+      const selectedId = listFilterFKTP[index]?.id;
+      dispatch(fetchFKTPDetail(selectedId));
+      setActiveFaskes("FKTP");
+    }
+  };
+
+  useEffect(() => {
+    if (inputRasio["< 5000"] && inputRasio[">= 5000"]) {
+      setInputRmin(0);
+      setInputRmax(10000);
+    } else if (inputRasio["< 5000"]) {
+      setInputRmin(0);
+      setInputRmax(5000);
+    } else if (inputRasio[">= 5000"]) {
+      setInputRmin(5000);
+      setInputRmax(10000);
+    } else {
+      // If none of the conditions are met, you can set default values or handle it as needed
+      // For example, setting both to some default values like 0
+      setInputRmin(0);
+      setInputRmax(0);
+    }
+  }, [inputRasio]);
+  const handleSubmit = () => {
+    const sanitizedSelectedProvId = selectedProvId ?? "null";
+    const sanitizedSelectedKabId = selectedKabId ?? "null";
+    const sanitizedSelectedKecId = selectedKecId ?? "null";
+    const sanitizedKodeKedeputian = kodeKedeputian?? "null";
+    const sanitizedInputKelasRS =
+      inputKelasRS.length > 0 ? inputKelasRS : "nan";
+    const sanitizedInputCanggih =
+      inputCanggih.length > 0 ? inputCanggih : listCanggih;
+    const sanitizedInputJenis = inputJenis.length > 0 ? inputJenis : "null";
+    const sanitizedInputNama = inputNama ?? "null";
+    const sanitizedInputAlamat = inputAlamat ?? "null";
+    const sanitizedInputRmin = inputrmin ?? "null";
+    const sanitizedInputRmax = inputrmax ?? "null";
+
+    if (faskes === "fkrtl") {
+      dispatch(
+        fetchFilterFKRTLList(
+          sanitizedSelectedProvId,
+          sanitizedSelectedKabId,
+          sanitizedSelectedKecId,
+          "null",
+          sanitizedKodeKedeputian,
+          sanitizedInputKelasRS,
+          sanitizedInputCanggih,
+          sanitizedInputJenis,
+          sanitizedInputNama,
+          sanitizedInputAlamat
+        )
+      );
+
+      dispatch(
+        fetchFilterFKRTL(
+          sanitizedSelectedProvId,
+          sanitizedSelectedKabId,
+          sanitizedSelectedKecId,
+          "null",
+          sanitizedKodeKedeputian,
+          sanitizedInputKelasRS,
+          sanitizedInputCanggih,
+          sanitizedInputJenis,
+          sanitizedInputNama,
+          sanitizedInputAlamat
+        )
+      );
+
+      removeFKRTLPointMarkerLayers();
+    } else {
+      dispatch(
+        fetchFilterFKTPList(
+          sanitizedSelectedProvId,
+          sanitizedSelectedKabId,
+          sanitizedSelectedKecId,
+          "null",
+          sanitizedKodeKedeputian,
+          sanitizedInputRmax,
+          sanitizedInputRmin,
+          sanitizedInputJenis,
+          sanitizedInputNama,
+          sanitizedInputAlamat
+        )
+      );
+
+      dispatch(
+        fetchFilterFKTP(
+          sanitizedSelectedProvId,
+          sanitizedSelectedKabId,
+          sanitizedSelectedKecId,
+          "null",
+          sanitizedKodeKedeputian,
+          sanitizedInputRmax,
+          sanitizedInputRmin,
+          sanitizedInputJenis,
+          sanitizedInputNama,
+          sanitizedInputAlamat
+        )
+      );
+
+      removeFKTPPointMarkerLayers();
+    }
+
+    closeDetailBox();
+    toggleSidebar(true);
+    setIsFiltered(true);
+    resetInput();
+  };
+
+  const resetInput = () => {
+    const sanitizedSelectedProvId = "null";
+    const sanitizedSelectedKabId = "null";
+    const sanitizedSelectedKecId = "null";
+    const sanitizedInputKelasRS = "nan";
+    const sanitizedInputCanggih = "null";
+    const sanitizedInputJenis = "null";
+    const sanitizedInputNama = "null";
+    const sanitizedInputAlamat = "null";
+  };
+
+  const getLayerLeftPosition = () => {
+    return showSidebar ? "420px" : "20px"; // Adjust this value based on your layout
   };
   return (
     <Box className="contentRoot">
@@ -722,9 +1144,13 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
         className="layer-select-embed"
         id={selectedBasemap}
         onClick={handleLayerSelectClick}
+        style={{ left: getLayerLeftPosition() }}
       ></div>
 
-      <div className="basemap-select hidden">
+      <div
+        className="basemap-select hidden"
+        style={{ left: getLayerLeftPosition() }}
+      >
         <FloatingButton
           basemapOptions={basemapOptions}
           basemap={selectedBasemap}
@@ -734,12 +1160,17 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
           faskesType={faskes}
           showFKTPMark={showFKTPMark}
           showFKRTLMark={showFKRTLMark}
-          handleFktpSwitchChange={handleFktpSwitchChange}
-          handleFkrtlSwitchChange={handleFkrtlSwitchChange}
+          handleFktpSwitchChange={toggleShowFKTPMark}
+          handleFkrtlSwitchChange={toggleShowFKRTLMark}
+          leftPosition={getLayerLeftPosition()}
         />
       </div>
 
-      <div className="legend-button-embed" onClick={handleLegendClick}>
+      <div
+        className="legend-button-embed"
+        onClick={handleLegendClick}
+        style={{ left: getLayerLeftPosition() }}
+      >
         <PermDeviceInformationOutlinedIcon fontSize="medium" />
       </div>
 
@@ -748,16 +1179,19 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
           {faskes === "fkrtl" ? (
             <img
               src="../images/legend-fkrtl.png"
-              width="225px"
-              height="350px"
+              width="100%"
             />
           ) : (
-            <img src="../images/legend-fktp.png" width="225px" height="300px" />
+            <img src="../images/legend-fktp.png" width="100%" />
           )}
         </div>
       )}
 
-      <div className="filter-button-embed" onClick={handleFilterClick}>
+      <div
+        className="filter-button-embed"
+        onClick={handleFilterClick}
+        style={{ left: getLayerLeftPosition() }}
+      >
         <div className="button-container">
           <TuneOutlinedIcon fontSize="medium" />
         </div>
@@ -765,11 +1199,11 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
 
       <div className={`sidebar-filter ${showSidebar ? "open" : ""}`}>
         <div className="sidebar-header">
-          <Typography>Filter</Typography>
+          <Typography>Filter {faskes.toUpperCase()}</Typography>
         </div>
         <div className="sidebar-content">
           <Grid container spacing={2}>
-          <Grid item xs={12}>
+            <Grid item xs={12}>
               <Box
                 sx={{
                   padding: 1,
@@ -781,6 +1215,10 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
                   variant="outlined"
                   size={"small"}
                   fullWidth
+                  value={inputNama || ""}
+                  onChange={(e) =>
+                    setInputNama(e.target.value === "" ? null : e.target.value)
+                  }
                 />
               </Box>
             </Grid>
@@ -796,259 +1234,436 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
                   variant="outlined"
                   size={"small"}
                   fullWidth
+                  value={inputAlamat || ""}
+                  onChange={(e) =>
+                    setInputAlamat(
+                      e.target.value === "" ? null : e.target.value
+                    )
+                  }
                 />
               </Box>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12}>
               <Box
                 sx={{
                   padding: 1,
+                  marginTop: -3,
                 }}
               >
-                <Typography>Jenis Faskes</Typography>
+                <Typography fontWeight="fontWeightBold" variant="body2">
+                  Jenis Faskes
+                </Typography>
               </Box>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12}>
               <Box
                 sx={{
                   padding: 1,
+                  marginTop: -3,
                 }}
               >
                 <FormGroup>
-                  <FormControlLabel
-                    control={<Checkbox defaultChecked />}
-                    label="Rumah Sakit"
-                  />
-                  <FormControlLabel
-                    control={<Checkbox defaultChecked />}
-                    label="Rumah Sakit"
-                  />
-                  <FormControlLabel
-                    control={<Checkbox defaultChecked />}
-                    label="Rumah Sakit"
-                  />
+                  {faskes === "fktp"
+                    ? jenisFKTP.map((item, index) => (
+                        <div key={index}>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={inputJenis.includes(item.jenisfaskes)}
+                                onChange={() =>
+                                  handleJenisChange(item.jenisfaskes)
+                                }
+                              />
+                            }
+                            label={item.jenisfaskes}
+                          />
+                        </div>
+                      ))
+                    : jenisFKRTL.map((item, index) => (
+                        <div key={index}>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={inputJenis.includes(item.jenisfaskes)}
+                                onChange={() =>
+                                  handleJenisChange(item.jenisfaskes)
+                                }
+                              />
+                            }
+                            label={item.jenisfaskes}
+                          />
+                        </div>
+                      ))}
                 </FormGroup>
               </Box>
             </Grid>
-            
-            <Grid item xs={4}>
+
+            <Grid item xs={12}>
               <Box
                 sx={{
                   padding: 1,
+                  marginTop: -3,
                 }}
               >
-                <Typography>Wilayah</Typography>
+                <Typography fontWeight="fontWeightBold" variant="body2">
+                  Wilayah
+                </Typography>
               </Box>
             </Grid>
-            <Grid item xs={8}>
+            <Grid item xs={12}>
               <Box
                 sx={{
                   padding: 1,
+                  marginTop: -3,
                 }}
               >
                 <Autocomplete
-                  disablePortal
+                  noOptionsText={"Data Tidak Ditemukan"}
                   size={"small"}
                   fullWidth
                   id="combo-box-demo"
-                  options={testWilayah}
+                  value={selectedWilayah}
+                  onChange={handleSelectWilayah}
+                  inputValue={selectedWilayah}
+                  onInputChange={handleInputWilayahChange}
+                  options={listWilayah || []}
+                  getOptionLabel={(option) => option.disp}
                   renderInput={(params) => (
-                    <TextField {...params} label="Wilayah" />
+                    <TextField
+                      {...params}
+                      label="Masukan minimal 3 karakter"
+                      defaultValue=""
+                    />
                   )}
                 />
               </Box>
             </Grid>
-            <Grid item xs={4}>
-              <Box
-                sx={{
-                  padding: 1,
-                }}
-              >
-                <Typography>Rasio Dokter</Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={8}>
-              <Box
-                sx={{
-                  padding: 1,
-                }}
-              >
-               <Typography fontSize={12}>  {"< 5000"} <Switch /> {">= 5000"}</Typography> 
-              </Box>
-            </Grid>
-            <Grid item xs={6}>
-              <Box
-                sx={{
-                  padding: 1,
-                }}
-              >
-                <Typography>Kelas RS</Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={6}>
-              <Box
-                sx={{
-                  padding: 1,
-                }}
-              >
-                <FormGroup>
-                  <FormControlLabel
-                    control={<Checkbox defaultChecked />}
-                    label="A"
-                  />
-                  <FormControlLabel
-                    control={<Checkbox defaultChecked />}
-                    label="B"
-                  />
-                  <FormControlLabel
-                    control={<Checkbox defaultChecked />}
-                    label="C"
-                  />
-                  <FormControlLabel
-                    control={<Checkbox defaultChecked />}
-                    label="D"
-                  />
-                </FormGroup>
-              </Box>
-            </Grid>
-            <Grid item xs={12}>
-              <Box
-                sx={{
-                  padding: 1,
-                }}
-              >
-                <Typography fon>Pelayanan Canggih</Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12}>
-              <Box
-                sx={{
-                  padding: 1,
-                }}
-              >
-                <FormGroup>
-                  <FormControlLabel
-                    control={<Checkbox defaultChecked />}
-                    label="Cathlab"
-                  />
-                  <FormControlLabel
-                    control={<Checkbox defaultChecked />}
-                    label="Sarana Radioterapi"
-                  />
-                  <FormControlLabel
-                    control={<Checkbox defaultChecked />}
-                    label="Sarana Kemoterapi"
-                  />
-                </FormGroup>
-              </Box>
-            </Grid>
+            {faskes === "fktp" ? (
+              <>
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      padding: 1,
+                      marginTop: -3,
+                    }}
+                  >
+                    <Typography fontWeight="fontWeightBold" variant="body2">
+                      Rasio Dokter
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      padding: 1,
+                      marginTop: -3,
+                    }}
+                  >
+                    <FormGroup>
+                      {listRasio.map((item) => (
+                        <FormControlLabel
+                          key={item}
+                          control={
+                            <Checkbox
+                              checked={inputRasio[item] || false}
+                              onChange={() => handleRasioChange(item)}
+                            />
+                          }
+                          label={item}
+                        />
+                      ))}
+                    </FormGroup>
+                  </Box>
+                </Grid>
+              </>
+            ) : null}
+
+            {faskes === "fkrtl" ? (
+              <>
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      padding: 1,
+                      marginTop: -3,
+                    }}
+                  >
+                    <Typography fontWeight="fontWeightBold" variant="body2">
+                      Kelas RS
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      padding: 1,
+                      marginTop: -3,
+                    }}
+                  >
+                    <Grid
+                      container
+                      wrap="nowrap"
+                      spacing={8}
+                      sx={{ overflow: "auto" }}
+                    >
+                      {listKelasRS.map((kelas) => (
+                        <Grid item xs={1} key={kelas}>
+                          <Typography>
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={inputKelasRS.includes(kelas)}
+                                  onChange={(event) =>
+                                    handleKelasRSChange(kelas, event)
+                                  }
+                                />
+                              }
+                              label={kelas}
+                            />
+                          </Typography>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Box>
+                </Grid>
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      padding: 1,
+                    }}
+                  >
+                    <Typography fontWeight="fontWeightBold" variant="body2">
+                      Pelayanan Canggih
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      padding: 1,
+                      marginTop: -3,
+                    }}
+                  >
+                    <FormGroup>
+                      {listCanggih.map((option) => (
+                        <FormControlLabel
+                          key={option.value}
+                          control={
+                            <Checkbox
+                              checked={inputCanggih.includes(option.value)}
+                              onChange={(event) =>
+                                handleCanggihChange(option.value, event)
+                              }
+                            />
+                          }
+                          label={option.name}
+                        />
+                      ))}
+                    </FormGroup>
+                  </Box>
+                </Grid>
+              </>
+            ) : null}
           </Grid>
         </div>
         <div className="sidebar-footer">
-          <Box  sx={{ m: 1}}>
-          <Grid container spacing={0.5}  >
-            <Grid item xs={6}>
-     
-                <Button variant="contained" fullWidth onClick={handleFilterClick}>Tutup</Button>
-           
+          <Box sx={{ m: 1 }}>
+            <Grid container spacing={0.5}>
+              {isFiltered ? (
+                <Grid item xs={6}>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    onClick={handleResetFilter}
+                  >
+                    Hapus Filter
+                  </Button>
+                </Grid>
+              ) : null}
+
+              <Grid item xs={isFiltered ? 6 : 12}>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  size="medium"
+                  onClick={() => {
+                    handleSubmit(); // Call the submission function
+                  }}
+                >
+                  Terapkan
+                </Button>
+              </Grid>
             </Grid>
-            <Grid item xs={6}>
-    
-                <Button variant="contained" fullWidth size="medium"  onClick={handleFilterClick}>Terapkan</Button>
-             
-            </Grid>
-          </Grid>
           </Box>
-         
         </div>
       </div>
+      {faskes === "fkrtl" ? (
+        <>
+          <div className={`sidebar-data ${showSidebarData ? "open" : ""}`}>
+            <div className="sidebar-header">
+              <Typography>Daftar Faskes</Typography>
+              <div className="sidebar-data-toggle" onClick={toggleSidebar}>
+                {showSidebarData ? (
+                  <span className="caret">&#x25C0;</span>
+                ) : (
+                  <span className="caret">&#x25B6;</span>
+                )}
+              </div>
+            </div>
+            {listFilterFKRTL && listFilterFKRTL.length > 0 ? (
+              <>
+                <div className="sidebar-subheader">
+                  <Stack sx={{ width: "100%" }} spacing={2}>
+                    <Alert severity="success">
+                      <Typography>
+                        Total : {listFilterFKRTL.length} Data Ditemukan
+                      </Typography>
+                    </Alert>
+                  </Stack>
+                </div>
 
-      {showDetailBox && (
-        <div className="detail-box" onClick={closeDetailBox}>
-          <Card sx={{ maxWidth: 345 }}>
-            {/*  <CardMedia
-              component="img"
-              alt="green iguana"
-              height="140"
-              image="images/Kantor-BPJS.jpg"
-            /> */}
-            <CardHeader
-              title={detailFKTP[0].nmppk}
-              subheader={
-                activeFaskes + ` | KODE FASKES : ${detailFKTP[0].faskesid}`
-              }
-              style={cardHeaderStyle}
-              titleTypographyProps={{ style: titleStyle }}
-              subheaderTypographyProps={{ style: subheaderStyle }}
-            />
-            <CardContent>
-              <Typography fontSize={12}>
-                <table className="table-card">
-                  <tbody>
-                    <tr>
-                      <td style={{ width: "150px" }}>
-                        <strong>KEDEPUTIAN WILAYAH</strong>
-                      </td>
-                      <td>
-                        <strong>:</strong>
-                      </td>
-                      <td>{detailFKTP[0].kwppk}</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <strong>KANTOR CABANG</strong>
-                      </td>
-                      <td>
-                        <strong>:</strong>
-                      </td>
-                      <td>{detailFKTP[0].kcppk}</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <strong>
-                          {activeFaskes === "FKRTL" ? "KELAS RS" : "JENIS"}
-                        </strong>
-                      </td>
-                      <td>
-                        <strong>:</strong>
-                      </td>
-                      <td>
-                        {activeFaskes === "FKRTL"
-                          ? detailFKTP[0].kelasrs
-                          : detailFKTP[0].jenisfaskes}
-                      </td>
-                    </tr>
-                    {activeFaskes === "FKRTL" ? (
-                      <tr>
-                        <td>
-                          <strong>PELAYANAN CANGGIH</strong>
-                        </td>
-                        <td>
-                          <strong>:</strong>
-                        </td>
-                        <td>{detailFKTP[0].pelayanancanggih}</td>
-                      </tr>
-                    ) : null}
-                    <tr>
-                      <td>
-                        <strong>ALAMAT</strong>
-                      </td>
-                      <td>
-                        <strong>:</strong>
-                      </td>
-                      <td>{detailFKTP[0].alamatppk}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button size="small" onClick={closeDetailBox}>
-                Tutup
-              </Button>
-            </CardActions>
-          </Card>
-        </div>
+                <div className="sidebar-content">
+                  <List sx={{ width: "100%", bgcolor: "background.paper" }}>
+                    {listFilterFKRTL.map((item, index) => (
+                      <React.Fragment key={index}>
+                        <ListItem
+                          alignItems="flex-start"
+                          sx={{
+                            height: 100,
+                            transition: "background-color 0.3s",
+                            backgroundColor:
+                              selectedItem === index
+                                ? "lightgrey"
+                                : "transparent",
+                            "&:hover": {
+                              backgroundColor: "lightgrey",
+                            },
+                          }}
+                          onClick={() => handleListClick(index)}
+                        >
+                          <ListItemText
+                            primary={item.nmppk}
+                            secondary={
+                              <React.Fragment>
+                                <Typography
+                                  sx={{ display: "inline" }}
+                                  component="span"
+                                  variant="body2"
+                                  color="text.primary"
+                                >
+                                  {item.jenisfaskes} | Kode Faskes{" "}
+                                  {item.faskesid}
+                                </Typography>
+                                <Typography fontSize={10}>
+                                  {item.alamatppk}
+                                </Typography>
+                              </React.Fragment>
+                            }
+                          />
+                        </ListItem>
+                        {index < listFilterFKRTL.length - 1 && <Divider />}{" "}
+                      </React.Fragment>
+                    ))}
+                  </List>
+                </div>
+              </>
+            ) : (
+              <Stack sx={{ width: "100%" }} spacing={2}>
+                <Alert severity="error">
+                  {" "}
+                  <Typography>Data Tidak Ditemukan</Typography>
+                </Alert>
+              </Stack>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className={`sidebar-data ${showSidebarData ? "open" : ""}`}>
+            <div className="sidebar-header">
+              <Typography>Daftar Faskes</Typography>
+              <div className="sidebar-data-toggle" onClick={toggleSidebar}>
+                {showSidebarData ? (
+                  <span className="caret">&#x25C0;</span>
+                ) : (
+                  <span className="caret">&#x25B6;</span>
+                )}
+              </div>
+            </div>
+            {listFilterFKTP && listFilterFKTP.length > 0 ? (
+              <>
+                <div className="sidebar-subheader">
+                  <Stack sx={{ width: "100%" }} spacing={2}>
+                    <Alert severity="success">
+                      <Typography>
+                        Total : {listFilterFKTP.length} Data Ditemukan
+                      </Typography>
+                    </Alert>
+                  </Stack>
+                </div>
+
+                <div className="sidebar-content">
+                  <List sx={{ width: "100%", bgcolor: "background.paper" }}>
+                    {listFilterFKTP.map((item, index) => (
+                      <React.Fragment key={index}>
+                        <ListItem
+                          alignItems="flex-start"
+                          sx={{
+                            height: 100,
+                            transition: "background-color 0.3s",
+                            backgroundColor:
+                              selectedItem === index
+                                ? "lightgrey"
+                                : "transparent",
+                            "&:hover": {
+                              backgroundColor: "lightgrey",
+                            },
+                          }}
+                          onClick={() => handleListClick(index)}
+                        >
+                          <ListItemText
+                            primary={item.nmppk}
+                            secondary={
+                              <React.Fragment>
+                                <Typography
+                                  sx={{ display: "inline" }}
+                                  component="span"
+                                  variant="body2"
+                                  color="text.primary"
+                                >
+                                  {item.jenisfaskes} | Kode Faskes{" "}
+                                  {item.faskesid}
+                                </Typography>
+                                <Typography fontSize={10}>
+                                  {item.alamatppk}
+                                </Typography>
+                              </React.Fragment>
+                            }
+                          />
+                        </ListItem>
+                        {index < listFilterFKTP.length - 1 && <Divider />}{" "}
+                      </React.Fragment>
+                    ))}
+                  </List>
+                </div>
+              </>
+            ) : (
+              <Stack sx={{ width: "100%" }} spacing={2}>
+                <Alert severity="error">
+                  {" "}
+                  <Typography>Data Tidak Ditemukan</Typography>
+                </Alert>
+              </Stack>
+            )}
+          </div>
+        </>
+      )}
+
+      {showDetailBox && detailFKTP && detailFKTP.length > 0 && (
+        <CardFaskes
+          detailFKTP={detailFKTP}
+          activeFaskes={activeFaskes}
+          closeDetailBox={closeDetailBox}
+        />
       )}
     </Box>
   );

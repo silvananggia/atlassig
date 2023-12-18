@@ -24,6 +24,11 @@ const getAutoWilayah = (id) => {
   return axios.get(`/autowilayah/${id}`);
 };
 
+const getCabang = (id) => {
+  return axios.get(`/get-cabang/${id}`);
+};
+
+
 const getJenisFKTP = () => {
   return axios.get(`/list-jenis-fktp`);
 };
@@ -40,32 +45,6 @@ const getWilayahCanggih= (pro,kab,kec,id) => {
   return axios.get(`/wilayahadmin-canggih/${pro}/${kab}/${kec}/${id}`);
 };
 
-const getFilterFKTP = (pro,kab,kec,kdkc,kddep,rmax,rmin,nmppk,alamatppk) => {
-  return axios.get(`/filter-fktp/${pro}/${kab}/${kec}/${kdkc}/${kddep}/${rmax}/${rmin}/${nmppk}/${alamatppk}`);
-};
-
-const getFilterFKRTL = (pro,kab,kec,kdkc,kddep,krs,canggih,nmppk,alamatppk) => {
-  return axios.get(`/filter-fktp/${pro}/${kab}/${kec}/${kdkc}/${kddep}/${krs}/${canggih}/${nmppk}/${alamatppk}`);
-};
-
-const getFilterFKTPlist = (nmppk) => {
-  return axios.get(`/filter-fktp-list/${nmppk}`);
-};
-
-
-const getFilterFKRTLlist = (pro,kab,kec,kdkc,kddep,krs,canggih,nmppk,alamatppk) => {
-    return axios.get(`/filter-fkrtl-list/${pro}/${kab}/${kec}/${kdkc}/${kddep}/${krs}/${canggih}/${nmppk}/${alamatppk}`);
-  };
-
-  const countJenisFKRTL = (pro,kab,kec,kdkc,kddep) => {
-    return axios.get(`/count-jenis-fkrtl/${pro}/${kab}/${kec}/${kdkc}/${kddep}`);
-  };
-
-  const countJenisFKTP = (pro,kab,kec,kdkc,kddep) => {
-    return axios.get(`/count-jenis-fktp/${pro}/${kab}/${kec}/${kdkc}/${kddep}`);
-  };
-
-
 const FilterService = {
   getBBOXKabupaten,
   getBBOXCabang,
@@ -75,14 +54,9 @@ const FilterService = {
   getAutoWilayah,
   getWilayahAdmin,
   getWilayahCanggih,
-  getFilterFKTP,
-  getFilterFKRTL,
   getJenisFKTP,
   getJenisFKRTL,
-  getFilterFKTPlist,
-  getFilterFKRTLlist,
-  countJenisFKRTL,
-  countJenisFKTP
+  getCabang
 
 };
 

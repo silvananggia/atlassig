@@ -1,5 +1,32 @@
 const db = require("../config/database");
 
+exports.getCabang = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+
+
+    const result = await db.query(
+      `SELECT * FROM cabang WHERE LOWER(namacabang) LIKE LOWER('%' || $1 || '%') limit 10;
+      `,
+      [id]
+    );
+
+    res.json({
+      code: 200,
+      status: "success",
+      data: result.rows,
+    });
+  } catch (error) {
+    console.error("Error executing query", error);
+    res.status(500).json({
+      code: 500,
+      status: "error",
+      data: "Internal Server Error",
+    });
+  }
+};
+
 exports.bboxKabupaten = async (req, res) => {
   try {
     const id = req.params.id;
@@ -246,16 +273,17 @@ exports.autowilayah = async (req, res) => {
       `SELECT kecamatan.kcid::integer AS kec_id, kecamatan.kecamatan AS kec, kabupaten.kbid::integer AS kab_id, provinsi.prid::integer AS prov_id, kabupaten.kabupaten AS kab, provinsi.provinsi AS prov, INITCAP(CONCAT (kecamatan.kecamatan,', ', kabupaten.kabupaten,', ', provinsi.provinsi)) AS disp FROM kecamatan
       JOIN kabupaten ON kabupaten.kbid = kecamatan.kab_id
       JOIN provinsi ON provinsi.prid = kabupaten.prov_id
-      WHERE lower(kecamatan.kecamatan) LIKE '%${id}%'
-UNION
-SELECT NULL::integer AS kec_id, NULL::char AS kec, kabupaten.kbid::integer AS kab_id, provinsi.prid::integer AS prov_id, kabupaten.kabupaten AS kab, provinsi.provinsi AS prov, INITCAP(CONCAT (kabupaten.kabupaten,', ', provinsi.provinsi)) AS disp FROM kabupaten
-      JOIN provinsi ON provinsi.prid = kabupaten.prov_id
-      WHERE lower(kabupaten.kabupaten) LIKE '%${id}%'
-UNION
-SELECT NULL::integer AS kec_id, NULL::char AS kec, NULL::integer AS kab_id, provinsi.prid::integer AS prov_id, NULL::char AS kab, provinsi.provinsi AS prov, INITCAP(provinsi.provinsi) AS disp FROM provinsi
-      WHERE lower(provinsi.provinsi) LIKE '%${id}%' 
-ORDER BY kec_id DESC, kab_id DESC LIMIT 7;
+      WHERE lower(kecamatan.kecamatan) LIKE LOWER('%' || $1 || '%')
+      UNION
+      SELECT NULL::integer AS kec_id, NULL::char AS kec, kabupaten.kbid::integer AS kab_id, provinsi.prid::integer AS prov_id, kabupaten.kabupaten AS kab, provinsi.provinsi AS prov, INITCAP(CONCAT (kabupaten.kabupaten,', ', provinsi.provinsi)) AS disp FROM kabupaten
+            JOIN provinsi ON provinsi.prid = kabupaten.prov_id
+            WHERE lower(kabupaten.kabupaten) LIKE LOWER('%' || $1 || '%')
+      UNION
+      SELECT NULL::integer AS kec_id, NULL::char AS kec, NULL::integer AS kab_id, provinsi.prid::integer AS prov_id, NULL::char AS kab, provinsi.provinsi AS prov, INITCAP(provinsi.provinsi) AS disp FROM provinsi
+            WHERE lower(provinsi.provinsi) LIKE LOWER('%' || $1 || '%')
+      ORDER BY kec_id DESC, kab_id DESC LIMIT 7;
         `
+        ,[id]
     );
 
     res.json({
@@ -391,16 +419,20 @@ exports.wilayahadminCanggih = async (req, res) => {
 
 exports.filterTitikFKTP = async (req, res) => {
   try {
-    /* const pro = req.params.pro === "null" ? null : req.params.pro;
+    const pro = req.params.pro === "null" ? null : req.params.pro;
     const kab = req.params.kab === "null" ? null : req.params.kab;
     const kec = req.params.kec === "null" ? null : req.params.kec;
-    const kdkc = req.params.pro === "null" ? null : req.params.kdkc;
-    const kddep = req.params.kab === "null" ? null : req.params.kddep;
-    const rmax = req.params.kec === "null" ? null : req.params.rmax;
-    const rmin = req.params.pro === "null" ? null : req.params.rmin;
-   
-    const alamatppk = req.params.kec === "null" ? null : req.params.alamatppk; */
-    const nmppk = req.params.kab === "null" ? null : req.params.nmppk;
+    const kdkc = req.params.kdkc === "null" ? null : req.params.kdkc;
+    const kddep = req.params.kddep === "null" ? null : req.params.kddep;
+    const nmppk = req.params.nmppk === "null" ? null : req.params.nmppk;
+    const alamatppk =
+      req.params.alamatppk === "null" ? null : req.params.alamatppk;
+      const rmin = req.params.rmin === "null" ? null : req.params.rmin;
+      const rmax = req.params.rmax === "null" ? null : req.params.rmax
+    const jenis =
+      req.params.jenis ;
+
+      
     /*       if (!pro || !kab || !kec) {
         return res.status(400).json({
           code: 400,
@@ -409,7 +441,7 @@ exports.filterTitikFKTP = async (req, res) => {
         });
       } */
 
-    /*  const result = await db.query(
+      const result = await db.query(
         `
         SELECT jsonb_build_object(
           'type',     'FeatureCollection',
@@ -423,44 +455,47 @@ exports.filterTitikFKTP = async (req, res) => {
             'properties', to_jsonb(row) - 'coord' - 'id'
           ) AS feature
           FROM (SELECT Distinct fktp.fktpid AS id, ST_Transform(ST_SetSRID(coordinat, 4326), 3857) AS coord
-              FROM fktp
-              INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fktp.wlid
-              INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
-              INNER JOIN kabupaten ON wilayahadmindesa.kab_id=kabupaten.kbid
-              INNER JOIN provinsi ON wilayahadmindesa.prov_id=provinsi.prid
-                    INNER JOIN cabang ON cabang.kodecab=kabupaten.kodekc
-              WHERE fktp.status='aktif' 
-                    AND (${nmppk}::integer IS NULL OR fktp.nmppk LIKE '%${nmppk}%')
-                    AND (${alamatppk}::integer IS NULL OR fktp.alamatppk LIKE '%${alamatppk}%')
-                    AND fktp.npeserta/NULLIF(fktp.ndokter,0)<$1 
-                    AND fktp.npeserta/NULLIF(fktp.ndokter,0)>=$2
-              AND ($3::integer IS NULL OR provinsi.prid=$3)
-              AND ($4::integer IS NULL OR kabupaten.kbid=$4)
-              AND ($5::integer IS NULL OR kecamatan.kcid=$5)
-              AND ($6::integer IS NULL OR cabang.kodecab=$6)
-              AND ($7::integer IS NULL OR cabang.kodedep=$7)
+              		FROM fktp
+			INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fktp.wlid
+			INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
+			INNER JOIN kabupaten ON wilayahadmindesa.kab_id=kabupaten.kbid
+			INNER JOIN provinsi ON wilayahadmindesa.prov_id=provinsi.prid
+            INNER JOIN cabang ON cabang.kodecab=kabupaten.kodekc
+			WHERE fktp.status='aktif' 
+      AND ($1::character IS NULL OR LOWER(fktp.nmppk) LIKE LOWER('%' || $1 || '%'))
+      AND ($2::character IS NULL OR LOWER(fktp.alamatppk) LIKE LOWER('%' || $2 || '%'))     
+			AND ($3::integer IS NULL OR provinsi.prid=$3)
+			AND ($4::integer IS NULL OR kabupaten.kbid=$4)
+			AND ($5::integer IS NULL OR kecamatan.kcid=$5)
+      AND ($6::character IS NULL OR cabang.kodecab=$6)
+			AND ($7::character IS NULL OR cabang.kodedep=$7)
+      AND fktp.npeserta/NULLIF(fktp.ndokter,0)<$8
+      AND fktp.npeserta/NULLIF(fktp.ndokter,0)>=$9
+      AND ($10::character IS NULL OR 
+        TRIM(LOWER(fktp.jenisfaskes)) IN (SELECT * FROM unnest(string_to_array(lower($10), ',')))
+           )
               
           ) AS row
         ) features;
         `,
-        [rmax,rmin,pro,kab,kec,kdkc,kddep]
-      ); */
-    const result = await db.query(
-      `
-        
-      SELECT fktp.fktpid AS id, ST_X(ST_SetSRID(coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(coordinat, 4326)) AS lat, faskes1id AS faskesid, kwppk, kcppk, alamatppk, nmppk, jenisfaskes
-              FROM fktp
-              WHERE fktp.status='aktif' 
-                    AND fktp.nmppk LIKE '$1'
-                    
-              
-        `,
-      [`%${id}%`]
-    );
+        [
+          nmppk,
+          alamatppk,
+          pro,
+          kab,
+          kec,
+          kdkc,
+          kddep,
+          rmax,
+          rmin,
+          jenis
+          
+        ]
+      ); 
     res.json({
       code: 200,
       status: "success",
-      data: result.rows,
+      data: result.rows[0].jsonb_build_object,
     });
   } catch (error) {
     console.error("Error executing query", error);
@@ -474,19 +509,56 @@ exports.filterTitikFKTP = async (req, res) => {
 
 exports.filterFKTP = async (req, res) => {
   try {
-    const nmppk = req.params.kab === "null" ? null : req.params.nmppk;
-
+    const pro = req.params.pro === "null" ? null : req.params.pro;
+    const kab = req.params.kab === "null" ? null : req.params.kab;
+    const kec = req.params.kec === "null" ? null : req.params.kec;
+    const kdkc = req.params.kdkc === "null" ? null : req.params.kdkc;
+    const kddep = req.params.kddep === "null" ? null : req.params.kddep;
+    const nmppk = req.params.nmppk === "null" ? null : req.params.nmppk;
+    const alamatppk =
+      req.params.alamatppk === "null" ? null : req.params.alamatppk;
+      const rmin = req.params.rmin === "null" ? null : req.params.rmin;
+      const rmax = req.params.rmax === "null" ? null : req.params.rmax
+    const jenis =
+      req.params.jenis;
     const result = await db.query(
       `
-        
-      SELECT fktp.fktpid AS id, ST_X(ST_SetSRID(coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(coordinat, 4326)) AS lat, faskes1id AS faskesid, kwppk, kcppk, alamatppk, nmppk, jenisfaskes
-              FROM fktp
-              WHERE fktp.status='aktif' 
-                    AND fktp.nmppk LIKE $1
+      SELECT fktp.fktpid AS id, ST_X(ST_SetSRID(fktp.coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(fktp.coordinat, 4326)) AS lat, faskes1id AS faskesid, kwppk, kcppk, alamatppk, nmppk, jenisfaskes
+			FROM fktp
+			INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fktp.wlid
+			INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
+			INNER JOIN kabupaten ON wilayahadmindesa.kab_id=kabupaten.kbid
+			INNER JOIN provinsi ON wilayahadmindesa.prov_id=provinsi.prid
+            INNER JOIN cabang ON cabang.kodecab=kabupaten.kodekc
+			WHERE fktp.status='aktif' 
+      AND ($1::character IS NULL OR LOWER(fktp.nmppk) LIKE LOWER('%' || $1 || '%'))
+      AND ($2::character IS NULL OR LOWER(fktp.alamatppk) LIKE LOWER('%' || $2 || '%'))     
+			AND ($3::integer IS NULL OR provinsi.prid=$3)
+			AND ($4::integer IS NULL OR kabupaten.kbid=$4)
+			AND ($5::integer IS NULL OR kecamatan.kcid=$5)
+      AND ($6::character IS NULL OR cabang.kodecab=$6)
+			AND ($7::character IS NULL OR cabang.kodedep=$7)
+      AND fktp.npeserta/NULLIF(fktp.ndokter,0)<$8
+      AND fktp.npeserta/NULLIF(fktp.ndokter,0)>=$9
+      AND ($10::character IS NULL OR 
+        TRIM(LOWER(fktp.jenisfaskes)) IN (SELECT * FROM unnest(string_to_array(lower($10), ',')))
+           )
                     
               
         `,
-      [`%${nmppk}%`]
+      [
+        nmppk,
+        alamatppk,
+        pro,
+        kab,
+        kec,
+        kdkc,
+        kddep,
+        rmax,
+        rmin,
+        jenis
+        
+      ]
     );
     res.json({
       code: 200,
@@ -516,11 +588,11 @@ exports.filterFKRTL = async (req, res) => {
     const alamatppk =
       req.params.alamatppk === "null" ? null : req.params.alamatppk;
     const jenis =
-      req.params.jenisfaskes === "null" ? null : req.params.jenisfaskes;
+      req.params.jenis;
 
     const result = await db.query(
       `
-        SELECT fkrtl.fkrtlid AS id, ST_X(ST_SetSRID(fkrtl.coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(fkrtl.coordinat, 4326)) AS lat, faskes2id AS faskesid, kwppk, kcppk, alamatppk, nmppk, jenisfaskes
+      SELECT fkrtl.fkrtlid AS id, ST_X(ST_SetSRID(fkrtl.coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(fkrtl.coordinat, 4326)) AS lat, faskes2id AS faskesid, kwppk, kcppk, alamatppk, nmppk, jenisfaskes
 			FROM fkrtl
 			INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fkrtl.wlid
 			INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
@@ -528,33 +600,30 @@ exports.filterFKRTL = async (req, res) => {
 			INNER JOIN provinsi ON wilayahadmindesa.prov_id=provinsi.prid
             INNER JOIN cabang ON cabang.kodecab=kabupaten.kodekc
 			WHERE fkrtl.status='aktif' 
-            AND ($7::character IS NULL OR fkrtl.nmppk LIKE $8)
-            AND ($9::character IS NULL OR fkrtl.alamatppk LIKE $10)
-            AND fkrtl.kelasrs IN ($11)
-            AND (fkrtl.PelayananCanggih = $4 OR
-            ((string_to_array(lower(fkrtl.PelayananCanggih), ';') <@ string_to_array(lower($4), ',') 
-            AND string_to_array(lower(fkrtl.PelayananCanggih), ';') @> string_to_array(lower($4), ','))))
-            
-			AND ($1::integer IS NULL OR provinsi.prid=$1)
-			AND ($2::integer IS NULL OR kabupaten.kbid=$2)
-			AND ($3::integer IS NULL OR kecamatan.kcid=$3)
-      AND ($5::character IS NULL OR cabang.kodecab=$5)
-			AND ($6::character IS NULL OR cabang.kodedep=$6)
-                    
-              
+      AND ($1::character IS NULL OR LOWER(fkrtl.nmppk) LIKE LOWER('%' || $1 || '%'))
+      AND ($2::character IS NULL OR LOWER(fkrtl.alamatppk) LIKE LOWER('%' || $2 || '%'))
+      AND ($3::integer IS NULL OR provinsi.prid=$3)
+			AND ($4::integer IS NULL OR kabupaten.kbid=$4)
+			AND ($5::integer IS NULL OR kecamatan.kcid=$5)
+      AND ($6::character IS NULL OR cabang.kodecab=$6)
+			AND ($7::character IS NULL OR cabang.kodedep=$7)
+      AND fkrtl.kelasrs IN (SELECT * FROM unnest(string_to_array($8, ',')))
+      AND string_to_array(lower(fkrtl.PelayananCanggih), ';') && string_to_array(lower($9), ',')
+      AND ($10::character IS NULL OR 
+         TRIM(LOWER(fkrtl.jenisfaskes)) IN (SELECT * FROM unnest(string_to_array(lower($10), ',')))
+            )
         `,
       [
+        nmppk,
+        alamatppk,
         pro,
         kab,
         kec,
-        canggih,
         kdkc,
         kddep,
-        nmppk,
-        `%${nmppk}%`,
-        alamatppk,
-        `%${alamatppk}%`,
         krs,
+        canggih,
+        jenis
       ]
       /* ,
         [nmppk,alamatppk,krs,canggih,pro,kab,kec,`%${nmppk}%`,`%${alamatppk}%`,] */
@@ -580,13 +649,16 @@ exports.filterTitikFKRTL = async (req, res) => {
     const pro = req.params.pro === "null" ? null : req.params.pro;
     const kab = req.params.kab === "null" ? null : req.params.kab;
     const kec = req.params.kec === "null" ? null : req.params.kec;
-    const kdkc = req.params.pro === "null" ? null : req.params.kdkc;
-    const kddep = req.params.kab === "null" ? null : req.params.kddep;
-    const krs = req.params.kec === "null" ? null : req.params.krs;
-    const canggih = req.params.pro === "null" ? null : req.params.cannggih;
-    const nmppk = req.params.kab === "null" ? null : req.params.nmppk;
-    const alamatppk = req.params.kec === "null" ? null : req.params.alamatppk;
-
+    const kdkc = req.params.kdkc === "null" ? null : req.params.kdkc;
+    const kddep = req.params.kddep === "null" ? null : req.params.kddep;
+    const krs = req.params.krs === "null" ? "nan" : req.params.krs;
+    const canggih = req.params.canggih;
+    "null" ? "nan" : req.params.krs;
+    const nmppk = req.params.nmppk === "null" ? null : req.params.nmppk;
+    const alamatppk =
+      req.params.alamatppk === "null" ? null : req.params.alamatppk;
+    const jenis =
+      req.params.jenis;
     /*       if (!pro || !kab || !kec) {
         return res.status(400).json({
           code: 400,
@@ -597,39 +669,54 @@ exports.filterTitikFKRTL = async (req, res) => {
 
     const result = await db.query(
       `
+      SELECT jsonb_build_object(
+        'type',     'FeatureCollection',
+        'features', jsonb_agg(feature)
+      )
+      FROM (
         SELECT jsonb_build_object(
-          'type',     'FeatureCollection',
-          'features', jsonb_agg(feature)
-        )
-        FROM (
-          SELECT jsonb_build_object(
-            'type',       'Feature',
-            'id',         id,
-            'geometry',   ST_AsGeoJSON(coord)::jsonb,
-            'properties', to_jsonb(row) - 'coord' - 'id'
-          ) AS feature
-          FROM (SELECT Distinct fkrtl.fkrtlid AS id, ST_Transform(ST_SetSRID(coordinat, 4326), 3857) AS coord
-              FROM fkrtl
-              INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fkrtl.wlid
-              INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
-              INNER JOIN kabupaten ON wilayahadmindesa.kab_id=kabupaten.kbid
-              INNER JOIN provinsi ON wilayahadmindesa.prov_id=provinsi.prid
-                    INNER JOIN cabang ON cabang.kodecab=kabupaten.kodekc
-              WHERE fkrtl.status='aktif' 
-                    AND (${nmppk}::integer IS NULL OR fkrtl.nmppk LIKE '%${nmppk}%')
-                    AND (${alamatppk}::integer IS NULL OR fkrtl.alamatppk LIKE '%${alamatppk}%')
-                    AND fkrtl.kelasrs IN (${krs})
-                    AND (string_to_array(lower(fkrtl.PelayananCanggih), ';') <@ string_to_array(lower('$1'), ',') 
-                    AND string_to_array(lower(fkrtl.PelayananCanggih), ';') @> string_to_array(lower('$1'), ','))
-              AND ($2::integer IS NULL OR provinsi.prid=$2)
-              AND ($3::integer IS NULL OR kabupaten.kbid=$3)
-              AND ($4::integer IS NULL OR kecamatan.kcid=$4)
-              AND ($5::integer IS NULL OR cabang.kodecab=$5)
-              AND ($6::integer IS NULL OR cabang.kodedep=$6)
+          'type',       'Feature',
+          'id',         id,
+          'geometry',   ST_AsGeoJSON(coord)::jsonb,
+          'properties', to_jsonb(row) - 'coord' - 'id'
+        ) AS feature
+        FROM (SELECT Distinct fkrtl.fkrtlid AS id, ST_Transform(ST_SetSRID(coordinat, 4326), 3857) AS coord
+            FROM fkrtl
+          INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fkrtl.wlid
+          INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
+          INNER JOIN kabupaten ON wilayahadmindesa.kab_id=kabupaten.kbid
+          INNER JOIN provinsi ON wilayahadmindesa.prov_id=provinsi.prid
+                INNER JOIN cabang ON cabang.kodecab=kabupaten.kodekc
+          WHERE fkrtl.status='aktif' 
+          AND ($1::character IS NULL OR LOWER(fkrtl.nmppk) LIKE LOWER('%' || $1 || '%'))
+          AND ($2::character IS NULL OR LOWER(fkrtl.alamatppk) LIKE LOWER('%' || $2 || '%'))
+          AND ($3::integer IS NULL OR provinsi.prid=$3)
+          AND ($4::integer IS NULL OR kabupaten.kbid=$4)
+          AND ($5::integer IS NULL OR kecamatan.kcid=$5)
+          AND ($6::character IS NULL OR cabang.kodecab=$6)
+          AND ($7::character IS NULL OR cabang.kodedep=$7)
+          AND fkrtl.kelasrs IN (SELECT * FROM unnest(string_to_array($8, ',')))
+          AND string_to_array(lower(fkrtl.PelayananCanggih), ';') && string_to_array(lower($9), ',')
+          AND ($10::character IS NULL OR 
+             TRIM(LOWER(fkrtl.jenisfaskes)) IN (SELECT * FROM unnest(string_to_array(lower($10), ',')))
+                )
+                
+                
               ) row
         ) features;
         `,
-      [canggih, pro, kab, kec, kdkc, kddep]
+        [
+          nmppk,
+          alamatppk,
+          pro,
+          kab,
+          kec,
+          kdkc,
+          kddep,
+          krs,
+          canggih,
+          jenis
+        ]
     );
 
     res.json({
@@ -785,6 +872,98 @@ exports.countJenisFKTP = async (req, res) => {
       AND ($4::character IS NULL OR cabang.kodecab=$4)
       AND ($5::character IS NULL OR cabang.kodedep=$5)
       GROUP BY jenisfaskes;
+    `,
+    [pro, kab, kec, kdkc, kddep]
+      /* ,
+        [nmppk,alamatppk,krs,canggih,pro,kab,kec,`%${nmppk}%`,`%${alamatppk}%`,] */
+    );
+
+    res.json({
+      code: 200,
+      status: "success",
+      data: result.rows,
+    });
+  } catch (error) {
+    console.error("Error executing query", error);
+    res.status(500).json({
+      code: 500,
+      status: "error",
+      data: "Internal Server Error",
+    });
+  }
+};
+
+
+
+exports.countFKRTL = async (req, res) => {
+  try {
+    const pro = req.params.pro === "null" ? null : req.params.pro;
+    const kab = req.params.kab === "null" ? null : req.params.kab;
+    const kec = req.params.kec === "null" ? null : req.params.kec;
+    const kdkc = req.params.kdkc === "null" ? null : req.params.kdkc;
+    const kddep = req.params.kddep === "null" ? null : req.params.kddep;
+
+    const result = await db.query(
+      
+      `
+      SELECT COUNT(*) FROM fkrtl 
+      INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fkrtl.wlid
+      INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
+      INNER JOIN kabupaten ON wilayahadmindesa.kab_id=kabupaten.kbid
+      INNER JOIN provinsi ON wilayahadmindesa.prov_id=provinsi.prid
+      INNER JOIN cabang ON cabang.kodecab=kabupaten.kodekc
+      WHERE fkrtl.status='aktif' 
+      AND ($1::integer IS NULL OR provinsi.prid=$1)
+      AND ($2::integer IS NULL OR kabupaten.kbid=$2)
+      AND ($3::integer IS NULL OR kecamatan.kcid=$3)
+      AND ($4::character IS NULL OR cabang.kodecab=$4)
+      AND ($5::character IS NULL OR cabang.kodedep=$5)
+     
+    `,
+    [pro, kab, kec, kdkc, kddep]
+      /* ,
+        [nmppk,alamatppk,krs,canggih,pro,kab,kec,`%${nmppk}%`,`%${alamatppk}%`,] */
+    );
+
+    res.json({
+      code: 200,
+      status: "success",
+      data: result.rows,
+    });
+  } catch (error) {
+    console.error("Error executing query", error);
+    res.status(500).json({
+      code: 500,
+      status: "error",
+      data: "Internal Server Error",
+    });
+  }
+};
+
+exports.countFKTP = async (req, res) => {
+  try {
+    const pro = req.params.pro === "null" ? null : req.params.pro;
+    const kab = req.params.kab === "null" ? null : req.params.kab;
+    const kec = req.params.kec === "null" ? null : req.params.kec;
+    const kdkc = req.params.kdkc === "null" ? null : req.params.kdkc;
+    const kddep = req.params.kddep === "null" ? null : req.params.kddep;
+
+    const result = await db.query(
+      
+      `
+      SELECT  COUNT(*) FROM fktp 
+      INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fktp.wlid
+      INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
+      INNER JOIN kabupaten ON wilayahadmindesa.kab_id=kabupaten.kbid
+      INNER JOIN provinsi ON wilayahadmindesa.prov_id=provinsi.prid
+      INNER JOIN cabang ON cabang.kodecab=kabupaten.kodekc
+      WHERE fktp.status='aktif' 
+      AND ($1::integer IS NULL OR provinsi.prid=$1)
+      AND ($2::integer IS NULL OR kabupaten.kbid=$2)
+      AND ($3::integer IS NULL OR kecamatan.kcid=$3)
+      AND ($4::character IS NULL OR cabang.kodecab=$4)
+      AND ($5::character IS NULL OR cabang.kodedep=$5)
+     
     `,
     [pro, kab, kec, kdkc, kddep]
       /* ,

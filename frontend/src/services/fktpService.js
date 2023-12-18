@@ -21,6 +21,36 @@ const getFKTPKedeputian = (id) => {
 };
 
 
+const getFilterFKTP = (pro,kab,kec,kdkc,kddep,rmax,rmin,jenis,nmppk,alamatppk) => {
+  return axios.get(`/filter-fktp/${pro}/${kab}/${kec}/${kdkc}/${kddep}/${rmax}/${rmin}/${jenis}/${nmppk}/${alamatppk}`);
+};
+
+
+const getFilterFKTPlist = (pro,kab,kec,kdkc,kddep,krs,canggih,jenis,nmppk,alamatppk) => {
+  return axios.get(`/filter-fktp-list/${pro}/${kab}/${kec}/${kdkc}/${kddep}/${krs}/${canggih}/${jenis}/${nmppk}/${alamatppk}`);
+};
+
+const getFilterFKTPPublik = (pro,kab,kec) => {
+  return axios.get(`/filter-fktp-publik/${pro}/${kab}/${kec}`);
+};
+
+
+const getFilterFKTPlistPublik = (pro,kab,kec) => {
+  return axios.get(`/filter-fktp-list-publik/${pro}/${kab}/${kec}`);
+};
+
+
+
+  const countJenisFKTP = (pro,kab,kec,kdkc,kddep) => {
+    return axios.get(`/count-jenis-fktp/${pro}/${kab}/${kec}/${kdkc}/${kddep}`);
+  };
+
+  const countFKTP = (pro,kab,kec,kdkc,kddep) => {
+    return axios.get(`/count-fktp/${pro}/${kab}/${kec}/${kdkc}/${kddep}`);
+  };
+
+
+
 
 const FKTPService = {
   getFKTP,
@@ -28,6 +58,12 @@ const FKTPService = {
   getFKTPCabang,
   getFKTPKedeputian,
   getFKTPList,
+  getFilterFKTP,
+  getFilterFKTPlist,
+  countJenisFKTP,
+  getFilterFKTPPublik,
+  getFilterFKTPlistPublik,
+  countFKTP,
 };
 
 export default FKTPService;

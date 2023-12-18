@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate , useLocation} from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import MuiDrawer from '@mui/material/Drawer';
@@ -23,6 +24,7 @@ import bpjsLogo from '../assets/images/bpjs_logo.svg';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
+import { logout } from "../actions/authActions";
 
 const drawerWidth = 240;
 const openedMixin = (theme) => ({
@@ -95,18 +97,40 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 
 export default function MiniDrawer({ children }) {
   const theme = useTheme();
+  const dispatch = useDispatch();
+    let navigate = useNavigate();
   const [auth, setAuth] = React.useState(true);
   const [open, setOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
-
+  const location = useLocation();
   const handleChange = (event) => {
     setAuth(event.target.checked);
   };
+
+    const isAuthenticated = useSelector((state) => state.mapauth.isAuthenticated);
+
+    // Redirect to login if not authenticated
+    React.useEffect(() => {
+      if (!isAuthenticated) {
+        navigate("/login");
+      }
+    }, [isAuthenticated, navigate]);
+  
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
+  const handleLogout =()=>{
+dispatch(logout());
+
+  navigate("/login");
+
+  };
+
+
+
+  
   const handleClose = () => {
     setAnchorEl(null);
   };
@@ -119,18 +143,18 @@ export default function MiniDrawer({ children }) {
     setOpen(false);
   };
 
-  let navigate = useNavigate();
+
 
 const itemsList = [
   {
     text: 'FKTP',
     icon: <BrandingWatermarkIcon />,
-    onClick: () => navigate('/'),
+    onClick: () => navigate('/mapfktp'),
   },
   {
     text: 'FKRTL',
     icon: <BrandingWatermarkIcon />,
-    onClick: () => navigate('/'),
+    onClick: () => navigate('/mapfkrtl'),
   },
   {
     text: 'Statistik',
@@ -139,6 +163,8 @@ const itemsList = [
   },
   
   ];
+
+  const isActive = (path) => location.pathname === path;
 
   const HeaderAppBar = styled(AppBar)(({ theme }) => ({
     background: 'linear-gradient(to right, #0F816F, #274C8B)',
@@ -158,6 +184,7 @@ const itemsList = [
           >
             <MenuIcon />
           </IconButton>
+
           <img src={bpjsLogo} alt="BPJS Logo" style={{ height: 24 }} />
           <Box sx={{ flexGrow: 1 }} />
           {auth && (
@@ -188,12 +215,14 @@ const itemsList = [
                 onClose={handleClose}
               >
                 <MenuItem onClick={handleClose}>Profile</MenuItem>
-                <MenuItem onClick={handleClose}>My account</MenuItem>
+                <MenuItem onClick={handleLogout}>Logout</MenuItem>
               </Menu>
             </div>
           )}
         </Toolbar>
       </HeaderAppBar>
+
+
       <Drawer variant="permanent" open={open}>
         <DrawerHeader>
           <IconButton onClick={handleDrawerClose}>
@@ -203,9 +232,9 @@ const itemsList = [
         <Divider />
         <List>
         {itemsList.map((item, index) => {
-      const { text, icon, onClick } = item;
+      const { text, icon,path, onClick } = item;
       return (
-        <ListItem button key={text} onClick={onClick}>
+        <ListItem button key={text} onClick={onClick} selected={isActive(path)}>
           {icon && <ListItemIcon>{icon}</ListItemIcon>}
           <ListItemText primary={text} />
         </ListItem>

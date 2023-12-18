@@ -7,14 +7,10 @@ import {
   FETCH_AUTO_WILAYAH,
   FETCH_CANGGIH,
   FETCH_ADMIN_CANGGIH,
-  FETCH_FILTER_FKTP,
-  FETCH_FILTER_FKRTL,
   FETCH_JENIS_FKRTL,
   FETCH_JENIS_FKTP,
-  FETCH_FILTER_FKTP_LIST,
-  FETCH_FILTER_FKRTL_LIST,
-  FETCH_COUNT_FKRTL,
-  FETCH_COUNT_FKTP
+  FETCH_CABANG,
+ 
 } from "./types";
 
 import FilterService from "../services/filterService";
@@ -84,6 +80,19 @@ export const fetchAutoWilayah = (id) => async (dispatch) => {
   }
 };
 
+export const fetchCabang = (id) => async (dispatch) => {
+  try {
+    const res = await FilterService.getCabang(id);
+
+    dispatch({
+      type: FETCH_CABANG,
+      payload: res.data.data,
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 export const fetchJenisFKRTL= () => async (dispatch) => {
   try {
     const res = await FilterService.getJenisFKRTL();
@@ -104,48 +113,6 @@ export const fetchJenisFKTP= () => async (dispatch) => {
 
     dispatch({
       type: FETCH_JENIS_FKTP,
-      payload: res.data.data,
-    });
-  } catch (err) {
-    console.error(err);
-  }
-};
-
-
-export const fetchFilterFKRTLList= (pro,kab,kec,kdkc,kddep,krs,canggih,nmppk,alamatppk) => async (dispatch) => {
-  try {
-    const res = await FilterService.getFilterFKRTLlist(pro,kab,kec,kdkc,kddep,krs,canggih,nmppk,alamatppk);
-
-    dispatch({
-      type: FETCH_FILTER_FKRTL_LIST,
-      payload: res.data.data,
-    });
-  } catch (err) {
-    console.error(err);
-  }
-};
-
-
-export const fetchCountFKTP=(pro,kab,kec,kdkc,kddep) => async (dispatch) => {
-  try {
-    const res = await FilterService.countJenisFKTP(pro,kab,kec,kdkc,kddep);
-
-    dispatch({
-      type: FETCH_COUNT_FKTP,
-      payload: res.data.data,
-    });
-  } catch (err) {
-    console.error(err);
-  }
-};
-
-
-export const fetchCountFKRTL=(pro,kab,kec,kdkc,kddep) => async (dispatch) => {
-  try {
-    const res = await FilterService.countJenisFKRTL(pro,kab,kec,kdkc,kddep);
-
-    dispatch({
-      type: FETCH_COUNT_FKRTL,
       payload: res.data.data,
     });
   } catch (err) {

@@ -1,20 +1,32 @@
-// services/authService.js
-import axios from 'axios';
+import axios from "../api/axios";
 
-const API_URL = 'https://api.example.com'; // Replace with your API URL
+const login = (email,password) => {
+  console.log(email);
+  return axios.post(`/login`, {
+    email,
+    password,
+});
+};
+
+const checkAuth = () => {
+  return axios.get(`/checkAuth`
+  );
+  
+};
+
+
+const logout = () => {
+  return axios.get(`/logout`
+  );
+  
+};
+
 
 const authService = {
-  login: async (username, password) => {
-    try {
-      const response = await axios.post('/api/login', {
-        username,
-        password,
-      });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
+  login,
+  checkAuth,
+  logout
+
 };
 
 export default authService;

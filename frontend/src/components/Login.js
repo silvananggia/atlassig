@@ -1,12 +1,9 @@
-// src/components/Login.js
 import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Button, TextField } from "@mui/material";
-import { useAuth } from "../context/AuthContext";
+import { Button, TextField, Checkbox, FormControlLabel } from "@mui/material";
 import Avatar from "@mui/material/Avatar";
 import CssBaseline from "@mui/material/CssBaseline";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
 import Link from "@mui/material/Link";
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
@@ -14,19 +11,18 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import bpjsLogo from '../assets/images/bpjs-logo-color.svg'; 
+import bpjsLogo from "../assets/images/bpjs-logo-color.svg";
+import { fetchLogin } from "../actions/authActions";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
+import Stack from "@mui/material/Stack";
 
-function Copyright(props) {
+function Copyright() {
   return (
-    <Typography
-      variant="body2"
-      color="text.secondary"
-      align="center"
-      {...props}
-    >
+    <Typography variant="body2" color="text.secondary" align="center">
       {"Copyright © "}
-      <Link color="inherit" href="https://mui.com/">
-        Your Website
+      <Link color="inherit" href="https://bpjs-kesehatan.go.id/">
+        BPJS Kesehatan
       </Link>{" "}
       {new Date().getFullYear()}
       {"."}
@@ -34,31 +30,26 @@ function Copyright(props) {
   );
 }
 
-// TODO remove, this demo shouldn't need to reset the theme.
-
 const defaultTheme = createTheme();
+
 const Login = () => {
-  const { authDispatch } = useAuth();
-  const navigate = useNavigate();
-  const [credentials, setCredentials] = useState({
-    username: "",
-    password: "",
-  });
+  const dispatch = useDispatch();
+  let navigate = useNavigate();
+  const error = useSelector((state) => state.mapauth.error);
 
-  const handleLogin = async () => {
-    const { username, password } = credentials;
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-    if (username === "admin" && password === "admin") {
-      // Simulate a successful login
-      // You can replace this with an actual API call if needed
-      authDispatch({ type: "LOGIN" });
-
-      // Navigate to the map page
-      navigate("/map");
-    } else {
-      console.error("Login failed: Invalid credentials");
-    }
+  const handleLogin = () => {
+    dispatch(fetchLogin(email, password));
   };
+
+  const isAuthenticated = useSelector((state) => state.mapauth.isAuthenticated);
+
+  if (isAuthenticated) {
+    // Redirect to home if user is authenticated
+    navigate("/");
+  }
 
   return (
     <ThemeProvider theme={defaultTheme}>
@@ -72,40 +63,43 @@ const Login = () => {
             alignItems: "center",
           }}
         >
-           <img src={bpjsLogo} alt="BPJS Logo" style={{ height: 32 }} />
-          <br/>
+          <img src={bpjsLogo} alt="BPJS Logo" style={{ height: 32 }} />
+          <br />
           <Typography component="h1" variant="h5">
             Masuk Ke Atlas-SIG
           </Typography>
+          {error && (
+            <Stack sx={{ width: "100%" }} spacing={2}>
+              <Alert severity="error">
+                <AlertTitle>Error</AlertTitle>
+                {error}
+              </Alert>
+            </Stack>
+          )}
           <Box component="form" noValidate sx={{ mt: 1 }}>
             <TextField
-                         margin="normal"
-                         required
-                         fullWidth
-                         id="email"
-                         name="email"
-                         autoComplete="email"
-                         autoFocus
-              label="Username"
-              value={credentials.username}
-              onChange={(e) =>
-                setCredentials({ ...credentials, username: e.target.value })
-              }
+              margin="normal"
+              required
+              fullWidth
+              id="email" // Change from 'email' to 'username'
+              name="email"
+              autoComplete="email" // Change from 'email' to 'username'
+              autoFocus
+              label="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
             <TextField
-                          margin="normal"
-                          required
-                          fullWidth
-                          name="password"
-                          label="Password"
-                          type="password"
-                          id="password"
-                          autoComplete="current-password"
-      
-              value={credentials.password}
-              onChange={(e) =>
-                setCredentials({ ...credentials, password: e.target.value })
-              }
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="Password"
+              type="password"
+              id="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
 
             <FormControlLabel
@@ -113,26 +107,14 @@ const Login = () => {
               label="Remember me"
             />
             <Button
-              type="submit"
+              type="button" // Change from 'submit' to 'button'
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
               onClick={handleLogin}
             >
-              Sign In
+              Masuk
             </Button>
-            <Grid container>
-              <Grid item xs>
-                <Link href="#" variant="body2">
-                  Forgot password?
-                </Link>
-              </Grid>
-              <Grid item>
-                <Link href="#" variant="body2">
-                  {"Don't have an account? Sign Up"}
-                </Link>
-              </Grid>
-            </Grid>
           </Box>
         </Box>
         <Copyright sx={{ mt: 8, mb: 4 }} />

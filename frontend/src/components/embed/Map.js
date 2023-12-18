@@ -77,6 +77,28 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
   const markerListFKRTL = useSelector((state) => state.mapfkrtl.fkrtllist);
 
 
+  useEffect(() => {
+    if (faskes === "fkrtl") {
+      if (
+        markerListFKRTL &&
+        markerListFKRTL != null &&
+        markerListFKRTL.features &&
+        markerListFKRTL.features.length > 0
+      ) {
+        FKRTLPointMarker();
+      }
+    } else {
+      if (
+        markerListFKTP &&
+        markerListFKTP != null &&
+        markerListFKTP.features &&
+        markerListFKTP.features.length > 0
+      ) {
+        FKTPPointMarker();
+      }
+    }
+  }, [markerListFKRTL, markerListFKTP]);
+
 
   const handleLayerSelectClick = () => {
     setShowFloatingButton((prevState) => !prevState);
@@ -86,9 +108,19 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
   const handleLegendClick = () => {
     setShowLegend((prevState) => !prevState);
   };
-  const handleFktpSwitchChange = () => {
-    // Only proceed if markers have been loaded and map is available
+  
+  const toggleShowFKTPMark = () => {
+    setShowFKTPMark((prevState) => {
+      if (!prevState) {
+        FKTPPointMarker();
+      } else {
+        removeFKTPPointMarkerLayers();
+      }
+      return !prevState;
+    });
+  };
 
+  const removeFKTPPointMarkerLayers = () => {
     if (map) {
       const overlayGroup = map
         .getLayers()
@@ -104,13 +136,39 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
         .getArray()
         .find((layer) => layer.get("title") === "RadiusFKTP");
 
-      if (showFKTPMark) {
-        // Remove the potential layer from the overlay group
+      // Remove the potential layers from the overlay group if they exist
+      if (markerFKTPLayer) {
         overlayGroup.getLayers().remove(markerFKTPLayer);
+      }
+      if (RadiusFKTPLayer) {
         overlayGroup.getLayers().remove(RadiusFKTPLayer);
-      } else {
-        if (markerListFKTP) {
-          //console.log(markerListFKTP);
+      }
+    }
+  };
+  const FKTPPointMarker = () => {
+    if (map) {
+      const overlayGroup = map
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Overlay");
+
+      const markerFKTPLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "MarkerFKTP");
+
+      const RadiusFKTPLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "RadiusFKTP");
+
+      if (
+        markerListFKTP &&
+        markerListFKTP !== null &&
+        markerListFKTP.features &&
+        markerListFKTP.features.length > 0
+      ) {
+        if (!markerFKTPLayer || !RadiusFKTPLayer) {
           const vectorSource = new VectorSource();
           const newMarkerFKTPLayer = new VectorLayer({
             source: vectorSource,
@@ -123,59 +181,74 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
             title: "RadiusFKTP",
           });
 
-          const features = new GeoJSON().readFeatures(markerListFKTP);
-          //console.log(features);
-          features.forEach((feature) => {
-            const coordinates = feature.getGeometry().getCoordinates();
+          const featuresFKTP = new GeoJSON().readFeatures(markerListFKTP);
 
-            const markerFeature = new Feature({
-              geometry: new Point(coordinates),
+          if (featuresFKTP && featuresFKTP.length > 0) {
+            featuresFKTP.forEach((feature) => {
+              const coordinates = feature.getGeometry().getCoordinates();
+
+              // Create a marker feature
+              const markerFeature = new Feature({
+                geometry: new Point(coordinates),
+                id: feature.getId(),
+              });
+
+              // Style for the marker
+              const markerStyle = new Style({
+                image: new Icon({
+                  //anchor: [0.5, 1],
+                  src: "../images/m2.png",
+                  scale: 0.5,
+                  zIndex: 1000,
+                }),
+              });
+
+              markerFeature.setStyle(markerStyle);
+
+              const circleRadiusMeters = 2000; // 2 kilometers circleRadiusMeters);
+              const circleGeometry = new Circle(
+                coordinates,
+                circleRadiusMeters
+              );
+              const circleFeature = new Feature(circleGeometry);
+              const circleStyle = new Style({
+                fill: new Fill({
+                  color: "rgba(0, 0, 255, 0.1)",
+                }),
+                stroke: new Stroke({
+                  color: "rgba(0, 0, 255, 0.6)",
+                  width: 0.5,
+                }),
+                zIndex: 10,
+              });
+              circleFeature.setStyle(circleStyle);
+
+              newMarkerFKTPLayer.setZIndex(1000);
+              newRadiusFKTPLayer.setZIndex(10);
+              radiusSource.addFeatures([circleFeature]);
+              vectorSource.addFeatures([markerFeature]);
             });
 
-            // Style for the marker
-            const markerStyle = new Style({
-              image: new Icon({
-                // anchor: [0.5, 1],
-                src: "../images/m2.png",
-                scale: 0.5,
-                zIndex: 10000,
-              }),
-            });
-
-            markerFeature.setStyle(markerStyle);
-
-            const circleRadiusMeters = 2000; // 2 kilometers
-            const circleGeometry = new Circle(coordinates, circleRadiusMeters);
-            const circleFeature = new Feature(circleGeometry);
-            const circleStyle = new Style({
-              fill: new Fill({
-                color: "rgba(0, 0, 255, 0.1)",
-              }),
-              stroke: new Stroke({
-                color: "rgba(0, 0, 255, 0.6)",
-                width: 0.5,
-              }),
-              zIndex: 10,
-            });
-            circleFeature.setStyle(circleStyle);
-            newMarkerFKTPLayer.setZIndex(1000);
-            newRadiusFKTPLayer.setZIndex(10);
-            radiusSource.addFeatures([circleFeature]);
-            vectorSource.addFeatures([markerFeature]);
-          });
-
-          overlayGroup.getLayers().push(newMarkerFKTPLayer);
-          overlayGroup.getLayers().push(newRadiusFKTPLayer);
+            overlayGroup.getLayers().push(newMarkerFKTPLayer);
+            overlayGroup.getLayers().push(newRadiusFKTPLayer);
+          }
         }
       }
-      // Update the showPotentialLayer state
-      setShowFKTPMark((prevState) => !prevState);
     }
-    // You can add additional logic here if needed
   };
 
-  const handleFkrtlSwitchChange = () => {
-    // Only proceed if markers have been loaded and map is available
+  const toggleShowFKRTLMark = () => {
+    setShowFKRTLMark((prevState) => {
+      if (!prevState) {
+        FKRTLPointMarker();
+      } else {
+        removeFKRTLPointMarkerLayers();
+      }
+      return !prevState;
+    });
+  };
+
+  const removeFKRTLPointMarkerLayers = () => {
     if (map) {
       const overlayGroup = map
         .getLayers()
@@ -191,13 +264,41 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
         .getLayers()
         .getArray()
         .find((layer) => layer.get("title") === "RadiusFKRTL");
-      if (showFKRTLMark) {
-        // Remove the potential layer from the overlay group
+
+      // Remove the potential layers from the overlay group if they exist
+      if (markerFKRTLLayer) {
         overlayGroup.getLayers().remove(markerFKRTLLayer);
+      }
+      if (RadiusFKRTLLayer) {
         overlayGroup.getLayers().remove(RadiusFKRTLLayer);
-      } else {
-        // Your existing code for processing markers
-        if (markerListFKRTL) {
+      }
+    }
+  };
+
+  const FKRTLPointMarker = () => {
+    if (map) {
+      const overlayGroup = map
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Overlay");
+
+      const markerFKRTLLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "MarkerFKRTL");
+
+      const RadiusFKRTLLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "RadiusFKRTL");
+
+      if (
+        markerListFKRTL &&
+        markerListFKRTL !== null &&
+        markerListFKRTL.features &&
+        markerListFKRTL.features.length > 0
+      ) {
+        if (!markerFKRTLLayer || !RadiusFKRTLLayer) {
           const vectorSource = new VectorSource();
           const newMarkerFKRTLLayer = new VectorLayer({
             source: vectorSource,
@@ -209,59 +310,63 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
             source: radiusSource,
             title: "RadiusFKRTL",
           });
+
           const featuresFKRTL = new GeoJSON().readFeatures(markerListFKRTL);
-          //console.log(features);
-          featuresFKRTL.forEach((feature) => {
-            const coordinates = feature.getGeometry().getCoordinates();
 
-            // Create a marker feature
-            const markerFeature = new Feature({
-              geometry: new Point(coordinates),
+          if (featuresFKRTL && featuresFKRTL.length > 0) {
+            featuresFKRTL.forEach((feature) => {
+              const coordinates = feature.getGeometry().getCoordinates();
+
+              // Create a marker feature
+              const markerFeature = new Feature({
+                geometry: new Point(coordinates),
+                id: feature.getId(),
+              });
+
+              // Style for the marker
+              const markerStyle = new Style({
+                image: new Icon({
+                  //anchor: [0.5, 1],
+                  src: "../images/m3.png",
+                  scale: 0.5,
+                  zIndex: 1000,
+                }),
+              });
+
+              markerFeature.setStyle(markerStyle);
+
+              const circleRadiusMeters = 5000; // 5 kilometers circleRadiusMeters);
+              const circleGeometry = new Circle(
+                coordinates,
+                circleRadiusMeters
+              );
+              const circleFeature = new Feature(circleGeometry);
+              const circleStyle = new Style({
+                fill: new Fill({
+                  color: "rgba(56, 167, 203, 0.1)",
+                }),
+                stroke: new Stroke({
+                  color: "rgba(56, 167, 203, 0.6)",
+                  width: 0.5,
+                }),
+              });
+              circleFeature.setStyle(circleStyle);
+
+              newMarkerFKRTLLayer.setZIndex(10000);
+              newRadiusFKRTLLayer.setZIndex(100);
+              radiusSource.addFeatures([circleFeature]);
+              vectorSource.addFeatures([markerFeature]);
             });
 
-            // Style for the marker
-            const markerStyle = new Style({
-              image: new Icon({
-                //anchor: [0.5, 1],
-                src: "../images/m3.png",
-                scale: 0.5,
-                zIndex: 1000,
-              }),
-            });
-
-            markerFeature.setStyle(markerStyle);
-
-            const circleRadiusMeters = 5000; // 5 kilometers circleRadiusMeters);
-            const circleGeometry = new Circle(coordinates, circleRadiusMeters);
-            const circleFeature = new Feature(circleGeometry);
-            const circleStyle = new Style({
-              fill: new Fill({
-                color: "rgba(56, 167, 203, 0.1)",
-              }),
-              stroke: new Stroke({
-                color: "rgba(56, 167, 203, 0.6)",
-                width: 0.5,
-              }),
-            });
-            circleFeature.setStyle(circleStyle);
-
-            newMarkerFKRTLLayer.setZIndex(1000);
-            newRadiusFKRTLLayer.setZIndex(10);
-            radiusSource.addFeatures([circleFeature]);
-            vectorSource.addFeatures([markerFeature]);
-          });
-
-          //  map.addLayer(markerFKTPLayer);
-          // Add the potential layer to the overlay group
-          overlayGroup.getLayers().push(newMarkerFKRTLLayer);
-          overlayGroup.getLayers().push(newRadiusFKRTLLayer);
+            overlayGroup.getLayers().push(newMarkerFKRTLLayer);
+            overlayGroup.getLayers().push(newRadiusFKRTLLayer);
+          }
         }
       }
-      // Update the showPotentialLayer state
-      setShowFKRTLMark((prevState) => !prevState);
     }
-    // You can add additional logic here if needed
   };
+
+
   const basemapOptions = [
     { key: "map-switch-default", label: "Plain" },
     { key: "map-switch-basic", label: "Road" },
@@ -578,6 +683,14 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
         setUserLocation(lonLat);
       });
     }
+
+    if (faskes === "fkrtl") {
+      FKRTLPointMarker();
+      setShowFKRTLMark(true);
+    } else {
+      FKTPPointMarker();
+      setShowFKTPMark(true);
+    }
   }, []);
 
   const handleCenterGeolocation = () => {
@@ -626,8 +739,8 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
           faskesType={faskes}
           showFKTPMark={showFKTPMark}
           showFKRTLMark={showFKRTLMark}
-          handleFktpSwitchChange={handleFktpSwitchChange}
-          handleFkrtlSwitchChange={handleFkrtlSwitchChange}
+          handleFktpSwitchChange={toggleShowFKTPMark}
+          handleFkrtlSwitchChange={toggleShowFKRTLMark}
         />
       </div>
 
@@ -641,15 +754,13 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
           <div className="legend-box-embed" onClick={handleLegendClick}>
             {faskes === "fkrtl" ? (
               <img
-                src="../images/legend-fkrtl.png"
-                width="225px"
-                height="350px"
+                src="../images/legend-calon-fkrtl.png"
+                width="100%"
               />
             ) : (
               <img
                 src="../images/legend-fktp.png"
-                width="225px"
-                height="300px"
+                width="100%"
               />
             )}
           </div>

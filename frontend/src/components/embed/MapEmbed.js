@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {  useParams } from "react-router-dom";
 import { connect, useDispatch,useSelector } from "react-redux";
-import Box from "@mui/material/Box";
+import {Box, Typography} from "@mui/material";
 
 import { fetchEmbedFaskes } from "../../actions/accessActions";
 
@@ -63,7 +63,7 @@ const MapComponent = () => {
             {" "}
             {/* Render an error message or redirect to an error page if the token is invalid */}
             <h1>Error: Invalid Map Token</h1>
-            <p>Please contact support for assistance.</p>
+            <Typography>Please contact support for assistance.</Typography>
           </div>
         )}
       </div>
@@ -72,7 +72,7 @@ const MapComponent = () => {
           {" "}
           {/* Render an error message or redirect to an error page if the token is invalid */}
           <h1>Error: Invalid Map Token</h1>
-          <p>Please contact support for assistance.</p>
+          <Typography>Please contact support for assistance.</Typography>
         </div>
       )}
     </Box>
