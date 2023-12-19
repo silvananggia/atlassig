@@ -15,6 +15,10 @@ const AutocompleteComponent = () => {
       dispatch(fetchAutoWilayah(value));
     } else {
       dispatch(fetchAutoWilayah([]));
+
+      setSelectedKecId("null");
+      setSelectedKabId("null");
+      setSelectedProvId("null");
     }
   };
 

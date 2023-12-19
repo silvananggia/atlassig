@@ -22,7 +22,7 @@ import Icon from "ol/style/Icon";
 import Overlay from "ol/Overlay";
 import { Circle as CircleStyle, Fill, Stroke, Style } from "ol/style.js";
 import { Box, Grid, formControlClasses } from "@mui/material";
-import FloatingButton from "./EmbedFloatingButton";
+import FloatingButton from "../embed/EmbedFloatingButton";
 import LayerGroup from "ol/layer/Group";
 import PermDeviceInformationOutlinedIcon from "@mui/icons-material/PermDeviceInformationOutlined";
 import Typography from "@mui/material/Typography";
@@ -30,44 +30,35 @@ import Button from "@mui/material/Button";
 import MyLocationOutlinedIcon from "@mui/icons-material/MyLocationOutlined";
 import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
 import {
-  fetchFKTPKedeputian,
+  fetchFKTPCabang,
   fetchFKTPDetail,
   fetchFilterFKTP,
   fetchFilterFKTPList,
+  fetchMarkersFKTP,
 } from "../../actions/fktpActions";
 import {
-  fetchFKRTLKedeputian,
+  fetchFKRTLCabang,
   fetchFKRTLDetail,
   fetchFilterFKRTLList,
   fetchFilterFKRTL,
+  fetchMarkersFKRTL,
 } from "../../actions/fkrtlActions";
 import {
-  fetchCenterKedeputian,
-  fetchBBOXKedeputian,
   fetchAutoWilayah,
   fetchJenisFKRTL,
   fetchJenisFKTP,
+  fetchCabang,
 } from "../../actions/filterActions";
-import {
-  setLoading,
-
-} from "../../actions/loadingActions";
 import GeoJSON from "ol/format/GeoJSON";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import Divider from "@mui/material/Divider";
 import ListItemText from "@mui/material/ListItemText";
 
-import TextField from "@mui/material/TextField";
-import Autocomplete from "@mui/material/Autocomplete";
-import FormGroup from "@mui/material/FormGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
-import { Switch } from "@mui/material";
-import Alert from "@mui/material/Alert";
-import Stack from "@mui/material/Stack";
-import CardFaskes from "./CardFaskes";
-const MapComponent = ({ faskes, kodeKedeputian }) => {
+import {TextField,Autocomplete,FormGroup,FormControlLabel,Checkbox,Alert,Stack,FormControl, InputLabel,Select,MenuItem} from "@mui/material";
+
+import CardFaskes from "../embed/CardFaskes";
+const MapComponent = ({ faskes }) => {
   const dispatch = useDispatch();
   const bingApiKey =
     "Asz37fJVIXH4CpaK90Ohf9bPbV39RCX1IQ1LP4fMm4iaDN5gD5USHfqmgdFY5BrA";
@@ -78,9 +69,14 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
   const [showFloatingButton2, setShowFloatingButton2] = useState(false);
 
   const [userLocation, setUserLocation] = useState([0, 0]);
+  const [markerPosition, setMarkerPosition] = useState([0, 0]);
+  const [centerMap, setCenterMap] = useState([
+    13124075.715923082, -277949.29803053016,
+  ]);
   const [selectedBasemap, setSelectedBasemap] = useState("map-switch-default");
   const [userMarkerFeature, setUserMarkerFeature] = useState(null);
-
+  const [latitude, setLatitude] = useState(-2.5489);
+  const [longitude, setLongitude] = useState(118.0149);
   const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.7);
   const [markersLoaded, setMarkersLoaded] = useState(false);
   const [showFKTPMark, setShowFKTPMark] = useState(false);
@@ -91,6 +87,7 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
   const [showSidebar, setShowSidebar] = useState(false);
   const [showSidebarData, setShowSidebarData] = useState(false);
   const [selectedWilayah, setselectedWilayah] = useState();
+  const [selectedCabang, setselectedCabang] = useState();
 
   //input
   const [inputNama, setInputNama] = useState(null);
@@ -98,6 +95,8 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
   const [inputJenis, setInputJenis] = useState([]);
   const [inputrmin, setInputRmin] = useState(null);
   const [inputrmax, setInputRmax] = useState(null);
+  const [inputKodeCabang, setInputKodeCabang] = useState(null);
+  const [inputKodeDeputi, setInputKodeDeputi] = useState(null);
   const [inputRasio, setInputRasio] = useState({
     "< 5000": true,
     ">= 5000": true,
@@ -117,8 +116,21 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
   const [selectedProvId, setSelectedProvId] = useState(null);
   //endinput
 
-  const centerMap = [13124075.715923082, -277949.29803053016];
-  const zoomLevel = 10;
+  const zoomLevel = 6;
+  const listKedeputian = [
+    "01",
+    "02",
+    "03",
+    "04",
+    "05",
+    "06",
+    "07",
+    "08",
+    "09",
+    "10",
+    "11",
+    "12",
+  ];
   const listKelasRS = ["A", "B", "C", "D"];
   const listCanggih = [
     { name: "Cathlab", value: "Cathlab" },
@@ -130,17 +142,17 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
   const listRasio = ["< 5000", ">= 5000"];
 
   const potentialLayerUrl =
-  faskes === "fktp"
-  ? "../tiles/fktp_tile/latest/{z}/{x}/{-y}.png"
-  : faskes === "fkrtl"
-  ? "../tiles/fkrtl_tile/latest/{z}/{x}/{-y}.png"
-  : "";
+    faskes === "fktp"
+      ? "../tiles/fktp_tile/latest/{z}/{x}/{-y}.png"
+      : faskes === "fkrtl"
+      ? "../tiles/fkrtl_tile/latest/{z}/{x}/{-y}.png"
+      : "";
+      
 
   useEffect(() => {
-    dispatch(fetchFKTPKedeputian(kodeKedeputian));
-    dispatch(fetchFKRTLKedeputian(kodeKedeputian));
-    dispatch(fetchCenterKedeputian(kodeKedeputian));
-    dispatch(fetchBBOXKedeputian(kodeKedeputian));
+    dispatch(fetchMarkersFKTP(latitude, longitude));
+    dispatch(fetchMarkersFKRTL(latitude, longitude));
+ 
     if (faskes === "fkrtl") {
       dispatch(fetchJenisFKRTL());
     } else {
@@ -148,10 +160,8 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
     }
 
     //dispatch(fetchAutoWilayah(""));
-  }, [dispatch, kodeKedeputian]);
+  }, [dispatch, latitude, longitude]);
 
-  const centerKedeputian = useSelector((state) => state.mapfilter.coordinate);
-  const bboxKedeputian = useSelector((state) => state.mapfilter.dataobj);
   const markerListFKTP = useSelector((state) => state.mapfktp.fktplist);
   const markerListFKRTL = useSelector((state) => state.mapfkrtl.fkrtllist);
   const detailFKTP = useSelector((state) => state.mapfktp.fktpobj);
@@ -159,13 +169,10 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
   const jenisFKRTL = useSelector((state) => state.mapfilter.jenisfkrtl);
   const jenisFKTP = useSelector((state) => state.mapfilter.jenisfktp);
   const listWilayah = useSelector((state) => state.mapfilter.wilayahlist);
+  const listCabang = useSelector((state) => state.mapfilter.cabanglist);
   const listFilterFKTP = useSelector((state) => state.mapfktp.fktpdatalist);
   const listFilterFKRTL = useSelector((state) => state.mapfkrtl.fkrtldatalist);
-  const isLoading = useSelector((state) => state.loading.isLoading);
 
-  useEffect(() => {
-    
-  }, [isLoading]);
   useEffect(() => {
     if (faskes === "fkrtl") {
       if (
@@ -202,17 +209,27 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
     }
   }, [jenisFKTP]);
 
+
+  const handleKedeputianChange = (event, value) => {
+    setInputKodeDeputi(value);
+  };
+
   const handleInputWilayahChange = (event, value) => {
     if (value.length >= 3) {
       dispatch(fetchAutoWilayah(value));
     } else {
-      dispatch(fetchAutoWilayah([]));
-
-      setSelectedKecId("null");
-      setSelectedKabId("null");
-      setSelectedProvId("null");
+      //dispatch(fetchAutoWilayah([]));
     }
   };
+
+  const handleInputCabangChange = (event, value) => {
+    if (value.length >= 2) {
+      dispatch(fetchCabang(value));
+    } else {
+      //dispatch(fetchAutoWilayah([]));
+    }
+  };
+  
 
   const handleSelectWilayah = (event, selectedOption) => {
     if (selectedOption) {
@@ -223,15 +240,23 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
       setSelectedProvId(prov_id);
     }
   };
+
+  const handleSelectCabang = (event, selectedOption) => {
+    if (selectedOption) {
+      const { kodecab } = selectedOption;
+
+      setInputKodeCabang(kodecab);
+    }
+  };
   useEffect(() => {
-    if (centerKedeputian && map) {
+    if (centerMap && map) {
       map.getView().animate({
-        center: centerKedeputian,
+        center: centerMap,
         duration: 1000,
-        zoom: 9,
+        zoom: 6,
       });
     }
-  }, [centerKedeputian, map]);
+  }, [centerMap, map]);
 
   const handleLayerSelectClick = () => {
     setShowFloatingButton((prevState) => !prevState);
@@ -256,10 +281,10 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
 
   const handleResetFilter = () => {
     if (faskes === "fkrtl") {
-      dispatch(fetchFKRTLKedeputian(kodeKedeputian));
+      dispatch(fetchMarkersFKRTL(latitude, longitude));
       removeFKRTLPointMarkerLayers();
     } else {
-      dispatch(fetchFKTPKedeputian(kodeKedeputian));
+      dispatch(fetchMarkersFKTP(latitude, longitude));
       removeFKTPPointMarkerLayers();
     }
 
@@ -296,7 +321,7 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
       }
 
       map.getView().animate({
-        center: centerKedeputian,
+        center: centerMap,
         duration: 1000, // Animation duration in milliseconds
         zoom: zoomLevel,
       });
@@ -619,22 +644,6 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
           .getArray()
           .find((layer) => layer.get("title") === "Basemap");
 
-        if (
-          bboxKedeputian &&
-          bboxKedeputian.features &&
-          bboxKedeputian.features.length > 0
-        ) {
-          const coords = bboxKedeputian.features[0].geometry.coordinates;
-          const f = new Feature({ geometry: new Polygon(coords) });
-          const crop = new Mask({
-            feature: f,
-            wrapX: true,
-            inner: false,
-          });
-
-          basemapLayer.addFilter(crop);
-        }
-
         basemapGroup.getLayers().clear();
         basemapGroup.getLayers().push(basemapLayer);
         setSelectedBasemap(basemap);
@@ -656,66 +665,6 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
   };
 
   useEffect(() => {
-    if (bboxKedeputian && bboxKedeputian.features && bboxKedeputian.features.length > 0) {
-      const potentialLayer = new TileLayer({
-        title: "PotentialLayer",
-        source: new XYZ({
-          attributions: "",
-          minZoom: 2,
-          maxZoom: 10,
-          url: potentialLayerUrl,
-          tileSize: [384, 384],
-        }),
-      });
-
-      const coords = bboxKedeputian.features[0].geometry.coordinates;
-      const f = new Feature({ geometry: new Polygon(coords) });
-      const crop = new Crop({
-        feature: f,
-        wrapX: true,
-        inner: false,
-        //shadowWidth : 5,
-      });
-
-      potentialLayer.addFilter(crop);
-      if (map && map.getLayers()) {
-        const overlayGroup = map
-          .getLayers()
-          .getArray()
-          .find((layer) => layer.get("title") === "PotentialLayer");
-        overlayGroup.getLayers().clear();
-        overlayGroup.getLayers().push(potentialLayer);
-      }
-    }
-  }, [bboxKedeputian, map, potentialLayerUrl]);
-
-  useEffect(() => {
-    if (bboxKedeputian && bboxKedeputian.features && bboxKedeputian.features.length > 0) {
-      const basemapMask = new TileLayer({
-        source: new XYZ({
-          url: "https://abcd.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-        }),
-      });
-      const coords = bboxKedeputian.features[0].geometry.coordinates;
-      const f = new Feature({ geometry: new Polygon(coords) });
-      const crop = new Mask({
-        feature: f,
-        wrapX: true,
-        inner: false,
-      });
-
-      basemapMask.addFilter(crop);
-
-      const basemapGroup = map
-        .getLayers()
-        .getArray()
-        .find((layer) => layer.get("title") === "Basemap");
-      basemapGroup.getLayers().clear();
-      basemapGroup.getLayers().push(basemapMask);
-    }
-  }, [bboxKedeputian, map]);
-
-  useEffect(() => {
     const potentialLayer = new TileLayer({
       title: "PotentialLayer",
 
@@ -734,6 +683,14 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
       layers: [
         new LayerGroup({
           title: "Basemap",
+          layers: [
+            new TileLayer({
+              title: "Basemap",
+              source: new XYZ({
+                url: "https://abcd.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+              }),
+            }),
+          ],
         }),
         new LayerGroup({
           title: "Basemap",
@@ -749,7 +706,7 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
       view: new View({
         center: centerMap,
         zoom: zoomLevel,
-        maxZoom: 20,
+        maxZoom: 14,
       }),
     });
 
@@ -853,6 +810,28 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
       FKTPPointMarker();
       setShowFKTPMark(true);
     }
+    // Get the device's current location and zoom to it
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const lonLat = [position.coords.longitude, position.coords.latitude];
+        const coordinates = fromLonLat(lonLat);
+        map.getView().animate({
+          center: coordinates,
+          duration: 1000, // Animation duration in milliseconds
+          zoom: zoomLevel,
+        });
+
+        userMarkerFeature.getGeometry().setCoordinates(coordinates);
+        //markerFeature.getGeometry().setCoordinates(coordinates);
+        // circleFeature.getGeometry().setCoordinates(coordinates);
+
+        setUserLocation(lonLat);
+        setMarkerPosition(coordinates);
+        setCenterMap(coordinates);
+        setLatitude(position.coords.latitude);
+        setLongitude(position.coords.longitude);
+      });
+    }
   }, []);
 
   const handleCenterGeolocation = () => {
@@ -870,6 +849,9 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
         userMarkerFeature.getGeometry().setCoordinates(coordinates);
 
         setUserLocation(lonLat);
+        setCenterMap(coordinates);
+        setLatitude(position.coords.latitude);
+        setLongitude(position.coords.longitude);
       });
     }
   };
@@ -1044,7 +1026,8 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
     const sanitizedSelectedProvId = selectedProvId ?? "null";
     const sanitizedSelectedKabId = selectedKabId ?? "null";
     const sanitizedSelectedKecId = selectedKecId ?? "null";
-    const sanitizedKodeKedeputian = kodeKedeputian?? "null";
+    const sanitizedKodeCabang = inputKodeCabang ?? "null";
+    const sanitizedKodeDeputi = inputKodeDeputi ?? "null";
     const sanitizedInputKelasRS =
       inputKelasRS.length > 0 ? inputKelasRS : "nan";
     const sanitizedInputCanggih =
@@ -1061,8 +1044,8 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
           sanitizedSelectedProvId,
           sanitizedSelectedKabId,
           sanitizedSelectedKecId,
-          "null",
-          sanitizedKodeKedeputian,
+          sanitizedKodeCabang,
+          sanitizedKodeDeputi,
           sanitizedInputKelasRS,
           sanitizedInputCanggih,
           sanitizedInputJenis,
@@ -1076,8 +1059,8 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
           sanitizedSelectedProvId,
           sanitizedSelectedKabId,
           sanitizedSelectedKecId,
-          "null",
-          sanitizedKodeKedeputian,
+          sanitizedKodeCabang,
+          sanitizedKodeDeputi,
           sanitizedInputKelasRS,
           sanitizedInputCanggih,
           sanitizedInputJenis,
@@ -1093,8 +1076,8 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
           sanitizedSelectedProvId,
           sanitizedSelectedKabId,
           sanitizedSelectedKecId,
-          "null",
-          sanitizedKodeKedeputian,
+          sanitizedKodeCabang,
+          sanitizedKodeDeputi,
           sanitizedInputRmax,
           sanitizedInputRmin,
           sanitizedInputJenis,
@@ -1108,8 +1091,8 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
           sanitizedSelectedProvId,
           sanitizedSelectedKabId,
           sanitizedSelectedKecId,
-          "null",
-          sanitizedKodeKedeputian,
+          sanitizedKodeCabang,
+          sanitizedKodeDeputi,
           sanitizedInputRmax,
           sanitizedInputRmin,
           sanitizedInputJenis,
@@ -1139,11 +1122,11 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
   };
 
   const getLayerLeftPosition = () => {
-    return showSidebar ? "420px" : "20px"; // Adjust this value based on your layout
+    return showSidebar ? "380px" : "20px"; // Adjust this value based on your layout
   };
   return (
     <Box className="contentRoot">
-      <div id="map" className="map"></div>
+      <div id="map" className="map-dashboard"></div>
       {/* Center Geolocation Button */}
       <button
         onClick={handleCenterGeolocation}
@@ -1153,7 +1136,7 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
       </button>
 
       <div
-        className="layer-select-embed"
+        className="layer-select"
         id={selectedBasemap}
         onClick={handleLayerSelectClick}
         style={{ left: getLayerLeftPosition() }}
@@ -1179,7 +1162,7 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
       </div>
 
       <div
-        className="legend-button-embed"
+        className="legend-button"
         onClick={handleLegendClick}
         style={{ left: getLayerLeftPosition() }}
       >
@@ -1187,7 +1170,7 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
       </div>
 
       {showLegend && (
-        <div className="legend-box-embed" onClick={handleLegendClick}>
+        <div className="legend-box" onClick={handleLegendClick}>
           {faskes === "fkrtl" ? (
             <img
               src="../images/legend-fkrtl.png"
@@ -1200,7 +1183,7 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
       )}
 
       <div
-        className="filter-button-embed"
+        className="filter-button"
         onClick={handleFilterClick}
         style={{ left: getLayerLeftPosition() }}
       >
@@ -1209,7 +1192,7 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
         </div>
       </div>
 
-      <div className={`sidebar-filter ${showSidebar ? "open" : ""}`}>
+      <div className={`sidebar-filter-dashboard ${showSidebar ? "open" : ""}`}>
         <div className="sidebar-header">
           <Typography>Filter {faskes.toUpperCase()}</Typography>
         </div>
@@ -1310,6 +1293,58 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
               </Box>
             </Grid>
 
+            
+            <Grid item xs={6}>
+              <Box
+                sx={{
+                  padding: 1,
+                  marginTop: -3,
+                }}
+              >
+      
+      <Autocomplete
+        id="kedeputian-autocomplete"
+        options={listKedeputian}
+        value={inputKodeDeputi}
+        onChange={handleKedeputianChange}
+        renderInput={(params) => (
+          <TextField {...params} label="Kedeputian" size="small" />
+        )}
+      />
+                
+              </Box>
+            </Grid>
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  padding: 1,
+                  marginTop: -3,
+                }}
+              >
+ <Autocomplete
+                  disablePortal
+                  noOptionsText={"Data Tidak Ditemukan"}
+                  size={"small"}
+                  fullWidth
+                  id="combo-box-demo"
+                  value={selectedCabang}
+                  onChange={handleSelectCabang}
+                  inputValue={selectedCabang}
+                  onInputChange={handleInputCabangChange}
+                  options={listCabang || []}
+                  getOptionLabel={(option) => option.namacabang}
+                  style={{ zindex: 1000000, left: 0 }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Kantor Cabang | Masukan Minimal 2 Karakter"
+                      defaultValue=""
+                    />
+                  )}
+                />
+              </Box>
+            </Grid>
+
             <Grid item xs={12}>
               <Box
                 sx={{
@@ -1330,6 +1365,7 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
                 }}
               >
                 <Autocomplete
+                  disablePortal
                   noOptionsText={"Data Tidak Ditemukan"}
                   size={"small"}
                   fullWidth
@@ -1340,6 +1376,7 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
                   onInputChange={handleInputWilayahChange}
                   options={listWilayah || []}
                   getOptionLabel={(option) => option.disp}
+                  style={{ zindex: 1000000, left: 0 }}
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -1477,7 +1514,7 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
             ) : null}
           </Grid>
         </div>
-        <div className="sidebar-footer">
+        <div className="sidebar-footer-dashboard">
           <Box sx={{ m: 1 }}>
             <Grid container spacing={0.5}>
               {isFiltered ? (
@@ -1508,9 +1545,10 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
           </Box>
         </div>
       </div>
+
       {faskes === "fkrtl" ? (
         <>
-          <div className={`sidebar-data ${showSidebarData ? "open" : ""}`}>
+          <div className={`sidebar-data-dashboard ${showSidebarData ? "open" : ""}`}>
             <div className="sidebar-header">
               <Typography>Daftar Faskes</Typography>
               <div className="sidebar-data-toggle" onClick={toggleSidebar}>
@@ -1521,17 +1559,7 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
                 )}
               </div>
             </div>
-            {isLoading ?
-            
-            <div className="sidebar-subheader">
-                  <Stack sx={{ width: "100%" }} spacing={2}>
-                    <Alert severity="info">
-                      <Typography>
-                       Mengambil Data ...
-                      </Typography>
-                    </Alert>
-                  </Stack>
-                </div>: listFilterFKRTL && listFilterFKRTL.length > 0 ? (
+            {listFilterFKRTL && listFilterFKRTL.length > 0 ? (
               <>
                 <div className="sidebar-subheader">
                   <Stack sx={{ width: "100%" }} spacing={2}>
@@ -1600,7 +1628,7 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
         </>
       ) : (
         <>
-          <div className={`sidebar-data ${showSidebarData ? "open" : ""}`}>
+          <div className={`sidebar-data-dashboard ${showSidebarData ? "open" : ""}`}>
             <div className="sidebar-header">
               <Typography>Daftar Faskes</Typography>
               <div className="sidebar-data-toggle" onClick={toggleSidebar}>
@@ -1611,17 +1639,7 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
                 )}
               </div>
             </div>
-            {isLoading ?
-            
-            <div className="sidebar-subheader">
-                  <Stack sx={{ width: "100%" }} spacing={2}>
-                    <Alert severity="info">
-                      <Typography>
-                       Mengambil Data ...
-                      </Typography>
-                    </Alert>
-                  </Stack>
-                </div>: listFilterFKTP && listFilterFKTP.length > 0 ? (
+            {listFilterFKTP && listFilterFKTP.length > 0 ? (
               <>
                 <div className="sidebar-subheader">
                   <Stack sx={{ width: "100%" }} spacing={2}>

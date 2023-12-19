@@ -21,7 +21,7 @@ const checkAuth = () => {
 
 
 const logout = () => {
-  return axios.get(`/logout`, {
+  return axios.post(`/logout`, {
     withCredentials: true,
   }
   );

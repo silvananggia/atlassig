@@ -1,31 +1,58 @@
 // MyRouter.js
-import React from 'react';
-import { Route, Routes } from 'react-router-dom';
+import React from "react";
+import { useSelector } from "react-redux";
+import { Route, Routes, useNavigate } from "react-router-dom";
 
-import Layout from '../layouts/Layout';
-import LoginPage from '../components/Login';
-import MapPage from '../components/dashboard/MapDashboard';
-import EmbedPage from '../components/embed/MapEmbed';
-import StaisticsPage from '../components/statistic/StatisticsPage';
-import NotFound from '../components/NotFound';
+import Layout from "../layouts/Layout";
+import LoginPage from "../components/Login";
+import MapPage from "../components/dashboard/MapDashboard";
+import MapFKRTL from "../components/dashboard/MapDashboardFKRTL";
+import EmbedPage from "../components/embed/MapEmbed";
+import StaisticsPage from "../components/statistic/StatisticsPage";
+import NotFound from "../components/NotFound";
+import PrivateRoute from "./PrivateRoute";
 
 function MyRouter() {
   return (
+    <Routes>
+      <Route path="login" element={<LoginPage />} />
+      <Route path="embed/:code" element={<EmbedPage />} />
 
-<Routes>
-<Route path="login" element={<LoginPage />} />
-<Route path="embed/:code" element={<EmbedPage />} />
+      <Route
+        path="/"
+        element={
+          <PrivateRoute>
+            <MapPage faskes={"fktp"} />
+          </PrivateRoute>
+        }
+      ></Route>
+      <Route
+        path="mapfktp"
+        element={
+          <PrivateRoute>
+            <MapPage faskes={"fktp"} />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="mapfkrtl"
+        element={
+          <PrivateRoute>
+            <MapFKRTL />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="statistic"
+        element={
+          <PrivateRoute>
+            <StaisticsPage />
+          </PrivateRoute>
+        }
+      />
 
-<Route path="/" element={<Layout />}>
-    <Route index element={<MapPage faskes={"fktp"} />} />
-    <Route path="mapfktp" element={<MapPage faskes={"fktp"}/>} />
-    <Route path="mapfkrtl" element={<MapPage faskes={"fkrtl"}/>} />
-    <Route path="statistic" element={<StaisticsPage />} />
-    
-</Route>
-
-<Route path="*" element={<NotFound/>} />
-</Routes>
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 

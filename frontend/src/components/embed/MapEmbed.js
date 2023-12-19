@@ -9,7 +9,10 @@ import MapCalonFaskes from "./Map";
 import MapPublik from "./MapPublik";
 import MapCabang from "./MapCabang";
 import MapKedeputian from "./MapKedeputian";
+import {
+  setLoading,
 
+} from "../../actions/loadingActions";
 const MapComponent = () => {
   const dispatch = useDispatch();
   const { code } = useParams();
@@ -31,6 +34,10 @@ const MapComponent = () => {
       setCanAccess(false);
     }
   }, [accessEmbed]);
+
+  useEffect(()=>{
+    dispatch(setLoading(false));
+  },[])
 
   return (
     <Box className="contentRoot">
@@ -75,6 +82,7 @@ const MapComponent = () => {
           <Typography>Please contact support for assistance.</Typography>
         </div>
       )}
+      
     </Box>
   );
 };

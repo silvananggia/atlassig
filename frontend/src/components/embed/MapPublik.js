@@ -28,7 +28,7 @@ import PermDeviceInformationOutlinedIcon from "@mui/icons-material/PermDeviceInf
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import MyLocationOutlinedIcon from "@mui/icons-material/MyLocationOutlined";
-import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import {
   fetchFKTPDetail,
   fetchFilterFKTPPublik,
@@ -44,6 +44,10 @@ import {
 import {
   fetchAutoWilayah,
 } from "../../actions/filterActions";
+import {
+  setLoading,
+
+} from "../../actions/loadingActions";
 import GeoJSON from "ol/format/GeoJSON";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -100,11 +104,11 @@ const MapComponent = ({ faskes }) => {
   const zoomLevel = 10;
 
   const potentialLayerUrl =
-    faskes === "fktp"
-      ? "../potential/{z}/{x}/{-y}.png"
-      : faskes === "fkrtl"
-      ? "../potential_fkrtl/{z}/{x}/{-y}.png"
-      : "";
+  faskes === "fktp"
+  ? "../tiles/fktp_tile/latest/{z}/{x}/{-y}.png"
+  : faskes === "fkrtl"
+  ? "../tiles/fkrtl_tile/latest/{z}/{x}/{-y}.png"
+  : "";
 
  
       useEffect(() => {
@@ -120,7 +124,11 @@ const MapComponent = ({ faskes }) => {
   const listWilayah = useSelector((state) => state.mapfilter.wilayahlist);
   const listFilterFKTP = useSelector((state) => state.mapfktp.fktpdatalist);
   const listFilterFKRTL = useSelector((state) => state.mapfkrtl.fkrtldatalist);
+  const isLoading = useSelector((state) => state.loading.isLoading);
 
+  useEffect(() => {
+    
+  }, [isLoading]);
   useEffect(() => {
     if (faskes === "fkrtl") {
       if (
@@ -148,7 +156,11 @@ const MapComponent = ({ faskes }) => {
     if (value.length >= 3) {
       dispatch(fetchAutoWilayah(value));
     } else {
-      //dispatch(fetchAutoWilayah([]));
+      dispatch(fetchAutoWilayah([]));
+
+      setSelectedKecId("null");
+      setSelectedKabId("null");
+      setSelectedProvId("null");
     }
   };
 
@@ -852,6 +864,7 @@ const MapComponent = ({ faskes }) => {
   };
 
   const handleSubmit = () => {
+  
     const sanitizedSelectedProvId = selectedProvId ?? "null";
     const sanitizedSelectedKabId = selectedKabId ?? "null";
     const sanitizedSelectedKecId = selectedKecId ?? "null";
@@ -1043,7 +1056,18 @@ const MapComponent = ({ faskes }) => {
                 )}
               </div>
             </div>
-            {listFilterFKRTL && listFilterFKRTL.length > 0 ? (
+            {isLoading ?
+            
+            <div className="sidebar-subheader">
+                  <Stack sx={{ width: "100%" }} spacing={2}>
+                    <Alert severity="info">
+                      <Typography>
+                       Mengambil Data ...
+                      </Typography>
+                    </Alert>
+                  </Stack>
+                </div>: 
+                listFilterFKRTL && listFilterFKRTL.length > 0 ? (
               <>
                 <div className="sidebar-subheader">
                   <Stack sx={{ width: "100%" }} spacing={2}>
@@ -1123,7 +1147,17 @@ const MapComponent = ({ faskes }) => {
                 )}
               </div>
             </div>
-            {listFilterFKTP && listFilterFKTP.length > 0 ? (
+            {isLoading ?
+            
+            <div className="sidebar-subheader">
+                  <Stack sx={{ width: "100%" }} spacing={2}>
+                    <Alert severity="info">
+                      <Typography>
+                       Mengambil Data ...
+                      </Typography>
+                    </Alert>
+                  </Stack>
+                </div>: listFilterFKTP && listFilterFKTP.length > 0 ? (
               <>
                 <div className="sidebar-subheader">
                   <Stack sx={{ width: "100%" }} spacing={2}>
@@ -1199,6 +1233,26 @@ const MapComponent = ({ faskes }) => {
           closeDetailBox={closeDetailBox}
         />
       )}
+
+<div className="layer-select-embed3" >
+        <InfoOutlinedIcon fontSize="medium" />
+      </div>
+
+      <div className="basemap-select3 hidden">
+        <div className="coordinate-box-embed">
+          <p className="label">
+            <strong>Keterangan :</strong> <br />
+           
+            Lokasi Anda : Latitude: {userLocation[1].toFixed(6)}, Longitude:{" "}
+            {userLocation[0].toFixed(6)}
+          </p>
+          <p className="label">
+            - Titik Fasilitas Kesehatan yang Ditampilkan Radius 10 Km dari Titik
+            Lokasi Anda.
+            
+          </p>
+        </div>
+      </div>
     </Box>
   );
 };

@@ -29,6 +29,10 @@ import MyLocationOutlinedIcon from "@mui/icons-material/MyLocationOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { fetchMarkersFKTP } from "../../actions/fktpActions";
 import { fetchMarkersFKRTL } from "../../actions/fkrtlActions";
+import {
+  setLoading,
+
+} from "../../actions/loadingActions";
 import GeoJSON from "ol/format/GeoJSON";
 
 const MapComponent = ({ latitude, longitude, faskes }) => {
@@ -59,11 +63,11 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
     faskes === "fktp" ? 2000 : faskes === "fkrtl" ? 5000 : "";
 
   const potentialLayerUrl =
-    faskes === "fktp"
-      ? "../potential/{z}/{x}/{-y}.png"
-      : faskes === "fkrtl"
-      ? "../potential_fkrtl/{z}/{x}/{-y}.png"
-      : "";
+  faskes === "fktp"
+  ? "../tiles/fktp_tile/latest/{z}/{x}/{-y}.png"
+  : faskes === "fkrtl"
+  ? "../tiles/fkrtl_tile/latest/{z}/{x}/{-y}.png"
+  : "";
 
   const centerMap = [longitude, latitude]; // Move this line above its usage
   const zoomLevel = 13;
@@ -75,7 +79,11 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
 
   const markerListFKTP = useSelector((state) => state.mapfktp.fktplist);
   const markerListFKRTL = useSelector((state) => state.mapfkrtl.fkrtllist);
+  const isLoading = useSelector((state) => state.loading.isLoading);
 
+  useEffect(() => {
+    
+  }, [isLoading]);
 
   useEffect(() => {
     if (faskes === "fkrtl") {
@@ -759,7 +767,7 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
               />
             ) : (
               <img
-                src="../images/legend-fktp.png"
+                src="../images/legend-calon-fktp.png"
                 width="100%"
               />
             )}

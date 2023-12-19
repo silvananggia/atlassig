@@ -48,6 +48,10 @@ import {
   fetchJenisFKRTL,
   fetchJenisFKTP,
 } from "../../actions/filterActions";
+import {
+  setLoading,
+
+} from "../../actions/loadingActions";
 import GeoJSON from "ol/format/GeoJSON";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -63,6 +67,8 @@ import { Switch } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Stack from "@mui/material/Stack";
 import CardFaskes from "./CardFaskes";
+
+
 const MapComponent = ({ faskes, kodeCabang }) => {
   const dispatch = useDispatch();
   const bingApiKey =
@@ -126,13 +132,14 @@ const MapComponent = ({ faskes, kodeCabang }) => {
   const listRasio = ["< 5000", ">= 5000"];
 
   const potentialLayerUrl =
-    faskes === "fktp"
-      ? "../potential/{z}/{x}/{-y}.png"
-      : faskes === "fkrtl"
-      ? "../potential_fkrtl/{z}/{x}/{-y}.png"
-      : "";
+  faskes === "fktp"
+  ? "../tiles/fktp_tile/latest/{z}/{x}/{-y}.png"
+  : faskes === "fkrtl"
+  ? "../tiles/fkrtl_tile/latest/{z}/{x}/{-y}.png"
+  : "";
 
   useEffect(() => {
+    dispatch(setLoading(true));
     dispatch(fetchFKTPCabang(kodeCabang));
     dispatch(fetchFKRTLCabang(kodeCabang));
     dispatch(fetchCenterCabang(kodeCabang));
@@ -142,7 +149,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     } else {
       dispatch(fetchJenisFKTP());
     }
-
+    dispatch(setLoading(false));
     //dispatch(fetchAutoWilayah(""));
   }, [dispatch, kodeCabang]);
 
@@ -157,7 +164,11 @@ const MapComponent = ({ faskes, kodeCabang }) => {
   const listWilayah = useSelector((state) => state.mapfilter.wilayahlist);
   const listFilterFKTP = useSelector((state) => state.mapfktp.fktpdatalist);
   const listFilterFKRTL = useSelector((state) => state.mapfkrtl.fkrtldatalist);
+  const isLoading = useSelector((state) => state.loading.isLoading);
 
+  useEffect(() => {
+    
+  }, [isLoading]);
   useEffect(() => {
     if (faskes === "fkrtl") {
       if (
@@ -198,7 +209,11 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     if (value.length >= 3) {
       dispatch(fetchAutoWilayah(value));
     } else {
-      //dispatch(fetchAutoWilayah([]));
+      dispatch(fetchAutoWilayah([]));
+
+      setSelectedKecId("null");
+      setSelectedKabId("null");
+      setSelectedProvId("null");
     }
   };
 
@@ -1029,6 +1044,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     }
   }, [inputRasio]);
   const handleSubmit = () => {
+    dispatch(setLoading(true));
     const sanitizedSelectedProvId = selectedProvId ?? "null";
     const sanitizedSelectedKabId = selectedKabId ?? "null";
     const sanitizedSelectedKecId = selectedKecId ?? "null";
@@ -1107,12 +1123,14 @@ const MapComponent = ({ faskes, kodeCabang }) => {
       );
 
       removeFKTPPointMarkerLayers();
+      
     }
-
+    dispatch(setLoading(false));
     closeDetailBox();
     toggleSidebar(true);
     setIsFiltered(true);
     resetInput();
+    
   };
 
   const resetInput = () => {
@@ -1130,7 +1148,9 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     return showSidebar ? "420px" : "20px"; // Adjust this value based on your layout
   };
   return (
+    
     <Box className="contentRoot">
+
       <div id="map" className="map"></div>
       {/* Center Geolocation Button */}
       <button
@@ -1145,7 +1165,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
         id={selectedBasemap}
         onClick={handleLayerSelectClick}
         style={{ left: getLayerLeftPosition() }}
-      ></div>
+      > </div>
 
       <div
         className="basemap-select hidden"
@@ -1164,6 +1184,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
           handleFkrtlSwitchChange={toggleShowFKRTLMark}
           leftPosition={getLayerLeftPosition()}
         />
+     
       </div>
 
       <div
@@ -1494,6 +1515,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
                 </Button>
               </Grid>
             </Grid>
+           
           </Box>
         </div>
       </div>
@@ -1510,7 +1532,17 @@ const MapComponent = ({ faskes, kodeCabang }) => {
                 )}
               </div>
             </div>
-            {listFilterFKRTL && listFilterFKRTL.length > 0 ? (
+            {isLoading ?
+            
+            <div className="sidebar-subheader">
+                  <Stack sx={{ width: "100%" }} spacing={2}>
+                    <Alert severity="info">
+                      <Typography>
+                       Mengambil Data ...
+                      </Typography>
+                    </Alert>
+                  </Stack>
+                </div>: listFilterFKRTL && listFilterFKRTL.length > 0 ? (
               <>
                 <div className="sidebar-subheader">
                   <Stack sx={{ width: "100%" }} spacing={2}>
@@ -1590,7 +1622,18 @@ const MapComponent = ({ faskes, kodeCabang }) => {
                 )}
               </div>
             </div>
-            {listFilterFKTP && listFilterFKTP.length > 0 ? (
+            {isLoading ?
+            
+            <div className="sidebar-subheader">
+                  <Stack sx={{ width: "100%" }} spacing={2}>
+                    <Alert severity="info">
+                      <Typography>
+                       Mengambil Data ...
+                      </Typography>
+                    </Alert>
+                  </Stack>
+                </div>: 
+            listFilterFKTP && listFilterFKTP.length > 0 ? (
               <>
                 <div className="sidebar-subheader">
                   <Stack sx={{ width: "100%" }} spacing={2}>
@@ -1655,6 +1698,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
                 </Alert>
               </Stack>
             )}
+           
           </div>
         </>
       )}
@@ -1666,7 +1710,10 @@ const MapComponent = ({ faskes, kodeCabang }) => {
           closeDetailBox={closeDetailBox}
         />
       )}
+
+
     </Box>
+        
   );
 };
 

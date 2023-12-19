@@ -24,7 +24,7 @@ app.use(cors({
 }));
 
 const IN_PROD = process.env.NODE_ENV === "production";
-const EXPIRED = 30 * 60;
+const EXPIRED = 30 * 60 * 100;
 const REDIS_PORT = process.env.REDIS_PORT;
 
 // Redis setup
@@ -46,11 +46,12 @@ app.use(
     store: RedisStore,
     secret: process.env.SESS_SECRET,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: {
-      maxAge: 1000 * 60 * 10 ,
+      maxAge: 1000 * 60 * 60 *24*7,
       secure: false,
-        httpOnly:true,
+      httpOnly:true,
+      sameSite:"lax",
     },
   })
 );

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Button, TextField, Checkbox, FormControlLabel } from "@mui/material";
@@ -16,6 +16,10 @@ import { fetchLogin } from "../actions/authActions";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
 import Stack from "@mui/material/Stack";
+import {
+  setLoading,
+
+} from "../actions/loadingActions";
 
 function Copyright() {
   return (
@@ -39,10 +43,15 @@ const Login = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  useEffect(()=>{
+    dispatch(setLoading(false));
+  },[])
   const handleLogin = () => {
+    
     dispatch(fetchLogin(email, password));
   };
+
+  
 
   const isAuthenticated = useSelector((state) => state.mapauth.isAuthenticated);
 
@@ -51,6 +60,9 @@ const Login = () => {
     navigate("/");
   }
 
+
+
+  
   return (
     <ThemeProvider theme={defaultTheme}>
       <Container component="main" maxWidth="xs">

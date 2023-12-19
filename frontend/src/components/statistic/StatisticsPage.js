@@ -65,6 +65,12 @@ const StatisticsPage = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (dataFKTP && dataFKTP.length > 0 && dataFKRTL && dataFKRTL.length > 0) {
+      setDataPie([dataFKTP[0].count, dataFKRTL[0].count]);
+    }
+  }, [ dataFKTP, dataFKRTL, dataPie]);
+
   const handleKedeputianChange = (event, value) => {
     setInputKodeDeputi(value);
   };
@@ -74,6 +80,7 @@ const StatisticsPage = () => {
       dispatch(fetchCabang(value));
     } else {
       //dispatch(fetchAutoWilayah([]));
+      setInputKodeCabang("null")
     }
   };
 
@@ -176,6 +183,10 @@ const StatisticsPage = () => {
       dispatch(fetchAutoWilayah(value));
     } else {
       dispatch(fetchAutoWilayah([]));
+
+      setSelectedKecId("null");
+      setSelectedKabId("null");
+      setSelectedProvId("null");
     }
   };
 
