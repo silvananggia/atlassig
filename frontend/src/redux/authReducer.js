@@ -33,6 +33,7 @@ function authReducer(state = initialState, action) {
         ...state,
         user: action.payload,
         error: null,
+        isAuthenticated: !!action.payload,
       };
       case LOGOUT:
         return initialState;
