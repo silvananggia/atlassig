@@ -21,7 +21,7 @@ import ListItemText from "@mui/material/ListItemText";
 import BrandingWatermarkIcon from "@mui/icons-material/BrandingWatermark";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
-
+import Swal from 'sweetalert2'
 import bpjsLogo from "../assets/images/bpjs_logo.svg";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import MenuItem from "@mui/material/MenuItem";
@@ -102,7 +102,7 @@ export default function MiniDrawer({ children }) {
   const [open, setOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
   const location = useLocation();
-
+  const user =  localStorage.getItem("user");
 
 
   const handleChange = (event) => {
@@ -116,10 +116,33 @@ export default function MiniDrawer({ children }) {
   };
 
   const handleLogout = () => {
-    dispatch(logout());
+    Swal.mixin({
+      customClass: {
+        confirmButton: "btn btn-success",
+        cancelButton: "btn btn-danger"
+      },
+      buttonsStyling: false
+    });
+  
+    Swal.fire({
+      title: "Yakin akan keluar dari Atlas-SIG?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Ya",
+      cancelButtonText: "Tidak!",
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        dispatch(logout());
 
-    navigate("/login");
+        navigate("/login");
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        // User clicked "No, cancel!" or closed the modal
+        return;
+      }
+    });
   };
+  
 
   const handleClose = () => {
     setAnchorEl(null);
@@ -178,6 +201,7 @@ export default function MiniDrawer({ children }) {
           <img src={bpjsLogo} alt="BPJS Logo" style={{ height: 24 }} />
           <Box sx={{ flexGrow: 1 }} />
           <div>
+          
             <IconButton
               size="large"
               aria-label="account of current user"
@@ -187,8 +211,9 @@ export default function MiniDrawer({ children }) {
               color="inherit"
             >
               <AccountCircle />
+              
             </IconButton>
-
+          
             {/* <Menu
               id="menu-appbar"
               anchorEl={anchorEl}

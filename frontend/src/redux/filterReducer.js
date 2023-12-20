@@ -8,7 +8,10 @@ import {
   FETCH_JENIS_FKRTL,
   FETCH_JENIS_FKTP,
   FETCH_CABANG,
-
+  FETCH_WILAYAH_DEPUTI,
+  FETCH_WILAYAH_CABANG,
+  FETCH_KODE_DEPUTI,
+  FETCH_CABANG_DEPUTI,
 
   
 } from "../actions/types";
@@ -26,6 +29,7 @@ const initialState = {
   errmessage: "",
   coordinate: "",
   bbox: "",
+  kodedep: "",
   wilayahlist: [],
 };
 
@@ -93,6 +97,36 @@ function fktpReducer(state = initialState, action) {
         jenisfktp: payload,
       };
       
+      case FETCH_WILAYAH_DEPUTI:
+      return {
+        ...state,
+        loading: false,
+        errmessage: "",
+        wilayahlist: payload,
+      };
+
+      case FETCH_WILAYAH_CABANG:
+        return {
+          ...state,
+          loading: false,
+          errmessage: "",
+          wilayahlist: payload,
+        };
+
+        case FETCH_KODE_DEPUTI:
+        return {
+          ...state,
+          loading: false,
+          errmessage: "",
+          kodedep: payload,
+        };
+        case FETCH_CABANG_DEPUTI:
+        return {
+          ...state,
+          loading: false,
+          errmessage: "",
+          cabanglist: payload,
+        };
       
     default:
       return state;

@@ -28,27 +28,27 @@ import PermDeviceInformationOutlinedIcon from "@mui/icons-material/PermDeviceInf
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import MyLocationOutlinedIcon from "@mui/icons-material/MyLocationOutlined";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
 import {
   fetchFKTPDetail,
-  fetchFilterFKTPPublik,
-  fetchFilterFKTPListPublik,
+  fetchFilterFKTP,
+  fetchFilterFKTPList,
   fetchMarkersFKTP,
 } from "../../actions/fktpActions";
 import {
   fetchFKRTLDetail,
-  fetchFilterFKRTLListPublik,
-  fetchFilterFKRTLPublik,
+  fetchFilterFKRTLList,
+  fetchFilterFKRTL,
   fetchMarkersFKRTL,
 } from "../../actions/fkrtlActions";
 import {
   fetchAutoWilayah,
+  fetchJenisFKRTL,
+  fetchJenisFKTP,
 } from "../../actions/filterActions";
-import {
-  setLoading,
-
-} from "../../actions/loadingActions";
+import { setLoading } from "../../actions/loadingActions";
 import GeoJSON from "ol/format/GeoJSON";
+import Swal from "sweetalert2";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import Divider from "@mui/material/Divider";
@@ -62,7 +62,8 @@ import Checkbox from "@mui/material/Checkbox";
 import { Switch } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Stack from "@mui/material/Stack";
-import CardFaskes from "./CardFaskes";
+import CardFaskes from "./CardFaskesPublik";
+
 const MapComponent = ({ faskes }) => {
   const dispatch = useDispatch();
   const bingApiKey =
@@ -75,12 +76,14 @@ const MapComponent = ({ faskes }) => {
 
   const [userLocation, setUserLocation] = useState([0, 0]);
   const [markerPosition, setMarkerPosition] = useState([0, 0]);
-  const [centerMap, setCenterMap] = useState([13124075.715923082, -277949.29803053016]);
+  const [centerMap, setCenterMap] = useState([
+    13124075.715923082, -277949.29803053016,
+  ]);
   const [selectedBasemap, setSelectedBasemap] = useState("map-switch-default");
   const [userMarkerFeature, setUserMarkerFeature] = useState(null);
   const [latitude, setLatitude] = useState(-2.5489);
   const [longitude, setLongitude] = useState(118.0149);
-  const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.7);
+  const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.9);
   const [markersLoaded, setMarkersLoaded] = useState(false);
   const [showFKTPMark, setShowFKTPMark] = useState(false);
   const [showFKRTLMark, setShowFKRTLMark] = useState(false);
@@ -92,43 +95,70 @@ const MapComponent = ({ faskes }) => {
   const [selectedWilayah, setselectedWilayah] = useState();
 
   //input
-  
+  const [inputNama, setInputNama] = useState(null);
+  const [inputAlamat, setInputAlamat] = useState(null);
+  const [inputJenis, setInputJenis] = useState([]);
+  const [inputrmin, setInputRmin] = useState(null);
+  const [inputrmax, setInputRmax] = useState(null);
+  const [inputRasio, setInputRasio] = useState({
+    "< 5000": true,
+    ">= 5000": true,
+  });
+  const [inputKelasRS, setInputKelasRS] = useState(["A", "B", "C", "D"]);
   const [isFiltered, setIsFiltered] = useState(false);
 
+  const [inputCanggih, setInputCanggih] = useState([
+    "Cathlab",
+    "Sarana Radioterapi",
+    "Sarana Kemoterapi",
+    "None,nan",
+  ]);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [selectedKabId, setSelectedKabId] = useState(null);
-  const [selectedKecId, setSelectedKecId] = useState(null);
-  const [selectedProvId, setSelectedProvId] = useState(null);
+  const [selectedKabId, setSelectedKabId] = useState("nan");
+  const [selectedKecId, setSelectedKecId] = useState("nan");
+  const [selectedProvId, setSelectedProvId] = useState("nan");
   //endinput
 
   const zoomLevel = 10;
+  const listKelasRS = ["A", "B", "C", "D"];
+  const listCanggih = [
+    { name: "Cathlab", value: "Cathlab" },
+    { name: "Sarana Radioterapi", value: "Sarana Radioterapi" },
+    { name: "Sarana Kemoterapi", value: "Sarana Kemoterapi" },
+    { name: "Tanpa Pelayanan Canggih", value: "None,nan" },
+  ];
+
+  const listRasio = ["< 5000", ">= 5000"];
 
   const potentialLayerUrl =
-  faskes === "fktp"
-  ? "../tiles/fktp_tile/latest/{z}/{x}/{-y}.png"
-  : faskes === "fkrtl"
-  ? "../tiles/fkrtl_tile/latest/{z}/{x}/{-y}.png"
-  : "";
+    faskes === "fktp"
+      ? "../tiles/fktp_tile/latest/{z}/{x}/{-y}.png"
+      : faskes === "fkrtl"
+      ? "../tiles/fkrtl_tile/latest/{z}/{x}/{-y}.png"
+      : "";
 
- 
-      useEffect(() => {
-        dispatch(fetchMarkersFKTP(latitude, longitude));
-        dispatch(fetchMarkersFKRTL(latitude, longitude));
-      }, [dispatch, latitude, longitude]);
-
+  useEffect(() => {
+    dispatch(fetchMarkersFKTP(latitude, longitude));
+    dispatch(fetchMarkersFKRTL(latitude, longitude));
+    if (faskes === "fkrtl") {
+      dispatch(fetchJenisFKRTL());
+    } else {
+      dispatch(fetchJenisFKTP());
+    }
+  }, [dispatch, latitude, longitude]);
 
   const markerListFKTP = useSelector((state) => state.mapfktp.fktplist);
   const markerListFKRTL = useSelector((state) => state.mapfkrtl.fkrtllist);
   const detailFKTP = useSelector((state) => state.mapfktp.fktpobj);
   const detailFKRTL = useSelector((state) => state.mapfkrtl.fkrtlobj);
+  const jenisFKRTL = useSelector((state) => state.mapfilter.jenisfkrtl);
+  const jenisFKTP = useSelector((state) => state.mapfilter.jenisfktp);
   const listWilayah = useSelector((state) => state.mapfilter.wilayahlist);
   const listFilterFKTP = useSelector((state) => state.mapfktp.fktpdatalist);
   const listFilterFKRTL = useSelector((state) => state.mapfkrtl.fkrtldatalist);
   const isLoading = useSelector((state) => state.loading.isLoading);
 
-  useEffect(() => {
-    
-  }, [isLoading]);
+  useEffect(() => {}, [isLoading]);
   useEffect(() => {
     if (faskes === "fkrtl") {
       if (
@@ -151,21 +181,36 @@ const MapComponent = ({ faskes }) => {
     }
   }, [markerListFKRTL, markerListFKTP]);
 
+  useEffect(() => {
+    if (jenisFKRTL) {
+      const initialInputJenis = jenisFKRTL.map((item) => item.jenisfaskes);
+      setInputJenis(initialInputJenis);
+    }
+  }, [jenisFKRTL]);
+
+  useEffect(() => {
+    if (jenisFKTP) {
+      const initialInputJenis = jenisFKTP.map((item) => item.jenisfaskes);
+      setInputJenis(initialInputJenis);
+    }
+  }, [jenisFKTP]);
 
   const handleInputWilayahChange = (event, value) => {
     if (value.length >= 3) {
       dispatch(fetchAutoWilayah(value));
     } else {
       dispatch(fetchAutoWilayah([]));
-
-      setSelectedKecId("null");
-      setSelectedKabId("null");
-      setSelectedProvId("null");
+      setSelectedKecId("nan");
+      setSelectedKabId("nan");
+      setSelectedProvId("nan");
+      setselectedWilayah("");
     }
   };
 
   const handleSelectWilayah = (event, selectedOption) => {
-    if (selectedOption) {
+    if (selectedOption === null) {
+      setselectedWilayah("");
+    } else {
       const { kec_id, kab_id, prov_id } = selectedOption;
 
       setSelectedKecId(kec_id);
@@ -206,7 +251,6 @@ const MapComponent = ({ faskes }) => {
 
   const handleResetFilter = () => {
     if (faskes === "fkrtl") {
-     
       dispatch(fetchMarkersFKRTL(latitude, longitude));
       removeFKRTLPointMarkerLayers();
     } else {
@@ -219,10 +263,20 @@ const MapComponent = ({ faskes }) => {
     closeDetailBox();
     setIsFiltered(false);
     resetInput();
-   
-    setSelectedKecId("null");
-    setSelectedKabId("null");
-    setSelectedProvId("null");
+    setInputNama("");
+    setInputAlamat("");
+    setInputRasio({ "< 5000": true, ">= 5000": true });
+    setInputKelasRS(["A", "B", "C", "D"]);
+    setInputCanggih([
+      "Cathlab",
+      "Sarana Radioterapi",
+      "Sarana Kemoterapi",
+      "None,nan",
+    ]);
+    setSelectedKecId("nan");
+    setSelectedKabId("nan");
+    setSelectedProvId("nan");
+    setselectedWilayah("");
   };
   const closeDetailBox = () => {
     setShowDetailBox(false);
@@ -563,8 +617,6 @@ const MapComponent = ({ faskes }) => {
           .getArray()
           .find((layer) => layer.get("title") === "Basemap");
 
-      
-
         basemapGroup.getLayers().clear();
         basemapGroup.getLayers().push(basemapLayer);
         setSelectedBasemap(basemap);
@@ -584,9 +636,6 @@ const MapComponent = ({ faskes }) => {
       }
     }
   };
-
-
-
 
   useEffect(() => {
     const potentialLayer = new TileLayer({
@@ -734,7 +783,7 @@ const MapComponent = ({ faskes }) => {
       FKTPPointMarker();
       setShowFKTPMark(true);
     }
-    // Get the device's current location and zoom to it
+
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition((position) => {
         const lonLat = [position.coords.longitude, position.coords.latitude];
@@ -772,6 +821,7 @@ const MapComponent = ({ faskes }) => {
 
         userMarkerFeature.getGeometry().setCoordinates(coordinates);
 
+        setUserLocation(lonLat);
         setUserLocation(lonLat);
         setCenterMap(coordinates);
         setLatitude(position.coords.latitude);
@@ -848,6 +898,104 @@ const MapComponent = ({ faskes }) => {
     });
   };
 
+  const handleCheckAllChange = () => {
+    if (faskes === "fktp") {
+      setInputJenis(
+        inputJenis.length === jenisFKTP.length
+          ? []
+          : jenisFKTP.map((item) => item.jenisfaskes)
+      );
+    } else {
+      setInputJenis(
+        inputJenis.length === jenisFKRTL.length
+          ? []
+          : jenisFKRTL.map((item) => item.jenisfaskes)
+      );
+    }
+  };
+
+  const handleJenisChange = (item) => {
+    const isChecked = inputJenis.includes(item);
+    if (isChecked) {
+      setInputJenis((prev) => prev.filter((value) => value !== item));
+    } else {
+      setInputJenis((prev) => [...prev, item]);
+    }
+  };
+  const handleKelasRSChange = (kelas, event) => {
+    const updatedKelasRS = [...inputKelasRS];
+
+    if (event.target.checked) {
+      updatedKelasRS.push(kelas);
+    } else {
+      const index = updatedKelasRS.indexOf(kelas);
+      if (index !== -1) {
+        updatedKelasRS.splice(index, 1);
+      }
+    }
+
+    setInputKelasRS(updatedKelasRS);
+  };
+
+  const handleCheckAllKelasRSChange = () => {
+    setInputKelasRS((prev) =>
+      prev.length === listKelasRS.length ? [] : [...listKelasRS]
+    );
+  };
+
+  const selectAllKelasRS = () => inputKelasRS.length === listKelasRS.length;
+  const handleCanggihChange = (item, event) => {
+    const updatedCanggih = [...inputCanggih];
+
+    if (event.target.checked) {
+      updatedCanggih.push(item);
+    } else {
+      const index = updatedCanggih.indexOf(item);
+      if (index !== -1) {
+        updatedCanggih.splice(index, 1);
+      }
+    }
+    setInputCanggih(updatedCanggih);
+  };
+
+  const handleCheckAllCanggihChange = () => {
+    setInputCanggih((prev) =>
+      prev.length === listCanggih.map((option) => option.value).length
+        ? []
+        : listCanggih.map((option) => option.value)
+    );
+  };
+
+  const selectAllCanggih = () =>
+    inputCanggih.length === listCanggih.map((option) => option.value).length;
+
+  const handleRasioChange = (item) => {
+    setInputRasio((prevInputRasio) => {
+      let newInputRasio = { ...prevInputRasio };
+
+      // Toggle the checked state of the current item
+      newInputRasio[item] = !prevInputRasio[item];
+
+      // Check the conditions and update inputRmin and inputRmax accordingly
+      if (newInputRasio["< 5000"] && newInputRasio[">= 5000"]) {
+        setInputRmin(0);
+        setInputRmax(1000000);
+      } else if (newInputRasio["< 5000"]) {
+        setInputRmin(0);
+        setInputRmax(5000);
+      } else if (newInputRasio[">= 5000"]) {
+        setInputRmin(5000);
+        setInputRmax(1000000);
+      } else {
+        // If none of the conditions are met, you can set default values or handle it as needed
+        // For example, setting both to some default values like 0
+        setInputRmin(0);
+        setInputRmax(0);
+      }
+
+      return newInputRasio;
+    });
+  };
 
   const handleListClick = (index) => {
     setSelectedItem(index);
@@ -863,71 +1011,149 @@ const MapComponent = ({ faskes }) => {
     }
   };
 
-  const handleSubmit = () => {
-  
-    const sanitizedSelectedProvId = selectedProvId ?? "null";
-    const sanitizedSelectedKabId = selectedKabId ?? "null";
-    const sanitizedSelectedKecId = selectedKecId ?? "null";
-
-
-    if (faskes === "fkrtl") {
-      dispatch(
-        fetchFilterFKRTLListPublik(
-          sanitizedSelectedProvId,
-          sanitizedSelectedKabId,
-          sanitizedSelectedKecId,
-        )
-      );
-
-      dispatch(
-        fetchFilterFKRTLPublik(
-          sanitizedSelectedProvId,
-          sanitizedSelectedKabId,
-          sanitizedSelectedKecId,
-        )
-      );
-      dispatch(
-        fetchFilterFKTPListPublik(
-          sanitizedSelectedProvId,
-          sanitizedSelectedKabId,
-          sanitizedSelectedKecId,
-        )
-      );
-
-      dispatch(
-        fetchFilterFKTPPublik(
-          sanitizedSelectedProvId,
-          sanitizedSelectedKabId,
-          sanitizedSelectedKecId,
-        )
-      );
-
-      removeFKTPPointMarkerLayers();
-      removeFKRTLPointMarkerLayers();
+  useEffect(() => {
+    if (inputRasio["< 5000"] && inputRasio[">= 5000"]) {
+      setInputRmin(0);
+      setInputRmax(1000000);
+    } else if (inputRasio["< 5000"]) {
+      setInputRmin(0);
+      setInputRmax(5000);
+    } else if (inputRasio[">= 5000"]) {
+      setInputRmin(5000);
+      setInputRmax(1000000);
     } else {
-      dispatch(
-        fetchFilterFKTPListPublik(
-          sanitizedSelectedProvId,
-          sanitizedSelectedKabId,
-          sanitizedSelectedKecId,
-        )
-      );
-
-      dispatch(
-        fetchFilterFKTPPublik(
-          sanitizedSelectedProvId,
-          sanitizedSelectedKabId,
-          sanitizedSelectedKecId,
-        )
-      );
-
-      removeFKTPPointMarkerLayers();
+      // If none of the conditions are met, you can set default values or handle it as needed
+      // For example, setting both to some default values like 0
+      setInputRmin(0);
+      setInputRmax(0);
     }
+  }, [inputRasio]);
+  const handleSubmit = () => {
+    if (
+      selectedProvId != "nan" ||
+      selectedKabId != "nan" ||
+      selectedKecId != "nan"
+    ) {
+      const selectedCanggihValues = [
+        "Cathlab",
+        "Sarana Radioterapi",
+        "Sarana Kemoterapi",
+      ];
 
-    closeDetailBox();
-    toggleSidebar(true);
-    setIsFiltered(true);
-    resetInput();
+      const overlayLayer = map
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "PotentialLayer");
+
+      if (overlayLayer) {
+        if (inputCanggih.includes("None,nan")) {
+          overlayLayer.setOpacity(1);
+        } else if (
+          selectedCanggihValues.some((value) => inputCanggih.includes(value))
+        ) {
+          overlayLayer.setOpacity(0);
+        } else {
+          overlayLayer.setOpacity(1);
+        }
+      }
+
+      if (overlayLayer) {
+        if (inputJenis.includes("Dokter gigi") && inputJenis.length === 1) {
+          overlayLayer.setOpacity(0);
+        } else {
+          overlayLayer.setOpacity(1);
+        }
+      }
+
+      const sanitizedSelectedProvId = selectedProvId ?? "null";
+      const sanitizedSelectedKabId = selectedKabId ?? "null";
+      const sanitizedSelectedKecId = selectedKecId ?? "null";
+      const sanitizedInputKelasRS =
+        inputKelasRS.length > 0 ? inputKelasRS : "nan";
+      const sanitizedInputCanggih =
+        inputCanggih.length > 0 ? inputCanggih : listCanggih;
+      const sanitizedInputJenis = inputJenis.length > 0 ? inputJenis : "null";
+      const sanitizedInputNama = inputNama ?? "null";
+      const sanitizedInputAlamat = inputAlamat ?? "null";
+      const sanitizedInputRmin = inputrmin ?? "null";
+      const sanitizedInputRmax = inputrmax ?? "null";
+
+      if (faskes === "fkrtl") {
+        dispatch(
+          fetchFilterFKRTLList(
+            sanitizedSelectedProvId,
+            sanitizedSelectedKabId,
+            sanitizedSelectedKecId,
+            "null",
+            "null",
+            sanitizedInputKelasRS,
+            sanitizedInputCanggih,
+            sanitizedInputJenis,
+            sanitizedInputNama,
+            sanitizedInputAlamat
+          )
+        );
+
+        dispatch(
+          fetchFilterFKRTL(
+            sanitizedSelectedProvId,
+            sanitizedSelectedKabId,
+            sanitizedSelectedKecId,
+            "null",
+            "null",
+            sanitizedInputKelasRS,
+            sanitizedInputCanggih,
+            sanitizedInputJenis,
+            sanitizedInputNama,
+            sanitizedInputAlamat
+          )
+        );
+
+        removeFKRTLPointMarkerLayers();
+      } else {
+        dispatch(
+          fetchFilterFKTPList(
+            sanitizedSelectedProvId,
+            sanitizedSelectedKabId,
+            sanitizedSelectedKecId,
+            "null",
+            "null",
+            sanitizedInputRmax,
+            sanitizedInputRmin,
+            sanitizedInputJenis,
+            sanitizedInputNama,
+            sanitizedInputAlamat
+          )
+        );
+
+        dispatch(
+          fetchFilterFKTP(
+            sanitizedSelectedProvId,
+            sanitizedSelectedKabId,
+            sanitizedSelectedKecId,
+            "null",
+            "null",
+            sanitizedInputRmax,
+            sanitizedInputRmin,
+            sanitizedInputJenis,
+            sanitizedInputNama,
+            sanitizedInputAlamat
+          )
+        );
+
+        removeFKTPPointMarkerLayers();
+      }
+      closeDetailBox();
+      toggleSidebar(true);
+      setIsFiltered(true);
+      resetInput();
+      setselectedWilayah([]);
+    } else {
+      Swal.fire({
+        text: "Mohon tentukan wilayah pencarian terlebih dahulu",
+        icon: "info",
+      });
+    }
   };
 
   const resetInput = () => {
@@ -939,6 +1165,8 @@ const MapComponent = ({ faskes }) => {
     const sanitizedInputJenis = "null";
     const sanitizedInputNama = "null";
     const sanitizedInputAlamat = "null";
+    setselectedWilayah(null);
+    setselectedWilayah("");
   };
 
   const getLayerLeftPosition = () => {
@@ -955,52 +1183,14 @@ const MapComponent = ({ faskes }) => {
         <MyLocationOutlinedIcon className="img" />
       </button>
 
-      <div className="searchbar-embed">
-        <Box sx={{ m: 1 }}>
-          <Grid container spacing={0.5}>
-            <Grid item xs={8}>
-              <Autocomplete
-                noOptionsText={"Data Tidak Ditemukan"}
-                size={"small"}
-                fullWidth
-                id="combo-box-demo"
-                value={selectedWilayah}
-                onChange={handleSelectWilayah}
-                inputValue={selectedWilayah}
-                onInputChange={handleInputWilayahChange}
-                options={listWilayah || []}
-                getOptionLabel={(option) => option.disp}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Masukan minimal 3 karakter"
-                    defaultValue=""
-                  />
-                )}
-              />
-            </Grid>
-            <Grid item xs={4}>
-              <Button
-                variant="contained"
-                fullWidth
-                size="medium"
-                onClick={() => {
-                  handleSubmit(); // Call the submission function
-                }}
-              >
-                Terapkan
-              </Button>
-            </Grid>
-          </Grid>
-        </Box>
-      </div>
-
       <div
         className="layer-select-embed"
         id={selectedBasemap}
         onClick={handleLayerSelectClick}
         style={{ left: getLayerLeftPosition() }}
-      ></div>
+      >
+        {" "}
+      </div>
 
       <div
         className="basemap-select hidden"
@@ -1032,17 +1222,367 @@ const MapComponent = ({ faskes }) => {
       {showLegend && (
         <div className="legend-box-embed" onClick={handleLegendClick}>
           {faskes === "fkrtl" ? (
-            <img
-              src="../images/legend-fkrtl.png"
-              width="100%"
-            />
+            <img src="../images/legend-fkrtl.png" width="100%" />
           ) : (
             <img src="../images/legend-fktp.png" width="100%" />
           )}
         </div>
       )}
 
-      
+      <div
+        className="filter-button-embed"
+        onClick={handleFilterClick}
+        style={{ left: getLayerLeftPosition() }}
+      >
+        <div className="button-container">
+          <TuneOutlinedIcon fontSize="medium" />
+        </div>
+      </div>
+
+      <div className={`sidebar-filter ${showSidebar ? "open" : ""}`}>
+        <div className="sidebar-header">
+          <Typography>Filter {faskes.toUpperCase()}</Typography>
+        </div>
+        <div className="sidebar-content">
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  padding: 1,
+                  marginTop: -2,
+                }}
+              >
+                <Typography
+                  fontWeight="fontWeightBold"
+                  variant="body2"
+                  display="inline"
+                >
+                  Wilayah
+                </Typography>{" "}
+                <Typography fontSize={10} display="inline">
+                  (Wajib Diisi)
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  padding: 1,
+                  marginTop: -2,
+                }}
+              >
+                <Autocomplete
+                  noOptionsText={"Data Tidak Ditemukan"}
+                  size={"small"}
+                  fullWidth
+                  required
+                  id="wilayah"
+                  style={{ zindex: 1000000, left: 0 }}
+                  value={selectedWilayah}
+                  onChange={handleSelectWilayah}
+                  inputValue={selectedWilayah}
+                  onInputChange={handleInputWilayahChange}
+                  options={listWilayah || []}
+                  getOptionLabel={(option) => option.disp}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Masukan minimal 3 karakter"
+                      defaultValue=""
+                    />
+                  )}
+                />
+              </Box>
+            </Grid>
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  padding: 1,
+                }}
+              >
+                <TextField
+                  id="outlined-basic"
+                  label="Nama Faskes"
+                  variant="outlined"
+                  size={"small"}
+                  fullWidth
+                  value={inputNama || ""}
+                  onChange={(e) =>
+                    setInputNama(e.target.value === "" ? null : e.target.value)
+                  }
+                />
+              </Box>
+            </Grid>
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  padding: 1,
+                }}
+              >
+                <TextField
+                  id="outlined-basic"
+                  label="Alamat Faskes"
+                  variant="outlined"
+                  size={"small"}
+                  fullWidth
+                  value={inputAlamat || ""}
+                  onChange={(e) =>
+                    setInputAlamat(
+                      e.target.value === "" ? null : e.target.value
+                    )
+                  }
+                />
+              </Box>
+            </Grid>
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  padding: 1,
+                  marginTop: -3,
+                }}
+              >
+                <Typography fontWeight="fontWeightBold" variant="body2">
+                  Jenis Faskes
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  padding: 1,
+                  marginTop: -3,
+                }}
+              >
+                <FormGroup>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={
+                          faskes === "fktp"
+                            ? inputJenis.length === jenisFKTP.length
+                            : inputJenis.length === jenisFKRTL.length
+                        }
+                        onChange={() => handleCheckAllChange()}
+                      />
+                    }
+                    label="Pilih Semua"
+                  />
+
+                  {faskes === "fktp"
+                    ? jenisFKTP.map((item, index) => (
+                        <div key={index}>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={inputJenis.includes(item.jenisfaskes)}
+                                onChange={() =>
+                                  handleJenisChange(item.jenisfaskes)
+                                }
+                              />
+                            }
+                            label={item.jenisfaskes}
+                          />
+                        </div>
+                      ))
+                    : jenisFKRTL.map((item, index) => (
+                        <div key={index}>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={inputJenis.includes(item.jenisfaskes)}
+                                onChange={() =>
+                                  handleJenisChange(item.jenisfaskes)
+                                }
+                              />
+                            }
+                            label={item.jenisfaskes}
+                          />
+                        </div>
+                      ))}
+                </FormGroup>
+              </Box>
+            </Grid>
+
+            {faskes === "fktp" ? (
+              <>
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      padding: 1,
+                      marginTop: -3,
+                    }}
+                  >
+                    <Typography fontWeight="fontWeightBold" variant="body2">
+                      Rasio Dokter
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      padding: 1,
+                      marginTop: -3,
+                    }}
+                  >
+                    <FormGroup>
+                      {listRasio.map((item) => (
+                        <FormControlLabel
+                          key={item}
+                          control={
+                            <Checkbox
+                              checked={inputRasio[item] || false}
+                              onChange={() => handleRasioChange(item)}
+                            />
+                          }
+                          label={item}
+                        />
+                      ))}
+                    </FormGroup>
+                  </Box>
+                </Grid>
+              </>
+            ) : null}
+
+            {faskes === "fkrtl" ? (
+              <>
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      padding: 1,
+                      marginTop: -3,
+                    }}
+                  >
+                    <Typography fontWeight="fontWeightBold" variant="body2">
+                      Kelas RS
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      padding: 1,
+                      marginTop: -3,
+                    }}
+                  >
+                    <Grid item xs={12}>
+                      <Typography>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={selectAllKelasRS()}
+                              onChange={handleCheckAllKelasRSChange}
+                            />
+                          }
+                          label="Pilih Semua"
+                        />
+                      </Typography>
+                    </Grid>
+                    <Grid
+                      container
+                      wrap="nowrap"
+                      spacing={8}
+                      sx={{ overflow: "auto" }}
+                    >
+                      {listKelasRS.map((kelas) => (
+                        <Grid item xs={1} key={kelas}>
+                          <Typography>
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={inputKelasRS.includes(kelas)}
+                                  onChange={(event) =>
+                                    handleKelasRSChange(kelas, event)
+                                  }
+                                />
+                              }
+                              label={kelas}
+                            />
+                          </Typography>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Box>
+                </Grid>
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      padding: 1,
+                    }}
+                  >
+                    <Typography fontWeight="fontWeightBold" variant="body2">
+                      Pelayanan Canggih
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      padding: 1,
+                      marginTop: -3,
+                    }}
+                  >
+                    <FormGroup>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={selectAllCanggih()}
+                            onChange={handleCheckAllCanggihChange}
+                          />
+                        }
+                        label="Pilih Semua"
+                      />
+                      {listCanggih.map((option) => (
+                        <FormControlLabel
+                          key={option.value}
+                          control={
+                            <Checkbox
+                              checked={inputCanggih.includes(option.value)}
+                              onChange={(event) =>
+                                handleCanggihChange(option.value, event)
+                              }
+                            />
+                          }
+                          label={option.name}
+                        />
+                      ))}
+                    </FormGroup>
+                  </Box>
+                </Grid>
+              </>
+            ) : null}
+          </Grid>
+        </div>
+        <div className="sidebar-footer">
+          <Box sx={{ m: 1 }}>
+            <Grid container spacing={0.5}>
+              {isFiltered ? (
+                <Grid item xs={6}>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    onClick={handleResetFilter}
+                  >
+                    Hapus Filter
+                  </Button>
+                </Grid>
+              ) : null}
+
+              <Grid item xs={isFiltered ? 6 : 12}>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  size="medium"
+                  onClick={() => {
+                    handleSubmit(); // Call the submission function
+                  }}
+                >
+                  Terapkan
+                </Button>
+              </Grid>
+            </Grid>
+          </Box>
+        </div>
+      </div>
       {faskes === "fkrtl" ? (
         <>
           <div className={`sidebar-data ${showSidebarData ? "open" : ""}`}>
@@ -1056,18 +1596,15 @@ const MapComponent = ({ faskes }) => {
                 )}
               </div>
             </div>
-            {isLoading ?
-            
-            <div className="sidebar-subheader">
-                  <Stack sx={{ width: "100%" }} spacing={2}>
-                    <Alert severity="info">
-                      <Typography>
-                       Mengambil Data ...
-                      </Typography>
-                    </Alert>
-                  </Stack>
-                </div>: 
-                listFilterFKRTL && listFilterFKRTL.length > 0 ? (
+            {isLoading ? (
+              <div className="sidebar-subheader">
+                <Stack sx={{ width: "100%" }} spacing={2}>
+                  <Alert severity="info">
+                    <Typography>Mengambil Data ...</Typography>
+                  </Alert>
+                </Stack>
+              </div>
+            ) : listFilterFKRTL && listFilterFKRTL.length > 0 ? (
               <>
                 <div className="sidebar-subheader">
                   <Stack sx={{ width: "100%" }} spacing={2}>
@@ -1108,8 +1645,7 @@ const MapComponent = ({ faskes }) => {
                                   variant="body2"
                                   color="text.primary"
                                 >
-                                  {item.jenisfaskes} | Kode Faskes{" "}
-                                  {item.faskesid}
+                                  {item.jenisfaskes}{" "}
                                 </Typography>
                                 <Typography fontSize={10}>
                                   {item.alamatppk}
@@ -1147,17 +1683,15 @@ const MapComponent = ({ faskes }) => {
                 )}
               </div>
             </div>
-            {isLoading ?
-            
-            <div className="sidebar-subheader">
-                  <Stack sx={{ width: "100%" }} spacing={2}>
-                    <Alert severity="info">
-                      <Typography>
-                       Mengambil Data ...
-                      </Typography>
-                    </Alert>
-                  </Stack>
-                </div>: listFilterFKTP && listFilterFKTP.length > 0 ? (
+            {isLoading ? (
+              <div className="sidebar-subheader">
+                <Stack sx={{ width: "100%" }} spacing={2}>
+                  <Alert severity="info">
+                    <Typography>Mengambil Data ...</Typography>
+                  </Alert>
+                </Stack>
+              </div>
+            ) : listFilterFKTP && listFilterFKTP.length > 0 ? (
               <>
                 <div className="sidebar-subheader">
                   <Stack sx={{ width: "100%" }} spacing={2}>
@@ -1198,8 +1732,7 @@ const MapComponent = ({ faskes }) => {
                                   variant="body2"
                                   color="text.primary"
                                 >
-                                  {item.jenisfaskes} | Kode Faskes{" "}
-                                  {item.faskesid}
+                                  {item.jenisfaskes}
                                 </Typography>
                                 <Typography fontSize={10}>
                                   {item.alamatppk}
@@ -1233,26 +1766,6 @@ const MapComponent = ({ faskes }) => {
           closeDetailBox={closeDetailBox}
         />
       )}
-
-<div className="layer-select-embed3" >
-        <InfoOutlinedIcon fontSize="medium" />
-      </div>
-
-      <div className="basemap-select3 hidden">
-        <div className="coordinate-box-embed">
-          <p className="label">
-            <strong>Keterangan :</strong> <br />
-           
-            Lokasi Anda : Latitude: {userLocation[1].toFixed(6)}, Longitude:{" "}
-            {userLocation[0].toFixed(6)}
-          </p>
-          <p className="label">
-            - Titik Fasilitas Kesehatan yang Ditampilkan Radius 10 Km dari Titik
-            Lokasi Anda.
-            
-          </p>
-        </div>
-      </div>
     </Box>
   );
 };

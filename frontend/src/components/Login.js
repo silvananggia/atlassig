@@ -47,7 +47,6 @@ const Login = () => {
     dispatch(setLoading(false));
   },[])
   const handleLogin = () => {
-    
     dispatch(fetchLogin(email, password));
   };
 

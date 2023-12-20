@@ -9,6 +9,7 @@ const Redis = require("ioredis");
 const connectRedis = require("connect-redis").default;
 const { Pool } = require("pg");
 const { v4: uuidv4 } = require("uuid");
+var helmet =require('helmet');
 
 const app = express();
 app.use(cookieParser());
@@ -17,7 +18,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.set("trust proxy", 1);
-
+app.use(helmet());
 app.use(cors({
   origin: true,
   credentials: true,

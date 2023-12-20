@@ -45,6 +45,24 @@ const getWilayahCanggih= (pro,kab,kec,id) => {
   return axios.get(`/wilayahadmin-canggih/${pro}/${kab}/${kec}/${id}`);
 };
 
+const getAutoWilayahCaDep = (kddep,kdkc,id) => {
+  return axios.get(`/autowilayahcadep/${kddep}/${kdkc}/${id}`);
+};
+
+
+const getAutoWilayahDep = (kddep,id) => {
+  return axios.get(`/autowilayahdep/${kddep}/${id}`);
+};
+
+const getCabangDep = (kddep,id) => {
+  return axios.get(`/get-cabangdep/${kddep}/${id}`);
+};
+
+
+const getKodeDep = (kdkc) => {
+  return axios.get(`/get-kodedep/${kdkc}`);
+};
+
 const FilterService = {
   getBBOXKabupaten,
   getBBOXCabang,
@@ -56,7 +74,11 @@ const FilterService = {
   getWilayahCanggih,
   getJenisFKTP,
   getJenisFKRTL,
-  getCabang
+  getCabang,
+  getAutoWilayahCaDep,
+  getCabangDep,
+  getAutoWilayahDep,
+  getKodeDep
 
 };
 

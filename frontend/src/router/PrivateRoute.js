@@ -14,7 +14,7 @@ function PrivateRoute({children}) {
 ;
   
   const isAuthenticated = useSelector((state) => state.mapauth.isAuthenticated);
-  console.log(isAuthenticated)
+  //console.log(isAuthenticated)
   return isAuthenticated ? 
   <Layout>  {children} </Layout>
 

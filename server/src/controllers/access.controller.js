@@ -1,10 +1,23 @@
+const db = require("../config/database");
+
 const redis = require("ioredis");
 const crypto = require("crypto");
 const redisClient = redis.createClient();
 
+const validLevelValues = ["Publik", "Cabang", "Kedeputian", "CalonFaskes"];
+const validFaskesValues = ["fktp", "fkrtl"];
+
 exports.getAccess = async (req, res) => {
   try {
     const { level } = req.query;
+
+    if (!validLevelValues.includes(level)) {
+      return res.status(400).json({
+        code: 400,
+        status: "error",
+        data: "Invalid value for level.",
+      });
+    }
 
     if (level === "CalonFaskes") {
       const { lat, lon, faskes } = req.query;
@@ -14,6 +27,14 @@ exports.getAccess = async (req, res) => {
           code: 400,
           status: "error",
           data: "Valid parameters are required.",
+        });
+      }
+
+      if (!validFaskesValues.includes(faskes)) {
+        return res.status(400).json({
+          code: 400,
+          status: "error",
+          data: "Invalid value for faskes.",
         });
       }
 
@@ -31,7 +52,7 @@ exports.getAccess = async (req, res) => {
           token: token,
         },
       });
-    } else if (level === "Cabang"){
+    } else if (level === "Cabang") {
       const { kodeCabang, faskes } = req.query;
 
       if (!kodeCabang || !faskes) {
@@ -42,21 +63,52 @@ exports.getAccess = async (req, res) => {
         });
       }
 
-      const token = crypto.randomBytes(32).toString("hex");
+      if (!validFaskesValues.includes(faskes)) {
+        return res.status(400).json({
+          code: 400,
+          status: "error",
+          data: "Invalid value for faskes",
+        });
+      }
 
-      const key = `embed:${token}`;
-      redisClient.hmset(key, { level, faskes, kodeCabang });
+      //cek kode cabang
+      if (kodeCabang.length != 4) {
+        return res.status(400).json({
+          code: 400,
+          status: "error",
+          data: "Invalid value for kode cabang length",
+        });
+      }
 
-      redisClient.expire(key, 30 * 60); // Expire in 30 minutes
+      const result = await db.query(
+        `SELECT kodecab FROM cabang WHERE kodecab=$1;
+        `,
+        [kodeCabang]
+      );
 
-      res.json({
-        code: 200,
-        status: "success",
-        data: {
-          token: token,
-        },
+      if (result.rows && result.rows.length > 0) {
+        const token = crypto.randomBytes(32).toString("hex");
+
+        const key = `embed:${token}`;
+        redisClient.hmset(key, { level, faskes, kodeCabang });
+
+        redisClient.expire(key, 30 * 60); // Expire in 3 minutes
+
+        return res.json({
+          code: 200,
+          status: "success",
+          data: {
+            token: token,
+          },
+        });
+      }
+
+      return res.status(400).json({
+        code: 400,
+        status: "error",
+        data: "Invalid value for kode cabang",
       });
-    } else if(level === "Kedeputian"){
+    } else if (level === "Kedeputian") {
       const { kodeKedeputian, faskes } = req.query;
 
       if (!kodeKedeputian || !faskes) {
@@ -67,21 +119,53 @@ exports.getAccess = async (req, res) => {
         });
       }
 
-      const token = crypto.randomBytes(32).toString("hex");
+      if (!validFaskesValues.includes(faskes)) {
+        return res.status(400).json({
+          code: 400,
+          status: "error",
+          data: "Invalid value for faskes",
+        });
+      }
 
-      const key = `embed:${token}`;
-      redisClient.hmset(key, { level,faskes, kodeKedeputian });
+      if (kodeKedeputian.length != 2) {
+        return res.status(400).json({
+          code: 400,
+          status: "error",
+          data: "Invalid value for kode kedeputian length",
+        });
+      }
 
-      redisClient.expire(key, 30 * 60); // Expire in 30 minutes
+      const result = await db.query(
+        `SELECT kodedep FROM cabang WHERE kodedep=$1
+        `,
+        [kodeKedeputian]
+      );
 
-      res.json({
-        code: 200,
-        status: "success",
-        data: {
-          token: token,
-        },
-      });
-    } else if(level === "Publik"){
+      if (result.rows && result.rows.length > 0) {
+        const token = crypto.randomBytes(32).toString("hex");
+
+        const key = `embed:${token}`;
+        redisClient.hmset(key, { level, faskes, kodeKedeputian });
+
+        redisClient.expire(key, 30 * 60); // Expire in 3 minutes
+
+        res.json({
+          code: 200,
+          status: "success",
+          data: {
+            token: token,
+          },
+        });
+      } else {
+        return res.status(400).json({
+          code: 400,
+          status: "error",
+          data: "Invalid value for kode kedeputian",
+        });
+      }
+
+     
+    } else if (level === "Publik") {
       const { faskes } = req.query;
 
       if (!faskes) {
@@ -92,12 +176,20 @@ exports.getAccess = async (req, res) => {
         });
       }
 
+      if (!validFaskesValues.includes(faskes)) {
+        return res.status(400).json({
+          code: 400,
+          status: "error",
+          data: "Invalid value for faskes",
+        });
+      }
+
       const token = crypto.randomBytes(32).toString("hex");
 
       const key = `embed:${token}`;
-      redisClient.hmset(key, {  level,faskes });
+      redisClient.hmset(key, { level, faskes });
 
-      redisClient.expire(key, 30 * 60); // Expire in 30 minutes
+      redisClient.expire(key, 30 * 60); // Expire in 3 minutes
 
       res.json({
         code: 200,

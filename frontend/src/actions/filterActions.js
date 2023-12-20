@@ -10,6 +10,10 @@ import {
   FETCH_JENIS_FKRTL,
   FETCH_JENIS_FKTP,
   FETCH_CABANG,
+  FETCH_WILAYAH_DEPUTI,
+  FETCH_WILAYAH_CABANG,
+  FETCH_KODE_DEPUTI,
+  FETCH_CABANG_DEPUTI,
  
 } from "./types";
 
@@ -93,6 +97,20 @@ export const fetchCabang = (id) => async (dispatch) => {
   }
 };
 
+
+export const fetchCabangDeputi = (kddep,id) => async (dispatch) => {
+  try {
+    const res = await FilterService.getCabangDep(kddep,id);
+
+    dispatch({
+      type: FETCH_CABANG_DEPUTI,
+      payload: res.data.data,
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 export const fetchJenisFKRTL= () => async (dispatch) => {
   try {
     const res = await FilterService.getJenisFKRTL();
@@ -119,3 +137,47 @@ export const fetchJenisFKTP= () => async (dispatch) => {
     console.error(err);
   }
 };
+
+
+export const fetchAutoWilayahDeputi = (kddep,id) => async (dispatch) => {
+  try {
+    const res = await FilterService.getAutoWilayahDep(kddep,id);
+
+    dispatch({
+      type: FETCH_WILAYAH_DEPUTI,
+      payload: res.data.data,
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+
+
+
+export const fetchAutoWilayahCabang = (kddep,kdkc,id) => async (dispatch) => {
+  try {
+    const res = await FilterService.getAutoWilayahCaDep(kddep,kdkc,id);
+
+    dispatch({
+      type: FETCH_WILAYAH_CABANG,
+      payload: res.data.data,
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+
+export const fetchKodeDep = (kdkc) => async (dispatch) => {
+  try {
+    const res = await FilterService.getKodeDep(kdkc);
+
+    dispatch({
+      type: FETCH_KODE_DEPUTI,
+      payload: res.data.data,
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}

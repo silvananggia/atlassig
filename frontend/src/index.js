@@ -2,12 +2,10 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
-
 import { BrowserRouter } from "react-router-dom";
 // ** Redux Imports
 import { store } from "./redux/store";
 import { Provider } from "react-redux";
-import { AuthProvider } from './context/AuthContext';
 
 import "./assets/scss/style.scss";
 import "@fontsource/roboto/300.css";
@@ -19,11 +17,9 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   //<React.StrictMode>
   <BrowserRouter>
-   <AuthProvider>
     <Provider store={store}>
       <App />
     </Provider>
-    </AuthProvider>
   </BrowserRouter>
 
   //</React.StrictMode>

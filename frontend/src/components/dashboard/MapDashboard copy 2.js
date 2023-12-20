@@ -77,7 +77,7 @@ const MapComponent = ({ faskes }) => {
   const [userMarkerFeature, setUserMarkerFeature] = useState(null);
   const [latitude, setLatitude] = useState(-2.5489);
   const [longitude, setLongitude] = useState(118.0149);
-  const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.7);
+  const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.9);
   const [markersLoaded, setMarkersLoaded] = useState(false);
   const [showFKTPMark, setShowFKTPMark] = useState(false);
   const [showFKRTLMark, setShowFKRTLMark] = useState(false);
@@ -973,13 +973,13 @@ const MapComponent = ({ faskes }) => {
       // Check the conditions and update inputRmin and inputRmax accordingly
       if (newInputRasio["< 5000"] && newInputRasio[">= 5000"]) {
         setInputRmin(0);
-        setInputRmax(10000);
+        setInputRmax(1000000);
       } else if (newInputRasio["< 5000"]) {
         setInputRmin(0);
         setInputRmax(5000);
       } else if (newInputRasio[">= 5000"]) {
         setInputRmin(5000);
-        setInputRmax(10000);
+        setInputRmax(1000000);
       } else {
         // If none of the conditions are met, you can set default values or handle it as needed
         // For example, setting both to some default values like 0
@@ -1008,13 +1008,13 @@ const MapComponent = ({ faskes }) => {
   useEffect(() => {
     if (inputRasio["< 5000"] && inputRasio[">= 5000"]) {
       setInputRmin(0);
-      setInputRmax(10000);
+      setInputRmax(1000000);
     } else if (inputRasio["< 5000"]) {
       setInputRmin(0);
       setInputRmax(5000);
     } else if (inputRasio[">= 5000"]) {
       setInputRmin(5000);
-      setInputRmax(10000);
+      setInputRmax(1000000);
     } else {
       // If none of the conditions are met, you can set default values or handle it as needed
       // For example, setting both to some default values like 0

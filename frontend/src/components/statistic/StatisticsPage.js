@@ -14,7 +14,16 @@ import {
   Grid,
 } from "@mui/material";
 
-import { fetchAutoWilayah, fetchCabang } from "../../actions/filterActions";
+import {
+  fetchAutoWilayah,
+  fetchCabang,
+  fetchAutoWilayahCabang,
+  fetchJenisFKRTL,
+  fetchJenisFKTP,
+  fetchKodeDep,
+  fetchAutoWilayahDeputi,
+  fetchCabangDeputi,
+} from "../../actions/filterActions";
 import {
   fetchCountJenisFKRTL,
   fetchCountFKRTL,
@@ -43,6 +52,7 @@ const StatisticsPage = () => {
   const dataFKTP = useSelector((state) => state.mapfktp.totalfktp);
   const dataFKRTL = useSelector((state) => state.mapfkrtl.totalfkrtl);
   const listCabang = useSelector((state) => state.mapfilter.cabanglist);
+  const kodeDeputi = useSelector((state) => state.mapfilter.kodedep);
 
   const listKedeputian = [
     "01",
@@ -60,6 +70,14 @@ const StatisticsPage = () => {
   ];
 
   useEffect(() => {
+    if (kodeDeputi) {
+      console.log(kodeDeputi[0].kodedep);
+      setInputKodeDeputi(kodeDeputi[0].kodedep);
+    }
+  }, [kodeDeputi]);
+
+
+  useEffect(() => {
     if (!isFiltered) {
       handleResetFilter();
     }
@@ -69,35 +87,57 @@ const StatisticsPage = () => {
     if (dataFKTP && dataFKTP.length > 0 && dataFKRTL && dataFKRTL.length > 0) {
       setDataPie([dataFKTP[0].count, dataFKRTL[0].count]);
     }
-  }, [ dataFKTP, dataFKRTL, dataPie]);
+  }, [dataFKTP, dataFKRTL, dataPie]);
 
   const handleKedeputianChange = (event, value) => {
-    setInputKodeDeputi(value);
+    if(value === null || value == ""){
+      setInputKodeDeputi("");
+     
+    
+    } else {
+      setInputKodeDeputi(value);
+      setselectedCabang("");
+      handleSelectCabang("");
+    }
+   
   };
 
   const handleInputCabangChange = (event, value) => {
-    if (value.length >= 2) {
-      dispatch(fetchCabang(value));
+    if (inputKodeDeputi === null || inputKodeDeputi==="") {
+      if (value.length >= 2) {
+        dispatch(fetchCabang(value));
+      } else {
+        //dispatch(fetchAutoWilayah([]));
+        setInputKodeCabang("null");
+      }
     } else {
-      //dispatch(fetchAutoWilayah([]));
-      setInputKodeCabang("null")
+      dispatch(fetchCabangDeputi(inputKodeDeputi, value));
     }
   };
 
-  const handleSelectCabang = (event, selectedOption) => {
-    if (selectedOption) {
-      const { kodecab } = selectedOption;
 
-      setInputKodeCabang(kodecab);
+  const handleSelectCabang = (event, selectedOption) => {
+    if (selectedOption === null || selectedOption === '') {
+      // Handle clear action
+      setInputKodeCabang("null");
+    } else {
+      // Handle other changes
+      if (selectedOption) {
+        const { kodecab } = selectedOption;
+  
+        setInputKodeCabang(kodecab);
+        dispatch(fetchKodeDep(kodecab));
+      }
     }
+
+   
   };
   const handleSubmit = () => {
     const sanitizedSelectedProvId = selectedProvId ?? "null";
     const sanitizedSelectedKabId = selectedKabId ?? "null";
     const sanitizedSelectedKecId = selectedKecId ?? "null";
-    const sanitizedKodeCabang = inputKodeCabang ?? "null";
-    const sanitizedKodeDeputi = inputKodeDeputi ?? "null";
-
+   const sanitizedKodeCabang = inputKodeCabang === "" ? "null" : inputKodeCabang;
+    const sanitizedKodeDeputi = inputKodeDeputi === "" ? "null" : inputKodeDeputi;
     dispatch(
       fetchCountJenisFKRTL(
         sanitizedSelectedProvId,
@@ -161,24 +201,29 @@ const StatisticsPage = () => {
     setInputKodeDeputi(null);
   };
 
+  const handleSelectWilayah = (event, selectedOption) => {
+    // Check if the new value is null or an empty string
+    if (selectedOption === null || selectedOption === '') {
+     // Handle clear action
+     setSelectedKecId("null");
+     setSelectedKabId("null");
+     setSelectedProvId("null");
+   } else {
+     // Handle other changes
+     if (selectedOption) {
+       const { kec_id, kab_id, prov_id } = selectedOption;
+ 
+       setSelectedKecId(kec_id);
+       setSelectedKabId(kab_id);
+       setSelectedProvId(prov_id);
+     }
+   }
 
   
-  const handleSelectWilayah = (event, selectedOption) => {
-    console.log("Selected Option:", selectedOption);
-    if (selectedOption) {
-      const { kec_id, kab_id, prov_id } = selectedOption;
-      console.log("Kecamatan ID:", kec_id);
-      console.log("Kabupaten ID:", kab_id);
-      console.log("Provinsi ID:", prov_id);
+ };
 
-      setSelectedKecId(kec_id);
-      setSelectedKabId(kab_id);
-      setSelectedProvId(prov_id);
-      //handleSubmit();
-    }
-  };
-
-  const handleInputWilayahChange = (event, value) => {
+ const handleInputWilayahChange = (event, value) => {
+  if (inputKodeDeputi === null   && inputKodeCabang === null) {
     if (value.length >= 3) {
       dispatch(fetchAutoWilayah(value));
     } else {
@@ -188,7 +233,12 @@ const StatisticsPage = () => {
       setSelectedKabId("null");
       setSelectedProvId("null");
     }
-  };
+  } else if (inputKodeCabang === null || inputKodeCabang === "" && inputKodeDeputi != null && inputKodeDeputi != "null"  ) {
+    dispatch(fetchAutoWilayahDeputi(inputKodeDeputi, value));
+  } else {
+    dispatch(fetchAutoWilayahCabang(inputKodeDeputi, inputKodeCabang, value));
+  }
+};
 
   const cardHeaderStyle = {
     background: "linear-gradient(to right, #0F816F, #274C8B)", // Adjust gradient colors as needed
@@ -209,92 +259,84 @@ const StatisticsPage = () => {
       <h1>Statistik</h1>
 
       <Grid container spacing={2}>
-        <Grid item xs={6} md={3}>
-            <Autocomplete
-              noOptionsText={"Data Tidak Ditemukan"}
-              size={"small"}
-              fullWidth
-              id="combo-box-demo"
-              value={selectedWilayah}
-              onChange={handleSelectWilayah}
-              inputValue={selectedWilayah}
-              onInputChange={handleInputWilayahChange}
-              options={listWilayah || []}
-              getOptionLabel={(option) => option.disp}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Wilayah | Masukan minimal 3 karakter"
-                  defaultValue=""
-                />
-              )}
-            />
-        </Grid>
         <Grid item xs={6} md={1}>
-          
-            <Autocomplete
-              id="kedeputian-autocomplete"
-              options={listKedeputian}
-              value={inputKodeDeputi}
-              onChange={handleKedeputianChange}
-              renderInput={(params) => (
-                <TextField {...params} label="Kedeputian" size="small" />
-              )}
-            />
-          
+          <Autocomplete
+            id="kedeputian-autocomplete"
+            options={listKedeputian}
+            value={inputKodeDeputi}
+            onChange={handleKedeputianChange}
+            renderInput={(params) => (
+              <TextField {...params} label="Kedeputian" size="small" />
+            )}
+          />
         </Grid>
 
         <Grid item xs={6} md={3}>
-       
-            <Autocomplete
-              disablePortal
-              noOptionsText={"Data Tidak Ditemukan"}
-              size={"small"}
-              fullWidth
-              id="combo-box-demo"
-              value={selectedCabang}
-              onChange={handleSelectCabang}
-              inputValue={selectedCabang}
-              onInputChange={handleInputCabangChange}
-              options={listCabang || []}
-              getOptionLabel={(option) => option.namacabang}
-              style={{ zindex: 1000000, left: 0 }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Kantor Cabang | Masukan Minimal 2 Karakter"
-                  defaultValue=""
-                />
-              )}
-            />
-        </Grid>
-
-        <Grid item xs={6} md={2}>
-       
-             <Button
-                variant="contained"
-                fullWidth
-                size="medium"
-                onClick={() => {
-                  handleSubmit(); // Call the submission function
-                }}
-              >
-                Terapkan
-              </Button> 
-         
-        </Grid>
-
-        <Grid item xs={6} md={2}>
-          
-          {isFiltered && (
-              <Button variant="contained" fullWidth onClick={handleResetFilter}>
-                Hapus Filter
-              </Button>
+          <Autocomplete
+            disablePortal
+            noOptionsText={"Data Tidak Ditemukan"}
+            size={"small"}
+            fullWidth
+            id="combo-box-demo"
+            value={selectedCabang}
+            onChange={handleSelectCabang}
+            inputValue={selectedCabang}
+            onInputChange={handleInputCabangChange}
+            options={listCabang || []}
+            getOptionLabel={(option) => option.namacabang}
+            style={{ zindex: 1000000, left: 0 }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Kantor Cabang | Masukan Minimal 2 Karakter"
+                defaultValue=""
+              />
             )}
-          
+          />
         </Grid>
 
+        <Grid item xs={6} md={3}>
+          <Autocomplete
+            noOptionsText={"Data Tidak Ditemukan"}
+            size={"small"}
+            fullWidth
+            id="combo-box-demo"
+            value={selectedWilayah}
+            onChange={handleSelectWilayah}
+            inputValue={selectedWilayah}
+            onInputChange={handleInputWilayahChange}
+            options={listWilayah || []}
+            getOptionLabel={(option) => option.disp}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Wilayah | Masukan minimal 3 karakter"
+                defaultValue=""
+              />
+            )}
+          />
+        </Grid>
 
+        <Grid item xs={6} md={2}>
+          <Button
+            variant="contained"
+            fullWidth
+            size="medium"
+            onClick={() => {
+              handleSubmit(); // Call the submission function
+            }}
+          >
+            Terapkan
+          </Button>
+        </Grid>
+
+        <Grid item xs={6} md={2}>
+          {isFiltered && (
+            <Button variant="contained" fullWidth onClick={handleResetFilter}>
+              Hapus Filter
+            </Button>
+          )}
+        </Grid>
       </Grid>
 
       <Grid container sx={{ paddingTop: 3 }}>

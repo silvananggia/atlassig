@@ -44,9 +44,10 @@ import {
 import {
   fetchCenterCabang,
   fetchBBOXCabang,
-  fetchAutoWilayah,
+  fetchAutoWilayahCabang,
   fetchJenisFKRTL,
   fetchJenisFKTP,
+  fetchKodeDep
 } from "../../actions/filterActions";
 import {
   setLoading,
@@ -83,7 +84,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
   const [selectedBasemap, setSelectedBasemap] = useState("map-switch-default");
   const [userMarkerFeature, setUserMarkerFeature] = useState(null);
 
-  const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.7);
+  const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.9);
   const [markersLoaded, setMarkersLoaded] = useState(false);
   const [showFKTPMark, setShowFKTPMark] = useState(false);
   const [showFKRTLMark, setShowFKRTLMark] = useState(false);
@@ -98,6 +99,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
   const [inputNama, setInputNama] = useState(null);
   const [inputAlamat, setInputAlamat] = useState(null);
   const [inputJenis, setInputJenis] = useState([]);
+  const [inputKodeDeputi, setInputKodeDeputi] = useState(null);
   const [inputrmin, setInputRmin] = useState(null);
   const [inputrmax, setInputRmax] = useState(null);
   const [inputRasio, setInputRasio] = useState({
@@ -144,6 +146,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     dispatch(fetchFKRTLCabang(kodeCabang));
     dispatch(fetchCenterCabang(kodeCabang));
     dispatch(fetchBBOXCabang(kodeCabang));
+    dispatch(fetchKodeDep(kodeCabang));
     if (faskes === "fkrtl") {
       dispatch(fetchJenisFKRTL());
     } else {
@@ -155,6 +158,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
 
   const centerCabang = useSelector((state) => state.mapfilter.coordinate);
   const bboxCabang = useSelector((state) => state.mapfilter.dataobj);
+  const kodeDeputi = useSelector((state) => state.mapfilter.kodedep);
   const markerListFKTP = useSelector((state) => state.mapfktp.fktplist);
   const markerListFKRTL = useSelector((state) => state.mapfkrtl.fkrtllist);
   const detailFKTP = useSelector((state) => state.mapfktp.fktpobj);
@@ -165,6 +169,13 @@ const MapComponent = ({ faskes, kodeCabang }) => {
   const listFilterFKTP = useSelector((state) => state.mapfktp.fktpdatalist);
   const listFilterFKRTL = useSelector((state) => state.mapfkrtl.fkrtldatalist);
   const isLoading = useSelector((state) => state.loading.isLoading);
+
+  useEffect(() => {
+    if(kodeDeputi){
+      console.log(kodeDeputi[0].kodedep);
+      setInputKodeDeputi(kodeDeputi[0].kodedep)
+    }
+  }, [kodeDeputi]);
 
   useEffect(() => {
     
@@ -207,9 +218,9 @@ const MapComponent = ({ faskes, kodeCabang }) => {
 
   const handleInputWilayahChange = (event, value) => {
     if (value.length >= 3) {
-      dispatch(fetchAutoWilayah(value));
+      dispatch(fetchAutoWilayahCabang(inputKodeDeputi,kodeCabang,value));
     } else {
-      dispatch(fetchAutoWilayah([]));
+      dispatch(fetchAutoWilayahCabang([]));
 
       setSelectedKecId("null");
       setSelectedKabId("null");
@@ -945,6 +956,18 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     });
   };
 
+  const handleCheckAllChange = () => {
+    if (faskes === "fktp") {
+      setInputJenis(
+        inputJenis.length === jenisFKTP.length ? [] : jenisFKTP.map((item) => item.jenisfaskes)
+      );
+    } else {
+      setInputJenis(
+        inputJenis.length === jenisFKRTL.length ? [] : jenisFKRTL.map((item) => item.jenisfaskes)
+      );
+    }
+  };
+
   const handleJenisChange = (item) => {
     const isChecked = inputJenis.includes(item);
 
@@ -970,6 +993,13 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     setInputKelasRS(updatedKelasRS);
   };
 
+  const handleCheckAllKelasRSChange = () => {
+    setInputKelasRS((prev) =>
+      prev.length === listKelasRS.length ? [] : [...listKelasRS]
+    );
+  };
+
+  const selectAllKelasRS = () => inputKelasRS.length === listKelasRS.length;
   const handleCanggihChange = (item, event) => {
     const updatedCanggih = [...inputCanggih];
 
@@ -984,6 +1014,18 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     setInputCanggih(updatedCanggih);
   };
 
+  const handleCheckAllCanggihChange = () => {
+    setInputCanggih((prev) =>
+      prev.length === listCanggih.map((option) => option.value).length
+        ? []
+        : listCanggih.map((option) => option.value)
+    );
+  };
+
+  const selectAllCanggih = () =>
+    inputCanggih.length === listCanggih.map((option) => option.value).length;
+
+
   const handleRasioChange = (item) => {
     setInputRasio((prevInputRasio) => {
       let newInputRasio = { ...prevInputRasio };
@@ -994,13 +1036,13 @@ const MapComponent = ({ faskes, kodeCabang }) => {
       // Check the conditions and update inputRmin and inputRmax accordingly
       if (newInputRasio["< 5000"] && newInputRasio[">= 5000"]) {
         setInputRmin(0);
-        setInputRmax(10000);
+        setInputRmax(1000000);
       } else if (newInputRasio["< 5000"]) {
         setInputRmin(0);
         setInputRmax(5000);
       } else if (newInputRasio[">= 5000"]) {
         setInputRmin(5000);
-        setInputRmax(10000);
+        setInputRmax(1000000);
       } else {
         // If none of the conditions are met, you can set default values or handle it as needed
         // For example, setting both to some default values like 0
@@ -1029,13 +1071,13 @@ const MapComponent = ({ faskes, kodeCabang }) => {
   useEffect(() => {
     if (inputRasio["< 5000"] && inputRasio[">= 5000"]) {
       setInputRmin(0);
-      setInputRmax(10000);
+      setInputRmax(1000000);
     } else if (inputRasio["< 5000"]) {
       setInputRmin(0);
       setInputRmax(5000);
     } else if (inputRasio[">= 5000"]) {
       setInputRmin(5000);
-      setInputRmax(10000);
+      setInputRmax(1000000);
     } else {
       // If none of the conditions are met, you can set default values or handle it as needed
       // For example, setting both to some default values like 0
@@ -1044,7 +1086,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     }
   }, [inputRasio]);
   const handleSubmit = () => {
-    dispatch(setLoading(true));
+  
     const sanitizedSelectedProvId = selectedProvId ?? "null";
     const sanitizedSelectedKabId = selectedKabId ?? "null";
     const sanitizedSelectedKecId = selectedKecId ?? "null";
@@ -1125,7 +1167,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
       removeFKTPPointMarkerLayers();
       
     }
-    dispatch(setLoading(false));
+    
     closeDetailBox();
     toggleSidebar(true);
     setIsFiltered(true);
@@ -1284,6 +1326,20 @@ const MapComponent = ({ faskes, kodeCabang }) => {
                 }}
               >
                 <FormGroup>
+                <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={
+                          faskes === "fktp"
+                            ? inputJenis.length === jenisFKTP.length
+                            : inputJenis.length === jenisFKRTL.length
+                        }
+                        onChange={() => handleCheckAllChange()}
+                      />
+                    }
+                    label="Pilih Semua"
+                  />
+
                   {faskes === "fktp"
                     ? jenisFKTP.map((item, index) => (
                         <div key={index}>
@@ -1421,6 +1477,19 @@ const MapComponent = ({ faskes, kodeCabang }) => {
                       marginTop: -3,
                     }}
                   >
+                                        <Grid item xs={12}>
+                      <Typography>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={selectAllKelasRS()}
+                              onChange={handleCheckAllKelasRSChange}
+                            />
+                          }
+                          label="Pilih Semua"
+                        />
+                      </Typography>
+                    </Grid>
                     <Grid
                       container
                       wrap="nowrap"
@@ -1466,6 +1535,15 @@ const MapComponent = ({ faskes, kodeCabang }) => {
                     }}
                   >
                     <FormGroup>
+                    <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={selectAllCanggih()}
+                            onChange={handleCheckAllCanggihChange}
+                          />
+                        }
+                        label="Pilih Semua"
+                      />
                       {listCanggih.map((option) => (
                         <FormControlLabel
                           key={option.value}

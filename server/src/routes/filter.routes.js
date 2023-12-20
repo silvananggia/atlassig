@@ -16,7 +16,12 @@ router.get('/center-kedeputian/:id', filterController.centerKedeputian);
 
 
 router.get('/autowilayah/:id', filterController.autowilayah);
+router.get('/autowilayahcadep/:kddep/:kdkc/:id', filterController.autowilayahcadep);
+router.get('/autowilayahdep/:kddep/:id', filterController.autowilayahdep);
 router.get('/get-cabang/:id', filterController.getCabang);
+router.get('/get-cabangdep/:kddep/:id', filterController.getCabangDep);
+router.get('/get-kodedep/:kdkc', filterController.getKodeDep);
+
 router.get('/wilayahadmin/:pro/:kab/:kec', filterController.wilayahadmin);
 router.get('/wilayahadmin-canggih/:pro/:kab/:kec/:id', filterController.wilayahadminCanggih);
 router.get('/filter-fktp/:pro/:kab/:kec/:kdkc/:kddep/:rmax/:rmin/:jenis/:nmppk/:alamatppk', filterController.filterTitikFKTP);

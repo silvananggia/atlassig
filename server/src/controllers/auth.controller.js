@@ -36,22 +36,33 @@ exports.Login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-
     const user = await db.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
 
-   
     if (
       user.rows.length > 0 &&
       (await bcrypt.compare(password, user.rows[0].password))
     ) {
-     
       req.session.user = user.rows[0].email;
 
-      res.status(200).json({ message: "Authentication successful" });
+      data = {
+        nama: user.rows[0].nama,
+        email: user.rows[0].email,
+        level: user.rows[0].level,
+      };
+
+      res.json({
+        code: 200,
+        status: "success",
+        data: data,
+      });
     } else {
-      res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
     }
   } catch (error) {
     console.error(error);
@@ -63,9 +74,17 @@ exports.Logout = (req, res) => {
   req.session.destroy((err) => {
     if (err) {
       console.error("Error during logout:", err);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ 
+        code: 500,
+        status: "error",
+        data: "Internal server error",
+         });
     } else {
-      res.status(200).json({ message: "Logout successful" });
+      res.status(200).json({ 
+        code: 200,
+        status: "success",
+        data:  "Logout successful" ,
+       });
     }
   });
 };
@@ -80,9 +99,16 @@ exports.checkAuth = async (req, res) => {
       req.user = user;
       res.json(req.user);
     } catch (error) {
-      res.status(500).json({ error: "Internal Server Error" });
+      res.status(500).json({ 
+        code: 500,
+        status: "error",
+        data: "Internal server error",
+       });
     }
   } else {
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({    
+      code: 401,
+      status: "error",
+      data: "Unauthorized", });
   }
 };

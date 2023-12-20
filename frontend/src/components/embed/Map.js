@@ -52,7 +52,7 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
   const [markerFeature, setMarkerFeature] = useState(null);
   const [markerSource, setMarkerSource] = useState(null);
   const [markerLayer, setMarkerLayer] = useState(null);
-  const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.7);
+  const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.9);
   const [markersLoaded, setMarkersLoaded] = useState(false);
   const [showFKTPMark, setShowFKTPMark] = useState(false);
   const [showFKRTLMark, setShowFKRTLMark] = useState(false);

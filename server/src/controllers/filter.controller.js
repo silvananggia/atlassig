@@ -27,6 +27,59 @@ exports.getCabang = async (req, res) => {
   }
 };
 
+exports.getCabangDep = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const kddep = req.params.kddep;
+
+
+    const result = await db.query(
+      `SELECT * FROM cabang WHERE kodedep=$1;
+      `,
+      [ kddep]
+    );
+
+    res.json({
+      code: 200,
+      status: "success",
+      data: result.rows,
+    });
+  } catch (error) {
+    console.error("Error executing query", error);
+    res.status(500).json({
+      code: 500,
+      status: "error",
+      data: "Internal Server Error",
+    });
+  }
+};
+
+exports.getKodeDep = async (req, res) => {
+  try {
+    const id = req.params.kdkc;
+
+
+    const result = await db.query(
+      `SELECT kodedep FROM cabang WHERE kodecab=$1
+      `,
+      [id]
+    );
+
+    res.json({
+      code: 200,
+      status: "success",
+      data: result.rows,
+    });
+  } catch (error) {
+    console.error("Error executing query", error);
+    res.status(500).json({
+      code: 500,
+      status: "error",
+      data: "Internal Server Error",
+    });
+  }
+};
+
 exports.bboxKabupaten = async (req, res) => {
   try {
     const id = req.params.id;
@@ -469,8 +522,8 @@ exports.filterTitikFKTP = async (req, res) => {
 			AND ($5::integer IS NULL OR kecamatan.kcid=$5)
       AND ($6::character IS NULL OR cabang.kodecab=$6)
 			AND ($7::character IS NULL OR cabang.kodedep=$7)
-      AND fktp.npeserta/NULLIF(fktp.ndokter,0)<$8
-      AND fktp.npeserta/NULLIF(fktp.ndokter,0)>=$9
+      AND COALESCE(fktp.npeserta/NULLIF(fktp.ndokter,0),0) <$8
+      AND COALESCE(fktp.npeserta/NULLIF(fktp.ndokter,0),0)>=$9
       AND ($10::character IS NULL OR 
         TRIM(LOWER(fktp.jenisfaskes)) IN (SELECT * FROM unnest(string_to_array(lower($10), ',')))
            )
@@ -538,8 +591,8 @@ exports.filterFKTP = async (req, res) => {
 			AND ($5::integer IS NULL OR kecamatan.kcid=$5)
       AND ($6::character IS NULL OR cabang.kodecab=$6)
 			AND ($7::character IS NULL OR cabang.kodedep=$7)
-      AND fktp.npeserta/NULLIF(fktp.ndokter,0)<$8
-      AND fktp.npeserta/NULLIF(fktp.ndokter,0)>=$9
+      AND COALESCE(fktp.npeserta/NULLIF(fktp.ndokter,0),0) <$8
+      AND COALESCE(fktp.npeserta/NULLIF(fktp.ndokter,0),0)>=$9
       AND ($10::character IS NULL OR 
         TRIM(LOWER(fktp.jenisfaskes)) IN (SELECT * FROM unnest(string_to_array(lower($10), ',')))
            )
@@ -968,6 +1021,145 @@ exports.countFKTP = async (req, res) => {
     [pro, kab, kec, kdkc, kddep]
       /* ,
         [nmppk,alamatppk,krs,canggih,pro,kab,kec,`%${nmppk}%`,`%${alamatppk}%`,] */
+    );
+
+    res.json({
+      code: 200,
+      status: "success",
+      data: result.rows,
+    });
+  } catch (error) {
+    console.error("Error executing query", error);
+    res.status(500).json({
+      code: 500,
+      status: "error",
+      data: "Internal Server Error",
+    });
+  }
+};
+
+
+exports.autowilayahcadep = async (req, res) => {
+  try {
+    const kdkc = req.params.kdkc;
+    const kddep = req.params.kddep;
+    const id = req.params.id;
+
+    if (!id) {
+      return res.status(400).json({
+        code: 400,
+        status: "error",
+        data: "Code are required parameters.",
+      });
+    }
+
+    const result = await db.query(
+      `
+      SELECT
+      kecamatan.kcid::integer AS kec_id,
+      kecamatan.kecamatan AS kec,
+      kabupaten.kbid::integer AS kab_id,
+      provinsi.prid::integer AS prov_id,
+      kabupaten.kabupaten AS kab,
+      provinsi.provinsi AS prov,
+      INITCAP(CONCAT(kecamatan.kecamatan, ', ', kabupaten.kabupaten, ', ', provinsi.provinsi)) AS disp
+    FROM
+      kecamatan
+    JOIN
+      kabupaten ON kabupaten.kbid = kecamatan.kab_id
+    JOIN
+      provinsi ON provinsi.prid = kabupaten.prov_id
+    JOIN
+      cabang ON kabupaten.kodekc = cabang.kodecab
+    WHERE
+      lower(kecamatan.kecamatan) LIKE LOWER('%' || $3 || '%')
+      AND ($1::character IS NULL OR cabang.kodedep = $1)
+      AND ($2::character IS NULL OR cabang.kodecab = $2)
+      UNION
+      SELECT NULL::integer AS kec_id, NULL::char AS kec, kabupaten.kbid::integer AS kab_id, provinsi.prid::integer AS prov_id, kabupaten.kabupaten AS kab, provinsi.provinsi AS prov, INITCAP(CONCAT (kabupaten.kabupaten,', ', provinsi.provinsi)) AS disp FROM kabupaten
+            JOIN provinsi ON provinsi.prid = kabupaten.prov_id
+            JOIN  kecamatan ON kabupaten.kbid = kecamatan.kab_id
+            JOIN  cabang ON kabupaten.kodekc = cabang.kodecab
+            WHERE lower(kabupaten.kabupaten) LIKE LOWER('%' || $3 || '%')
+            AND ($1::character IS NULL OR cabang.kodedep = $1)
+            AND ($2::character IS NULL OR cabang.kodecab = $2)
+      UNION
+      SELECT NULL::integer AS kec_id, NULL::char AS kec, NULL::integer AS kab_id, provinsi.prid::integer AS prov_id, NULL::char AS kab, provinsi.provinsi AS prov, INITCAP(provinsi.provinsi) AS disp FROM provinsi
+            JOIN  kabupaten ON provinsi.prid = kabupaten.prov_id
+            JOIN  cabang ON kabupaten.kodekc = cabang.kodecab
+            WHERE lower(provinsi.provinsi) LIKE LOWER('%' || $3 || '%')
+            AND ($1::character IS NULL OR cabang.kodedep = $1)
+            AND ($2::character IS NULL OR cabang.kodecab = $2)
+      ORDER BY kec_id DESC, kab_id DESC ;
+`  , [kddep,kdkc,id]
+       
+    );
+
+    res.json({
+      code: 200,
+      status: "success",
+      data: result.rows,
+    });
+  } catch (error) {
+    console.error("Error executing query", error);
+    res.status(500).json({
+      code: 500,
+      status: "error",
+      data: "Internal Server Error",
+    });
+  }
+};
+
+exports.autowilayahdep = async (req, res) => {
+  try {
+    const kddep = req.params.kddep;
+    const id = req.params.id;
+
+    if (!id) {
+      return res.status(400).json({
+        code: 400,
+        status: "error",
+        data: "Code are required parameters.",
+      });
+    }
+
+    const result = await db.query(
+      `
+      SELECT
+      kecamatan.kcid::integer AS kec_id,
+      kecamatan.kecamatan AS kec,
+      kabupaten.kbid::integer AS kab_id,
+      provinsi.prid::integer AS prov_id,
+      kabupaten.kabupaten AS kab,
+      provinsi.provinsi AS prov,
+      INITCAP(CONCAT(kecamatan.kecamatan, ', ', kabupaten.kabupaten, ', ', provinsi.provinsi)) AS disp
+    FROM
+      kecamatan
+    JOIN
+      kabupaten ON kabupaten.kbid = kecamatan.kab_id
+    JOIN
+      provinsi ON provinsi.prid = kabupaten.prov_id
+    JOIN
+      cabang ON kabupaten.kodekc = cabang.kodecab
+    WHERE
+      lower(kecamatan.kecamatan) LIKE LOWER('%' || $2 || '%')
+      AND ($1::character IS NULL OR cabang.kodedep = $1)
+      UNION
+      SELECT NULL::integer AS kec_id, NULL::char AS kec, kabupaten.kbid::integer AS kab_id, provinsi.prid::integer AS prov_id, kabupaten.kabupaten AS kab, provinsi.provinsi AS prov, INITCAP(CONCAT (kabupaten.kabupaten,', ', provinsi.provinsi)) AS disp FROM kabupaten
+            JOIN provinsi ON provinsi.prid = kabupaten.prov_id
+            JOIN  kecamatan ON kabupaten.kbid = kecamatan.kab_id
+            JOIN  cabang ON kabupaten.kodekc = cabang.kodecab
+            WHERE lower(kabupaten.kabupaten) LIKE LOWER('%' || $2 || '%')
+            AND ($1::character IS NULL OR cabang.kodedep = $1)
+      UNION
+      SELECT NULL::integer AS kec_id, NULL::char AS kec, NULL::integer AS kab_id, provinsi.prid::integer AS prov_id, NULL::char AS kab, provinsi.provinsi AS prov, INITCAP(provinsi.provinsi) AS disp FROM provinsi
+            JOIN  kabupaten ON provinsi.prid = kabupaten.prov_id
+            JOIN  cabang ON kabupaten.kodekc = cabang.kodecab
+            WHERE lower(provinsi.provinsi) LIKE LOWER('%' || $2 || '%')
+            AND ($1::character IS NULL OR cabang.kodedep = $1)
+      ORDER BY kec_id DESC, kab_id DESC 
+`  , [kddep,id]
+       
     );
 
     res.json({
