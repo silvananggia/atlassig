@@ -29,6 +29,8 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import MyLocationOutlinedIcon from "@mui/icons-material/MyLocationOutlined";
 import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+
 import {
   fetchFKTPDetail,
   fetchFilterFKTP,
@@ -64,6 +66,8 @@ import Alert from "@mui/material/Alert";
 import Stack from "@mui/material/Stack";
 import CardFaskes from "./CardFaskesPublik";
 
+import Tooltip from "@mui/material/Tooltip";
+
 const MapComponent = ({ faskes }) => {
   const dispatch = useDispatch();
   const bingApiKey =
@@ -89,7 +93,7 @@ const MapComponent = ({ faskes }) => {
   const [showFKRTLMark, setShowFKRTLMark] = useState(false);
   const [showDetailBox, setShowDetailBox] = useState(false);
   const [activeFaskes, setActiveFaskes] = useState("");
-  const [showLegend, setShowLegend] = useState(false);
+  const [showLegend, setShowLegend] = useState(true);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showSidebarData, setShowSidebarData] = useState(false);
   const [selectedWilayah, setselectedWilayah] = useState();
@@ -98,6 +102,7 @@ const MapComponent = ({ faskes }) => {
   const [inputNama, setInputNama] = useState(null);
   const [inputAlamat, setInputAlamat] = useState(null);
   const [inputJenis, setInputJenis] = useState([]);
+  const [inputJenisFKTP, setInputJenisFKTP] = useState([]);
   const [inputrmin, setInputRmin] = useState(null);
   const [inputrmax, setInputRmax] = useState(null);
   const [inputRasio, setInputRasio] = useState({
@@ -142,6 +147,7 @@ const MapComponent = ({ faskes }) => {
     dispatch(fetchMarkersFKRTL(latitude, longitude));
     if (faskes === "fkrtl") {
       dispatch(fetchJenisFKRTL());
+      dispatch(fetchJenisFKTP());
     } else {
       dispatch(fetchJenisFKTP());
     }
@@ -189,9 +195,16 @@ const MapComponent = ({ faskes }) => {
   }, [jenisFKRTL]);
 
   useEffect(() => {
-    if (jenisFKTP) {
-      const initialInputJenis = jenisFKTP.map((item) => item.jenisfaskes);
-      setInputJenis(initialInputJenis);
+    if (faskes === "fkrtl") {
+      if (jenisFKTP) {
+        const initialInputJenis = jenisFKTP.map((item) => item.jenisfaskes);
+        setInputJenisFKTP(initialInputJenis);
+      }
+    } else {
+      if (jenisFKTP) {
+        const initialInputJenis = jenisFKTP.map((item) => item.jenisfaskes);
+        setInputJenis(initialInputJenis);
+      }
     }
   }, [jenisFKTP]);
 
@@ -203,19 +216,20 @@ const MapComponent = ({ faskes }) => {
       setSelectedKecId("nan");
       setSelectedKabId("nan");
       setSelectedProvId("nan");
-      setselectedWilayah("");
     }
   };
 
   const handleSelectWilayah = (event, selectedOption) => {
-    if (selectedOption === null) {
-      setselectedWilayah("");
-    } else {
+    if (selectedOption != null) {
       const { kec_id, kab_id, prov_id } = selectedOption;
 
       setSelectedKecId(kec_id);
       setSelectedKabId(kab_id);
       setSelectedProvId(prov_id);
+    } else {
+      setSelectedKecId("nan");
+      setSelectedKabId("nan");
+      setSelectedProvId("nan");
     }
   };
   useEffect(() => {
@@ -250,6 +264,8 @@ const MapComponent = ({ faskes }) => {
   };
 
   const handleResetFilter = () => {
+    console.log(selectedWilayah);
+
     if (faskes === "fkrtl") {
       dispatch(fetchMarkersFKRTL(latitude, longitude));
       removeFKRTLPointMarkerLayers();
@@ -276,7 +292,7 @@ const MapComponent = ({ faskes }) => {
     setSelectedKecId("nan");
     setSelectedKabId("nan");
     setSelectedProvId("nan");
-    setselectedWilayah("");
+    setselectedWilayah([]);
   };
   const closeDetailBox = () => {
     setShowDetailBox(false);
@@ -295,8 +311,8 @@ const MapComponent = ({ faskes }) => {
 
       map.getView().animate({
         center: centerMap,
-        duration: 1000, // Animation duration in milliseconds
-        zoom: zoomLevel,
+        duratin: 1000, // Animation duration in milliseconds
+        zoom: 5,
       });
     }
   };
@@ -779,6 +795,7 @@ const MapComponent = ({ faskes }) => {
     if (faskes === "fkrtl") {
       FKRTLPointMarker();
       setShowFKRTLMark(true);
+      removeFKTPPointMarkerLayers();
     } else {
       FKTPPointMarker();
       setShowFKTPMark(true);
@@ -894,7 +911,7 @@ const MapComponent = ({ faskes }) => {
     map.getView().animate({
       center: coordinates,
       duration: 500, // Animation duration in milliseconds
-      zoom: 15,
+      zoom: 13,
     });
   };
 
@@ -1034,6 +1051,16 @@ const MapComponent = ({ faskes }) => {
       selectedKabId != "nan" ||
       selectedKecId != "nan"
     ) {
+      Swal.fire({
+        confirmButtonColor: "#274C8B",
+        confirmButtonText: "Ya, Saya Mengerti",
+        text: "Data yang tampil merupakan Fasilitas Kesehatan kerja sama BPJS Kesehatan",
+        icon: "info",
+        width: "300px",
+        imageHeight: 40,
+        imageWidth: 40,
+      });
+
       const selectedCanggihValues = [
         "Cathlab",
         "Sarana Radioterapi",
@@ -1048,6 +1075,12 @@ const MapComponent = ({ faskes }) => {
       if (faskes === "fkrtl") {
         if (overlayLayer) {
           if (inputCanggih.includes("None,nan")) {
+            Swal.fire({
+              confirmButtonColor: "#274C8B",
+              confirmButtonText: "Ya, Saya Mengerti",
+              text: "Menampilkan peta potensi perluasan kerja sama FKRTL (belum termasuk analisis perluasan sarana pelayanan canggih di RS)",
+              icon: "info",
+            });
             overlayLayer.setOpacity(1);
           } else if (
             selectedCanggihValues.some((value) => inputCanggih.includes(value))
@@ -1077,8 +1110,8 @@ const MapComponent = ({ faskes }) => {
       const sanitizedInputCanggih =
         inputCanggih.length > 0 ? inputCanggih : listCanggih;
       const sanitizedInputJenis = inputJenis.length > 0 ? inputJenis : "null";
-      const sanitizedInputNama = inputNama ?? "null";
-      const sanitizedInputAlamat = inputAlamat ?? "null";
+      const sanitizedInputNama = inputNama === "" ? "null" : inputNama;
+      const sanitizedInputAlamat = inputAlamat === "" ? "null" : inputAlamat;
       const sanitizedInputRmin = inputrmin ?? "null";
       const sanitizedInputRmax = inputrmax ?? "null";
 
@@ -1113,7 +1146,38 @@ const MapComponent = ({ faskes }) => {
           )
         );
 
+        dispatch(
+          fetchFilterFKTPList(
+            sanitizedSelectedProvId,
+            sanitizedSelectedKabId,
+            sanitizedSelectedKecId,
+            "null",
+            "null",
+            sanitizedInputRmax,
+            sanitizedInputRmin,
+            inputJenisFKTP,
+            "null",
+            "null"
+          )
+        );
+
+        dispatch(
+          fetchFilterFKTP(
+            sanitizedSelectedProvId,
+            sanitizedSelectedKabId,
+            sanitizedSelectedKecId,
+            "null",
+            "null",
+            sanitizedInputRmax,
+            sanitizedInputRmin,
+            inputJenisFKTP,
+            "null",
+            "null"
+          )
+        );
+
         removeFKRTLPointMarkerLayers();
+        removeFKTPPointMarkerLayers();
       } else {
         dispatch(
           fetchFilterFKTPList(
@@ -1151,9 +1215,11 @@ const MapComponent = ({ faskes }) => {
       toggleSidebar(true);
       setIsFiltered(true);
       resetInput();
-      setselectedWilayah([]);
     } else {
+      //#0F816F, #274C8B
       Swal.fire({
+        confirmButtonColor: "#274C8B",
+        confirmButtonText: "OKE",
         text: "Mohon tentukan wilayah pencarian terlebih dahulu",
         icon: "info",
       });
@@ -1169,8 +1235,6 @@ const MapComponent = ({ faskes }) => {
     const sanitizedInputJenis = "null";
     const sanitizedInputNama = "null";
     const sanitizedInputAlamat = "null";
-    setselectedWilayah(null);
-    setselectedWilayah("");
   };
 
   const getLayerLeftPosition = () => {
@@ -1215,13 +1279,15 @@ const MapComponent = ({ faskes }) => {
         />
       </div>
 
-      <div
-        className="legend-button-embed"
-        onClick={handleLegendClick}
-        style={{ left: getLayerLeftPosition() }}
-      >
-        <PermDeviceInformationOutlinedIcon fontSize="medium" />
-      </div>
+      <Tooltip title="Legenda" placement="right">
+        <div
+          className="legend-button-embed"
+          onClick={handleLegendClick}
+          style={{ left: getLayerLeftPosition() }}
+        >
+          <PermDeviceInformationOutlinedIcon fontSize="medium" />
+        </div>
+      </Tooltip>
 
       {showLegend && (
         <div className="legend-box-embed" onClick={handleLegendClick}>
@@ -1233,19 +1299,20 @@ const MapComponent = ({ faskes }) => {
         </div>
       )}
 
-      <div
-        className="filter-button-embed"
-        onClick={handleFilterClick}
-        style={{ left: getLayerLeftPosition() }}
-      >
-        <div className="button-container">
-          <TuneOutlinedIcon fontSize="medium" />
+      <Tooltip title="Filter" placement="right">
+        <div
+          className="filter-button-embed"
+          onClick={handleFilterClick}
+          style={{ left: getLayerLeftPosition() }}
+        >
+          <div className="button-container">
+            <TuneOutlinedIcon fontSize="medium" />
+          </div>
         </div>
-      </div>
-
+      </Tooltip>
       <div className={`sidebar-filter ${showSidebar ? "open" : ""}`}>
         <div className="sidebar-header">
-          <Typography>Filter {faskes.toUpperCase()}</Typography>
+          <Typography>Filter {faskes.toUpperCase()} Kerja Sama</Typography>
         </div>
         <div className="sidebar-content">
           <Grid container spacing={2}>
@@ -1278,16 +1345,17 @@ const MapComponent = ({ faskes }) => {
                 <Autocomplete
                   noOptionsText={"Data Tidak Ditemukan"}
                   size={"small"}
+                  freeSolo
                   fullWidth
                   required
                   id="wilayah"
                   style={{ zindex: 1000000, left: 0 }}
-                  value={selectedWilayah}
+                  value={selectedWilayah ? selectedWilayah : null}
                   onChange={handleSelectWilayah}
                   inputValue={selectedWilayah}
                   onInputChange={handleInputWilayahChange}
                   options={listWilayah || []}
-                  getOptionLabel={(option) => option.disp}
+                  getOptionLabel={(option) => option.disp || ""}
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -1591,7 +1659,7 @@ const MapComponent = ({ faskes }) => {
         <>
           <div className={`sidebar-data ${showSidebarData ? "open" : ""}`}>
             <div className="sidebar-header">
-              <Typography>Daftar Faskes</Typography>
+              <Typography>Daftar Faskes Kerja Sama</Typography>
               <div className="sidebar-data-toggle" onClick={toggleSidebar}>
                 {showSidebarData ? (
                   <span className="caret">&#x25C0;</span>
@@ -1678,7 +1746,7 @@ const MapComponent = ({ faskes }) => {
         <>
           <div className={`sidebar-data ${showSidebarData ? "open" : ""}`}>
             <div className="sidebar-header">
-              <Typography>Daftar Faskes</Typography>
+              <Typography>Daftar Faskes Kerja Sama</Typography>
               <div className="sidebar-data-toggle" onClick={toggleSidebar}>
                 {showSidebarData ? (
                   <span className="caret">&#x25C0;</span>
@@ -1770,6 +1838,36 @@ const MapComponent = ({ faskes }) => {
           closeDetailBox={closeDetailBox}
         />
       )}
+
+      {faskes === "fkrtl" ? (
+        <>
+          <div
+            className="layer-select-embed3"
+            style={{ left: getLayerLeftPosition() }}
+          >
+            <InfoOutlinedIcon fontSize="medium" />
+          </div>
+
+          <div
+            className="basemap-select3 hidden"
+            style={{ left: getLayerLeftPosition() }}
+          >
+            <div
+              className="coordinate-box-embed"
+              style={{ left: getLayerLeftPosition() }}
+            >
+              <p className="label">
+                <strong>Keterangan :</strong> <br />
+              </p>
+              <p className="label">
+                - Menampilkan peta potensi perluasan kerja sama FKRTL (belum
+                termasuk analisis perluasan sarana pelayanan canggih di RS)
+                <br />
+              </p>
+            </div>
+          </div>
+        </>
+      ) : null}
     </Box>
   );
 };

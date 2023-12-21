@@ -19,14 +19,17 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import BrandingWatermarkIcon from "@mui/icons-material/BrandingWatermark";
+import MedicationIcon from "@mui/icons-material/Medication";
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
-import Swal from 'sweetalert2'
+import Swal from "sweetalert2";
 import bpjsLogo from "../assets/images/bpjs_logo.svg";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import MenuItem from "@mui/material/MenuItem";
 import Menu from "@mui/material/Menu";
-import { checkAuth,logout } from "../actions/authActions";
+
+import { checkAuth, logout } from "../actions/authActions";
 
 const drawerWidth = 240;
 const openedMixin = (theme) => ({
@@ -102,14 +105,13 @@ export default function MiniDrawer({ children }) {
   const [open, setOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
   const location = useLocation();
-  const user =  localStorage.getItem("user");
 
+  const isAuthenticated = useSelector((state) => state.mapauth.isAuthenticated);
+  const user = useSelector((state) => state.mapauth.user);
 
   const handleChange = (event) => {
     setAuth(event.target.checked);
   };
-
-
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -119,22 +121,22 @@ export default function MiniDrawer({ children }) {
     Swal.mixin({
       customClass: {
         confirmButton: "btn btn-success",
-        cancelButton: "btn btn-danger"
+        cancelButton: "btn btn-danger",
       },
-      buttonsStyling: false
+      buttonsStyling: false,
     });
-  
+
     Swal.fire({
-      title: "Yakin akan keluar dari Atlas-SIG?",
+      title: "Konfirmasi",
+      text: "Yakin akan keluar dari Atlas-SIG?",
       icon: "question",
       showCancelButton: true,
       confirmButtonText: "Ya",
       cancelButtonText: "Tidak!",
-      reverseButtons: true
+      reverseButtons: true,
     }).then((result) => {
       if (result.isConfirmed) {
         dispatch(logout());
-
         navigate("/login");
       } else if (result.dismiss === Swal.DismissReason.cancel) {
         // User clicked "No, cancel!" or closed the modal
@@ -142,7 +144,6 @@ export default function MiniDrawer({ children }) {
       }
     });
   };
-  
 
   const handleClose = () => {
     setAnchorEl(null);
@@ -159,21 +160,22 @@ export default function MiniDrawer({ children }) {
   const itemsList = [
     {
       text: "FKTP",
-      icon: <BrandingWatermarkIcon />,
+      icon: <MedicationIcon />,
+      path: "/mapfktp",
       onClick: () => navigate("/mapfktp"),
     },
     {
       text: "FKRTL",
-      icon: <BrandingWatermarkIcon />,
+      icon: <LocalHospitalIcon />,
+      path: "/mapfkrtl",
       onClick: () => navigate("/mapfkrtl"),
     },
     {
       text: "Statistik",
       icon: <AnalyticsIcon />,
+      path: "/statistic",
       onClick: () => navigate("/statistic"),
     },
-   
-
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -200,39 +202,47 @@ export default function MiniDrawer({ children }) {
 
           <img src={bpjsLogo} alt="BPJS Logo" style={{ height: 24 }} />
           <Box sx={{ flexGrow: 1 }} />
-          <div>
-          
-            <IconButton
-              size="large"
-              aria-label="account of current user"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleMenu}
-              color="inherit"
-            >
-              <AccountCircle />
-              
-            </IconButton>
-          
-            {/* <Menu
-              id="menu-appbar"
-              anchorEl={anchorEl}
-              anchorOrigin={{
-                vertical: "top",
-                horizontal: "right", // Set the horizontal origin to 'right'
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "right", // Set the horizontal origin to 'right'
-              }}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-            >
-              <MenuItem onClick={handleClose}>Profile</MenuItem>
-              <MenuItem onClick={handleLogout}>Logout</MenuItem>
-            </Menu> */}
-          </div>
+          {isAuthenticated && (
+      <Typography size={12} noWrap sx={{ display: { xs: 'none', sm: 'block' }, color: 'white', marginLeft: 1}}>
+        {user.data.nama}
+      </Typography>
+    )}
+          {isAuthenticated && (
+      <div>
+        
+        <IconButton
+          size="large"
+          aria-label="account of current user"
+          aria-controls="menu-appbar"
+          aria-haspopup="true"
+          onClick={handleMenu}
+          color="inherit"
+        >
+          <AccountCircle />
+        </IconButton>
+        {/* <Menu
+          id="menu-appbar"
+          anchorEl={anchorEl}
+          anchorOrigin={{
+            vertical: "top",
+            horizontal: "right",
+          }}
+          keepMounted
+          transformOrigin={{
+            vertical: "top",
+            horizontal: "right",
+          }}
+          open={Boolean(anchorEl)}
+          onClose={handleClose}
+        >
+          <MenuItem onClick={handleClose}>Profile</MenuItem>
+          <MenuItem onClick={handleLogout}>Logout</MenuItem>
+        </Menu> */}
+      </div>
+    )}
+
+    {/* Display user's name next to the person icon */}
+
         </Toolbar>
       </HeaderAppBar>
 
@@ -256,9 +266,24 @@ export default function MiniDrawer({ children }) {
                 key={text}
                 onClick={onClick}
                 selected={isActive(path)}
+                sx={{
+                  "&.Mui-selected": {
+                    background:
+                      "linear-gradient(to right, rgba(15, 129, 111, 0.5), rgba(39, 76, 139, 0.7))", // Set your transparent linear gradient here
+                  },
+                }}
               >
-                {icon && <ListItemIcon>{icon}</ListItemIcon>}
-                <ListItemText primary={text} />
+                {icon && (
+                  <ListItemIcon
+                    sx={{ color: isActive(path) ? "white" : "inherit" }}
+                  >
+                    {icon}
+                  </ListItemIcon>
+                )}
+                <ListItemText
+                  primary={text}
+                  sx={{ color: isActive(path) ? "white" : "inherit" }}
+                />
               </ListItem>
             );
           })}

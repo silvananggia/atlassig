@@ -21,12 +21,14 @@ const checkAuth = () => {
 
 const logout = () => {
   localStorage.removeItem("user");
-  return axios.post(`/logout`, {
-    withCredentials: true,
-  }
+
+  return axios.post(
+    "/logout",
+    {},
+    {
+      withCredentials: true,
+    }
   );
-  
-  
 };
 
 

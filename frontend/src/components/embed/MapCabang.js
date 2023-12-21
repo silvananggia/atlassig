@@ -29,6 +29,7 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import MyLocationOutlinedIcon from "@mui/icons-material/MyLocationOutlined";
 import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import {
   fetchFKTPCabang,
   fetchFKTPDetail,
@@ -293,6 +294,9 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     setSelectedKecId("null");
     setSelectedKabId("null");
     setSelectedProvId("null");
+    setselectedWilayah([]);
+    setInputAlamat('');
+    setInputNama('');
   };
   const closeDetailBox = () => {
     setShowDetailBox(false);
@@ -1086,6 +1090,43 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     }
   }, [inputRasio]);
   const handleSubmit = () => {
+
+    const selectedCanggihValues = [
+      "Cathlab",
+      "Sarana Radioterapi",
+      "Sarana Kemoterapi",
+    ];
+
+    const overlayLayer = map
+      .getLayers()
+      .getArray()
+      .find((layer) => layer.get("title") === "PotentialLayer");
+
+      if (faskes === "fkrtl") {
+        if (overlayLayer) {
+          if (inputCanggih.includes("None,nan")) {
+            overlayLayer.setOpacity(1);
+          } else if (
+            selectedCanggihValues.some((value) => inputCanggih.includes(value))
+          ) {
+            overlayLayer.setOpacity(0);
+          } else {
+            overlayLayer.setOpacity(1);
+          }
+        }
+      } 
+
+      if (faskes === "fktp") {
+
+    if (overlayLayer) {
+      if (inputJenis.includes("Dokter gigi") && inputJenis.length === 1) {
+        overlayLayer.setOpacity(0);
+      } else {
+        overlayLayer.setOpacity(1);
+      }
+    }
+  }
+
   
     const sanitizedSelectedProvId = selectedProvId ?? "null";
     const sanitizedSelectedKabId = selectedKabId ?? "null";
@@ -1096,8 +1137,8 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     const sanitizedInputCanggih =
       inputCanggih.length > 0 ? inputCanggih : listCanggih;
     const sanitizedInputJenis = inputJenis.length > 0 ? inputJenis : "null";
-    const sanitizedInputNama = inputNama ?? "null";
-    const sanitizedInputAlamat = inputAlamat ?? "null";
+    const sanitizedInputNama = inputNama === "" ? "null" : inputNama;
+    const sanitizedInputAlamat = inputAlamat === "" ? "null" : inputAlamat;
     const sanitizedInputRmin = inputrmin ?? "null";
     const sanitizedInputRmax = inputrmax ?? "null";
 
@@ -1262,7 +1303,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
 
       <div className={`sidebar-filter ${showSidebar ? "open" : ""}`}>
         <div className="sidebar-header">
-          <Typography>Filter {faskes.toUpperCase()}</Typography>
+          <Typography>Filter {faskes.toUpperCase()} Kerja Sama</Typography>
         </div>
         <div className="sidebar-content">
           <Grid container spacing={2}>
@@ -1395,17 +1436,18 @@ const MapComponent = ({ faskes, kodeCabang }) => {
                 }}
               >
                 <Autocomplete
+                freeSolo
                   noOptionsText={"Data Tidak Ditemukan"}
                   size={"small"}
                   fullWidth
                   id="combo-box-demo"
                   style={{ zindex: 1000000, left: 0 }}
-                  value={selectedWilayah}
+                  value={selectedWilayah?selectedWilayah:null}
                   onChange={handleSelectWilayah}
                   inputValue={selectedWilayah}
                   onInputChange={handleInputWilayahChange}
                   options={listWilayah || []}
-                  getOptionLabel={(option) => option.disp}
+                  getOptionLabel={(option) => option.disp||''}
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -1601,7 +1643,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
         <>
           <div className={`sidebar-data ${showSidebarData ? "open" : ""}`}>
             <div className="sidebar-header">
-              <Typography>Daftar Faskes</Typography>
+              <Typography>Daftar Faskes Kerja Sama</Typography>
               <div className="sidebar-data-toggle" onClick={toggleSidebar}>
                 {showSidebarData ? (
                   <span className="caret">&#x25C0;</span>
@@ -1691,7 +1733,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
         <>
           <div className={`sidebar-data ${showSidebarData ? "open" : ""}`}>
             <div className="sidebar-header">
-              <Typography>Daftar Faskes</Typography>
+              <Typography>Daftar Faskes Kerja Sama</Typography>
               <div className="sidebar-data-toggle" onClick={toggleSidebar}>
                 {showSidebarData ? (
                   <span className="caret">&#x25C0;</span>
@@ -1788,7 +1830,35 @@ const MapComponent = ({ faskes, kodeCabang }) => {
           closeDetailBox={closeDetailBox}
         />
       )}
+{faskes === "fkrtl" ? (
+        <>
+          <div
+            className="layer-select-embed3"
+            style={{ left: getLayerLeftPosition() }}
+          >
+            <InfoOutlinedIcon fontSize="medium" />
+          </div>
 
+          <div
+            className="basemap-select3 hidden"
+            style={{ left: getLayerLeftPosition() }}
+          >
+            <div
+              className="coordinate-box-embed"
+              style={{ left: getLayerLeftPosition() }}
+            >
+              <p className="label">
+                <strong>Keterangan :</strong> <br />
+              </p>
+              <p className="label">
+                - Menampilkan peta potensi perluasan kerja sama FKRTL (belum
+                termasuk analisis perluasan sarana pelayanan canggih di RS)
+                <br />
+              </p>
+            </div>
+          </div>
+        </>
+      ) : null}
 
     </Box>
         

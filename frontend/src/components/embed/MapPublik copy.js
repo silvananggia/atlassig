@@ -1047,7 +1047,7 @@ const MapComponent = ({ faskes }) => {
         <>
           <div className={`sidebar-data ${showSidebarData ? "open" : ""}`}>
             <div className="sidebar-header">
-              <Typography>Daftar Faskes</Typography>
+              <Typography>Daftar Faskes Kerja Sama</Typography>
               <div className="sidebar-data-toggle" onClick={toggleSidebar}>
                 {showSidebarData ? (
                   <span className="caret">&#x25C0;</span>
@@ -1138,7 +1138,7 @@ const MapComponent = ({ faskes }) => {
         <>
           <div className={`sidebar-data ${showSidebarData ? "open" : ""}`}>
             <div className="sidebar-header">
-              <Typography>Daftar Faskes</Typography>
+              <Typography>Daftar Faskes Kerja Sama</Typography>
               <div className="sidebar-data-toggle" onClick={toggleSidebar}>
                 {showSidebarData ? (
                   <span className="caret">&#x25C0;</span>

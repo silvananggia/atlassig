@@ -1,8 +1,16 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Box, Container, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
+import {
+  setLoading,
 
+} from "../actions/loadingActions";
 const NotFound = () => {
+  const dispatch = useDispatch();
+  useEffect(()=>{
+    dispatch(setLoading(false));
+  },[])
   return (
     <Box
       sx={{

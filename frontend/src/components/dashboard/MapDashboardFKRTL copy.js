@@ -1242,7 +1242,7 @@ const MapComponent = () => {
 
       <div className={`sidebar-filter-dashboard ${showSidebar ? "open" : ""}`}>
         <div className="sidebar-header">
-          <Typography>Filter {faskes.toUpperCase()}</Typography>
+          <Typography>Filter {faskes.toUpperCase()} Kerja Sama</Typography>
         </div>
         <div className="sidebar-content">
           <Grid container spacing={2}>
@@ -1635,7 +1635,7 @@ const MapComponent = () => {
         <>
           <div className={`sidebar-data-dashboard ${showSidebarData ? "open" : ""}`}>
             <div className="sidebar-header">
-              <Typography>Daftar Faskes</Typography>
+              <Typography>Daftar Faskes Kerja Sama</Typography>
               <div className="sidebar-data-toggle" onClick={toggleSidebar}>
                 {showSidebarData ? (
                   <span className="caret">&#x25C0;</span>
@@ -1725,7 +1725,7 @@ const MapComponent = () => {
         <>
           <div className={`sidebar-data-dashboard ${showSidebarData ? "open" : ""}`}>
             <div className="sidebar-header">
-              <Typography>Daftar Faskes</Typography>
+              <Typography>Daftar Faskes Kerja Sama</Typography>
               <div className="sidebar-data-toggle" onClick={toggleSidebar}>
                 {showSidebarData ? (
                   <span className="caret">&#x25C0;</span>

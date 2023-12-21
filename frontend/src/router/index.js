@@ -1,4 +1,3 @@
-// MyRouter.js
 import React from "react";
 import { useSelector } from "react-redux";
 import { Route, Routes, useNavigate } from "react-router-dom";

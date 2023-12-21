@@ -323,16 +323,16 @@ exports.autowilayah = async (req, res) => {
     }
 
     const result = await db.query(
-      `SELECT kecamatan.kcid::integer AS kec_id, kecamatan.kecamatan AS kec, kabupaten.kbid::integer AS kab_id, provinsi.prid::integer AS prov_id, kabupaten.kabupaten AS kab, provinsi.provinsi AS prov, INITCAP(CONCAT (kecamatan.kecamatan,', ', kabupaten.kabupaten,', ', provinsi.provinsi)) AS disp FROM kecamatan
+      `SELECT kecamatan.kcid::integer AS kec_id, kecamatan.kecamatan AS kec, kabupaten.kbid::integer AS kab_id, provinsi.prid::integer AS prov_id, kabupaten.kabupaten AS kab, provinsi.provinsi AS prov, UPPER(CONCAT (kecamatan.kecamatan,', ', kabupaten.kabupaten,', ', provinsi.provinsi)) AS disp FROM kecamatan
       JOIN kabupaten ON kabupaten.kbid = kecamatan.kab_id
       JOIN provinsi ON provinsi.prid = kabupaten.prov_id
       WHERE lower(kecamatan.kecamatan) LIKE LOWER('%' || $1 || '%')
       UNION
-      SELECT NULL::integer AS kec_id, NULL::char AS kec, kabupaten.kbid::integer AS kab_id, provinsi.prid::integer AS prov_id, kabupaten.kabupaten AS kab, provinsi.provinsi AS prov, INITCAP(CONCAT (kabupaten.kabupaten,', ', provinsi.provinsi)) AS disp FROM kabupaten
+      SELECT NULL::integer AS kec_id, NULL::char AS kec, kabupaten.kbid::integer AS kab_id, provinsi.prid::integer AS prov_id, kabupaten.kabupaten AS kab, provinsi.provinsi AS prov, UPPER(CONCAT (kabupaten.kabupaten,', ', provinsi.provinsi)) AS disp FROM kabupaten
             JOIN provinsi ON provinsi.prid = kabupaten.prov_id
             WHERE lower(kabupaten.kabupaten) LIKE LOWER('%' || $1 || '%')
       UNION
-      SELECT NULL::integer AS kec_id, NULL::char AS kec, NULL::integer AS kab_id, provinsi.prid::integer AS prov_id, NULL::char AS kab, provinsi.provinsi AS prov, INITCAP(provinsi.provinsi) AS disp FROM provinsi
+      SELECT NULL::integer AS kec_id, NULL::char AS kec, NULL::integer AS kab_id, provinsi.prid::integer AS prov_id, NULL::char AS kab, provinsi.provinsi AS prov, UPPER(provinsi.provinsi) AS disp FROM provinsi
             WHERE lower(provinsi.provinsi) LIKE LOWER('%' || $1 || '%')
       ORDER BY kec_id DESC, kab_id DESC LIMIT 7;
         `
@@ -1059,16 +1059,13 @@ exports.autowilayahcadep = async (req, res) => {
       kecamatan.kcid::integer AS kec_id,
       kecamatan.kecamatan AS kec,
       kabupaten.kbid::integer AS kab_id,
-      provinsi.prid::integer AS prov_id,
       kabupaten.kabupaten AS kab,
-      provinsi.provinsi AS prov,
-      INITCAP(CONCAT(kecamatan.kecamatan, ', ', kabupaten.kabupaten, ', ', provinsi.provinsi)) AS disp
+      UPPER(CONCAT(kecamatan.kecamatan, ', ', kabupaten.kabupaten)) AS disp
     FROM
       kecamatan
     JOIN
       kabupaten ON kabupaten.kbid = kecamatan.kab_id
-    JOIN
-      provinsi ON provinsi.prid = kabupaten.prov_id
+  
     JOIN
       cabang ON kabupaten.kodekc = cabang.kodecab
     WHERE
@@ -1076,20 +1073,14 @@ exports.autowilayahcadep = async (req, res) => {
       AND ($1::character IS NULL OR cabang.kodedep = $1)
       AND ($2::character IS NULL OR cabang.kodecab = $2)
       UNION
-      SELECT NULL::integer AS kec_id, NULL::char AS kec, kabupaten.kbid::integer AS kab_id, provinsi.prid::integer AS prov_id, kabupaten.kabupaten AS kab, provinsi.provinsi AS prov, INITCAP(CONCAT (kabupaten.kabupaten,', ', provinsi.provinsi)) AS disp FROM kabupaten
+      SELECT NULL::integer AS kec_id, NULL::char AS kec, kabupaten.kbid::integer AS kab_id,  kabupaten.kabupaten AS kab,  UPPER(CONCAT (kabupaten.kabupaten)) AS disp FROM kabupaten
             JOIN provinsi ON provinsi.prid = kabupaten.prov_id
             JOIN  kecamatan ON kabupaten.kbid = kecamatan.kab_id
             JOIN  cabang ON kabupaten.kodekc = cabang.kodecab
             WHERE lower(kabupaten.kabupaten) LIKE LOWER('%' || $3 || '%')
             AND ($1::character IS NULL OR cabang.kodedep = $1)
             AND ($2::character IS NULL OR cabang.kodecab = $2)
-      UNION
-      SELECT NULL::integer AS kec_id, NULL::char AS kec, NULL::integer AS kab_id, provinsi.prid::integer AS prov_id, NULL::char AS kab, provinsi.provinsi AS prov, INITCAP(provinsi.provinsi) AS disp FROM provinsi
-            JOIN  kabupaten ON provinsi.prid = kabupaten.prov_id
-            JOIN  cabang ON kabupaten.kodekc = cabang.kodecab
-            WHERE lower(provinsi.provinsi) LIKE LOWER('%' || $3 || '%')
-            AND ($1::character IS NULL OR cabang.kodedep = $1)
-            AND ($2::character IS NULL OR cabang.kodecab = $2)
+     
       ORDER BY kec_id DESC, kab_id DESC ;
 `  , [kddep,kdkc,id]
        
@@ -1132,7 +1123,7 @@ exports.autowilayahdep = async (req, res) => {
       provinsi.prid::integer AS prov_id,
       kabupaten.kabupaten AS kab,
       provinsi.provinsi AS prov,
-      INITCAP(CONCAT(kecamatan.kecamatan, ', ', kabupaten.kabupaten, ', ', provinsi.provinsi)) AS disp
+      UPPER(CONCAT(kecamatan.kecamatan, ', ', kabupaten.kabupaten, ', ', provinsi.provinsi)) AS disp
     FROM
       kecamatan
     JOIN
@@ -1145,14 +1136,14 @@ exports.autowilayahdep = async (req, res) => {
       lower(kecamatan.kecamatan) LIKE LOWER('%' || $2 || '%')
       AND ($1::character IS NULL OR cabang.kodedep = $1)
       UNION
-      SELECT NULL::integer AS kec_id, NULL::char AS kec, kabupaten.kbid::integer AS kab_id, provinsi.prid::integer AS prov_id, kabupaten.kabupaten AS kab, provinsi.provinsi AS prov, INITCAP(CONCAT (kabupaten.kabupaten,', ', provinsi.provinsi)) AS disp FROM kabupaten
+      SELECT NULL::integer AS kec_id, NULL::char AS kec, kabupaten.kbid::integer AS kab_id, provinsi.prid::integer AS prov_id, kabupaten.kabupaten AS kab, provinsi.provinsi AS prov, UPPER(CONCAT (kabupaten.kabupaten,', ', provinsi.provinsi)) AS disp FROM kabupaten
             JOIN provinsi ON provinsi.prid = kabupaten.prov_id
             JOIN  kecamatan ON kabupaten.kbid = kecamatan.kab_id
             JOIN  cabang ON kabupaten.kodekc = cabang.kodecab
             WHERE lower(kabupaten.kabupaten) LIKE LOWER('%' || $2 || '%')
             AND ($1::character IS NULL OR cabang.kodedep = $1)
       UNION
-      SELECT NULL::integer AS kec_id, NULL::char AS kec, NULL::integer AS kab_id, provinsi.prid::integer AS prov_id, NULL::char AS kab, provinsi.provinsi AS prov, INITCAP(provinsi.provinsi) AS disp FROM provinsi
+      SELECT NULL::integer AS kec_id, NULL::char AS kec, NULL::integer AS kab_id, provinsi.prid::integer AS prov_id, NULL::char AS kab, provinsi.provinsi AS prov, UPPER(provinsi.provinsi) AS disp FROM provinsi
             JOIN  kabupaten ON provinsi.prid = kabupaten.prov_id
             JOIN  cabang ON kabupaten.kodekc = cabang.kodecab
             WHERE lower(provinsi.provinsi) LIKE LOWER('%' || $2 || '%')

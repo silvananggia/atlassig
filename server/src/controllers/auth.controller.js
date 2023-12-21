@@ -97,7 +97,18 @@ exports.checkAuth = async (req, res) => {
       ]);
       const user = result.rows[0];
       req.user = user;
-      res.json(req.user);
+
+      data = {
+        nama: req.user.nama,
+        email:  req.user.email,
+        level: req.user.level,
+      };
+
+      res.json({
+        code: 200,
+        status: "success",
+        data: data,
+      });
     } catch (error) {
       res.status(500).json({ 
         code: 500,

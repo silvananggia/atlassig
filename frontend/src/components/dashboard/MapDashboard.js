@@ -243,8 +243,9 @@ const MapComponent = ({ faskes }) => {
     
     } else {
       setInputKodeDeputi(value);
-      setselectedCabang("");
-      handleSelectCabang("");
+      setselectedWilayah([]);
+      setselectedCabang([]);
+     
     }
    
   };
@@ -281,23 +282,18 @@ const MapComponent = ({ faskes }) => {
   };
 
   const handleSelectWilayah = (event, selectedOption) => {
-     // Check if the new value is null or an empty string
-     if (selectedOption === null || selectedOption === '') {
-      // Handle clear action
-      setSelectedKecId("null");
-      setSelectedKabId("null");
-      setSelectedProvId("null");
-    } else {
-      // Handle other changes
-      if (selectedOption) {
-        const { kec_id, kab_id, prov_id } = selectedOption;
-  
-        setSelectedKecId(kec_id);
-        setSelectedKabId(kab_id);
-        setSelectedProvId(prov_id);
-      }
-    }
+    if (selectedOption != null) {
+      const { kec_id, kab_id, prov_id } = selectedOption;
 
+     setSelectedKecId(kec_id);
+     setSelectedKabId(kab_id);
+     setSelectedProvId(prov_id);
+     
+   } else {
+           setSelectedKecId("nan");
+     setSelectedKabId("nan");
+     setSelectedProvId("nan");
+   }
    
   };
 
@@ -373,6 +369,12 @@ const MapComponent = ({ faskes }) => {
     setSelectedKecId("null");
     setSelectedKabId("null");
     setSelectedProvId("null");
+    setselectedCabang([]);
+    setselectedWilayah([]);
+    setInputKodeDeputi('');
+    setInputAlamat('');
+    setInputNama('');
+
   };
   const closeDetailBox = () => {
     setShowDetailBox(false);
@@ -1126,7 +1128,42 @@ const MapComponent = ({ faskes }) => {
     }
   }, [inputRasio]);
   const handleSubmit = () => {
-    console.log(isLoading);
+    const selectedCanggihValues = [
+      "Cathlab",
+      "Sarana Radioterapi",
+      "Sarana Kemoterapi",
+    ];
+
+    const overlayLayer = map
+      .getLayers()
+      .getArray()
+      .find((layer) => layer.get("title") === "PotentialLayer");
+
+      if (faskes === "fkrtl") {
+        if (overlayLayer) {
+          if (inputCanggih.includes("None,nan")) {
+            overlayLayer.setOpacity(1);
+          } else if (
+            selectedCanggihValues.some((value) => inputCanggih.includes(value))
+          ) {
+            overlayLayer.setOpacity(0);
+          } else {
+            overlayLayer.setOpacity(1);
+          }
+        }
+      } 
+
+      if (faskes === "fktp") {
+
+    if (overlayLayer) {
+      if (inputJenis.includes("Dokter gigi") && inputJenis.length === 1) {
+        overlayLayer.setOpacity(0);
+      } else {
+        overlayLayer.setOpacity(1);
+      }
+    }
+  }
+  
     const sanitizedSelectedProvId = selectedProvId ?? "null";
     const sanitizedSelectedKabId = selectedKabId ?? "null";
     const sanitizedSelectedKecId = selectedKecId ?? "null";
@@ -1298,7 +1335,7 @@ const MapComponent = ({ faskes }) => {
 
       <div className={`sidebar-filter-dashboard ${showSidebar ? "open" : ""}`}>
         <div className="sidebar-header">
-          <Typography>Filter {faskes.toUpperCase()}</Typography>
+          <Typography>Filter {faskes.toUpperCase()} Kerja Sama</Typography>
         </div>
         <div className="sidebar-content">
           <Grid container spacing={2}>
@@ -1436,18 +1473,18 @@ const MapComponent = ({ faskes }) => {
                   marginTop: -2,
                 }}
               >
-                <Autocomplete
-                selectOnFocus
+ <Autocomplete
+                freeSolo
                   noOptionsText={"Data Tidak Ditemukan"}
                   size={"small"}
                   fullWidth
                   id="cabang-list"
-                  value={selectedCabang}
+                  value={selectedCabang?selectedCabang:null }
                   onChange={handleSelectCabang}
                   inputValue={selectedCabang}
                   onInputChange={handleInputCabangChange}
                   options={listCabang || []}
-                  getOptionLabel={(option) => option.namacabang}
+                  getOptionLabel={(option) => option.namacabang||''}
                   style={{ zindex: 1000000, left: 0 }}
                   renderInput={(params) => (
                     <TextField
@@ -1483,14 +1520,15 @@ const MapComponent = ({ faskes }) => {
                   
                   noOptionsText={"Data Tidak Ditemukan"}
                   size={"small"}
+                  freeSolo
                   fullWidth
                   id="wilayah-list"
-                  value={selectedWilayah}
+                  value={selectedWilayah ? selectedWilayah : null }
                   onChange={handleSelectWilayah}
                   inputValue={selectedWilayah}
                   onInputChange={handleInputWilayahChange}
                   options={listWilayah || []}
-                  getOptionLabel={(option) => option.disp}
+                  getOptionLabel={(option) => option.disp || ''}
                   style={{ zindex: 1000000, left: 0 }}
                   renderInput={(params) => (
                     <TextField
@@ -1691,7 +1729,7 @@ const MapComponent = ({ faskes }) => {
             }`}
           >
             <div className="sidebar-header">
-              <Typography>Daftar Faskes</Typography>
+              <Typography>Daftar Faskes Kerja Sama</Typography>
               <div className="sidebar-data-toggle" onClick={toggleSidebar}>
                 {showSidebarData ? (
                   <span className="caret">&#x25C0;</span>
@@ -1783,7 +1821,7 @@ const MapComponent = ({ faskes }) => {
             }`}
           >
             <div className="sidebar-header">
-              <Typography>Daftar Faskes</Typography>
+              <Typography>Daftar Faskes Kerja Sama</Typography>
               <div className="sidebar-data-toggle" onClick={toggleSidebar}>
                 {showSidebarData ? (
                   <span className="caret">&#x25C0;</span>

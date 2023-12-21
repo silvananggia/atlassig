@@ -96,8 +96,9 @@ const StatisticsPage = () => {
     
     } else {
       setInputKodeDeputi(value);
-      setselectedCabang("");
-      handleSelectCabang("");
+      dispatch(fetchCabangDeputi([]));
+      setselectedCabang([]);
+      setselectedWilayah([]);
     }
    
   };
@@ -111,7 +112,9 @@ const StatisticsPage = () => {
         setInputKodeCabang("null");
       }
     } else {
+      
       dispatch(fetchCabangDeputi(inputKodeDeputi, value));
+      setselectedWilayah([]);
     }
   };
 
@@ -199,6 +202,8 @@ const StatisticsPage = () => {
 
     setIsFiltered(false);
     setInputKodeDeputi(null);
+    setselectedWilayah([]);
+    setselectedCabang([]);
   };
 
   const handleSelectWilayah = (event, selectedOption) => {
@@ -266,30 +271,31 @@ const StatisticsPage = () => {
             value={inputKodeDeputi}
             onChange={handleKedeputianChange}
             renderInput={(params) => (
-              <TextField {...params} label="Kedeputian" size="small" />
+              <TextField {...params} label="Kedeputian" size="small" autoComplete="off"/>
             )}
           />
         </Grid>
 
         <Grid item xs={6} md={3}>
           <Autocomplete
-            disablePortal
+            freeSolo
             noOptionsText={"Data Tidak Ditemukan"}
             size={"small"}
             fullWidth
             id="combo-box-demo"
-            value={selectedCabang}
+            value={selectedCabang ? selectedCabang : null}
             onChange={handleSelectCabang}
             inputValue={selectedCabang}
             onInputChange={handleInputCabangChange}
             options={listCabang || []}
-            getOptionLabel={(option) => option.namacabang}
+            getOptionLabel={(option) => option.namacabang || ''}
             style={{ zindex: 1000000, left: 0 }}
             renderInput={(params) => (
               <TextField
                 {...params}
                 label="Kantor Cabang | Masukan Minimal 2 Karakter"
                 defaultValue=""
+                autoComplete="off"
               />
             )}
           />
@@ -297,16 +303,17 @@ const StatisticsPage = () => {
 
         <Grid item xs={6} md={3}>
           <Autocomplete
+          freeSolo
             noOptionsText={"Data Tidak Ditemukan"}
             size={"small"}
             fullWidth
             id="combo-box-demo"
-            value={selectedWilayah}
+            value={selectedWilayah? selectedWilayah : null}
             onChange={handleSelectWilayah}
             inputValue={selectedWilayah}
             onInputChange={handleInputWilayahChange}
             options={listWilayah || []}
-            getOptionLabel={(option) => option.disp}
+            getOptionLabel={(option) => option.disp || ''}
             renderInput={(params) => (
               <TextField
                 {...params}
