@@ -37,7 +37,26 @@ exports.getAccess = async (req, res) => {
           data: "Invalid value for faskes.",
         });
       }
+  // Validate lat and lon as numeric values
+  if (isNaN(lat) || isNaN(lon)) {
+    return res.status(400).json({
+      code: 400,
+      status: "error",
+      data: "Invalid value for lat or lon. Numeric values are required.",
+    });
+  }
 
+  // Validate lat and lon within valid ranges
+  const validLatRange = [-90, 90];
+  const validLonRange = [-180, 180];
+
+  if (lat < validLatRange[0] || lat > validLatRange[1] || lon < validLonRange[0] || lon > validLonRange[1]) {
+    return res.status(400).json({
+      code: 400,
+      status: "error",
+      data: "Invalid value for lat or lon. Must be within valid ranges.",
+    });
+  }
       const token = crypto.randomBytes(32).toString("hex");
       const key = `embed:${token}`;
 
@@ -67,7 +86,7 @@ exports.getAccess = async (req, res) => {
         return res.status(400).json({
           code: 400,
           status: "error",
-          data: "Invalid value for faskes",
+          data: "Invalid value for faskes.",
         });
       }
 
@@ -76,7 +95,7 @@ exports.getAccess = async (req, res) => {
         return res.status(400).json({
           code: 400,
           status: "error",
-          data: "Invalid value for kode cabang length",
+          data: "Invalid value for kode cabang length.",
         });
       }
 
@@ -131,7 +150,7 @@ exports.getAccess = async (req, res) => {
         return res.status(400).json({
           code: 400,
           status: "error",
-          data: "Invalid value for kode kedeputian length",
+          data: "Invalid value for kode kedeputian length.",
         });
       }
 
@@ -160,7 +179,7 @@ exports.getAccess = async (req, res) => {
         return res.status(400).json({
           code: 400,
           status: "error",
-          data: "Invalid value for kode kedeputian",
+          data: "Invalid value for kode kedeputian.",
         });
       }
 
