@@ -1045,23 +1045,27 @@ const MapComponent = ({ faskes }) => {
         .getArray()
         .find((layer) => layer.get("title") === "PotentialLayer");
 
-      if (overlayLayer) {
-        if (inputCanggih.includes("None,nan")) {
-          overlayLayer.setOpacity(1);
-        } else if (
-          selectedCanggihValues.some((value) => inputCanggih.includes(value))
-        ) {
-          overlayLayer.setOpacity(0);
-        } else {
-          overlayLayer.setOpacity(1);
+      if (faskes === "fkrtl") {
+        if (overlayLayer) {
+          if (inputCanggih.includes("None,nan")) {
+            overlayLayer.setOpacity(1);
+          } else if (
+            selectedCanggihValues.some((value) => inputCanggih.includes(value))
+          ) {
+            overlayLayer.setOpacity(0);
+          } else {
+            overlayLayer.setOpacity(1);
+          }
         }
       }
 
-      if (overlayLayer) {
-        if (inputJenis.includes("Dokter gigi") && inputJenis.length === 1) {
-          overlayLayer.setOpacity(0);
-        } else {
-          overlayLayer.setOpacity(1);
+      if (faskes === "fktp") {
+        if (overlayLayer) {
+          if (inputJenis.includes("Dokter gigi") && inputJenis.length === 1) {
+            overlayLayer.setOpacity(0);
+          } else {
+            overlayLayer.setOpacity(1);
+          }
         }
       }
 
