@@ -5,7 +5,7 @@ import {Box, Typography} from "@mui/material";
 
 import { fetchEmbedFaskes } from "../../actions/accessActions";
 
-import MapCalonFaskes from "./Map";
+import MapCalonFaskes from "./MapCalon";
 import MapPublik from "./MapPublik";
 import MapCabang from "./MapCabang";
 import MapKedeputian from "./MapKedeputian";
@@ -17,12 +17,15 @@ const MapComponent = () => {
   const dispatch = useDispatch();
   const { code } = useParams();
   const [canAccess, setCanAccess] = useState(false);
+  const [wait, setWait] = useState(true); // Define the 'loading' variable
+
 
   useEffect(() => {
     const fetchData = async () => {
       await dispatch(fetchEmbedFaskes(code));
     };
     fetchData();
+   
   }, [dispatch, code]);
 
   const accessEmbed = useSelector((state) => state.mapaccess.dataobj);
@@ -33,12 +36,15 @@ const MapComponent = () => {
     } else {
       setCanAccess(false);
     }
+    setWait(false);
   }, [accessEmbed]);
 
   useEffect(()=>{
     dispatch(setLoading(false));
   },[])
 
+
+  
   return (
     <Box className="contentRoot">
       {canAccess ? (
@@ -48,6 +54,7 @@ const MapComponent = () => {
             latitude={accessEmbed.data.lat}
             longitude={accessEmbed.data.lon}
             faskes={accessEmbed.data.faskes}
+            potensi={accessEmbed.data.potensi}
           />
         ) : accessEmbed.data.level === "Kedeputian" ? (
           <MapKedeputian
@@ -74,15 +81,12 @@ const MapComponent = () => {
           </div>
         )}
       </div>
-      ) : (
+      ) : !wait ? (
         <div>
-          {" "}
-          {/* Render an error message or redirect to an error page if the token is invalid */}
           <h1>Error: Invalid Map Token</h1>
           <Typography>Please contact support for assistance.</Typography>
         </div>
-      )}
-      
+      ) : null}
     </Box>
   );
 };

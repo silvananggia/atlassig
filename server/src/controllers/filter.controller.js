@@ -4,7 +4,13 @@ exports.getCabang = async (req, res) => {
   try {
     const id = req.params.id;
 
-
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
 
     const result = await db.query(
       `SELECT * FROM cabang WHERE LOWER(namacabang) LIKE LOWER('%' || $1 || '%') limit 10;
@@ -32,6 +38,13 @@ exports.getCabangDep = async (req, res) => {
     const id = req.params.id;
     const kddep = req.params.kddep;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
 
     const result = await db.query(
       `SELECT * FROM cabang WHERE kodedep=$1;
@@ -58,6 +71,13 @@ exports.getKodeDep = async (req, res) => {
   try {
     const id = req.params.kdkc;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
 
     const result = await db.query(
       `SELECT kodedep FROM cabang WHERE kodecab=$1
@@ -83,6 +103,14 @@ exports.getKodeDep = async (req, res) => {
 exports.bboxKabupaten = async (req, res) => {
   try {
     const id = req.params.id;
+
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
 
     if (!id) {
       return res.status(400).json({
@@ -128,6 +156,14 @@ exports.bboxKabupaten = async (req, res) => {
 exports.bboxCabang = async (req, res) => {
   try {
     const id = req.params.id;
+
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
 
     if (!id) {
       return res.status(400).json({
@@ -175,6 +211,14 @@ exports.bboxKedeputian = async (req, res) => {
   try {
     const id = req.params.id;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
+
     if (!id) {
       return res.status(400).json({
         code: 400,
@@ -221,6 +265,14 @@ exports.centerCabang = async (req, res) => {
   try {
     const id = req.params.id;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
+
     if (!id) {
       return res.status(400).json({
         code: 400,
@@ -266,6 +318,14 @@ exports.centerCabang = async (req, res) => {
 exports.centerKedeputian = async (req, res) => {
   try {
     const id = req.params.id;
+
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
 
     if (!id) {
       return res.status(400).json({
@@ -314,6 +374,14 @@ exports.autowilayah = async (req, res) => {
   try {
     const id = req.params.id;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
+
     if (!id) {
       return res.status(400).json({
         code: 400,
@@ -360,6 +428,14 @@ exports.wilayahadmin = async (req, res) => {
     const kab = req.params.kab === "null" ? null : req.params.kab;
     const kec = req.params.kec === "null" ? null : req.params.kec;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
+
     /*       if (!pro || !kab || !kec) {
         return res.status(400).json({
           code: 400,
@@ -380,8 +456,9 @@ exports.wilayahadmin = async (req, res) => {
             'id',         id,
             'geometry',   ST_AsGeoJSON(coord)::jsonb,
             'properties', to_jsonb(row) - 'coord' - 'id'
+            || jsonb_build_object('jenisfaskes', UPPER(row.jenisfaskes)) 
           ) AS feature
-          FROM (SELECT Distinct fktp.fktpid AS id, ST_Transform(ST_SetSRID(coordinat, 4326), 3857) AS coord
+          FROM (SELECT Distinct fktp.fktpid AS id, ST_Transform(ST_SetSRID(coordinat, 4326), 3857) AS coord, fktp.jenisfaskes
               FROM fktp
               INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fktp.wlid
               INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
@@ -418,6 +495,15 @@ exports.wilayahadminCanggih = async (req, res) => {
     const kab = req.params.kab === "null" ? null : req.params.kab;
     const kec = req.params.kec === "null" ? null : req.params.kec;
     const id = req.params.id;
+
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
+
     /*       if (!pro || !kab || !kec) {
         return res.status(400).json({
           code: 400,
@@ -425,6 +511,7 @@ exports.wilayahadminCanggih = async (req, res) => {
           data: "Code are required parameters.",
         });
       } */
+
 
     const result = await db.query(
       `
@@ -485,7 +572,14 @@ exports.filterTitikFKTP = async (req, res) => {
     const jenis =
       req.params.jenis ;
 
-      
+          if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
+
     /*       if (!pro || !kab || !kec) {
         return res.status(400).json({
           code: 400,
@@ -506,8 +600,9 @@ exports.filterTitikFKTP = async (req, res) => {
             'id',         id,
             'geometry',   ST_AsGeoJSON(coord)::jsonb,
             'properties', to_jsonb(row) - 'coord' - 'id'
+          || jsonb_build_object('jenisfaskes', UPPER(row.jenisfaskes)) 
           ) AS feature
-          FROM (SELECT Distinct fktp.fktpid AS id, ST_Transform(ST_SetSRID(coordinat, 4326), 3857) AS coord
+          FROM (SELECT Distinct fktp.fktpid AS id, ST_Transform(ST_SetSRID(coordinat, 4326), 3857) AS coord, fktp.jenisfaskes
               		FROM fktp
 			INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fktp.wlid
 			INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
@@ -574,6 +669,16 @@ exports.filterFKTP = async (req, res) => {
       const rmax = req.params.rmax === "null" ? null : req.params.rmax
     const jenis =
       req.params.jenis;
+
+      if (!req.session.user) {
+        return res.status(401).json({
+          code: 401,
+          status: "error",
+          data: "Unauthorized",
+        });
+      }
+
+
     const result = await db.query(
       `
       SELECT fktp.fktpid AS id, ST_X(ST_SetSRID(fktp.coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(fktp.coordinat, 4326)) AS lat, faskes1id AS faskesid, kwppk, kcppk, alamatppk, nmppk, jenisfaskes
@@ -642,6 +747,14 @@ exports.filterFKRTL = async (req, res) => {
       req.params.alamatppk === "null" ? null : req.params.alamatppk;
     const jenis =
       req.params.jenis;
+
+      if (!req.session.user) {
+        return res.status(401).json({
+          code: 401,
+          status: "error",
+          data: "Unauthorized",
+        });
+      }
 
     const result = await db.query(
       `
@@ -719,6 +832,13 @@ exports.filterTitikFKRTL = async (req, res) => {
           data: "Code are required parameters.",
         });
       } */
+      if (!req.session.user) {
+        return res.status(401).json({
+          code: 401,
+          status: "error",
+          data: "Unauthorized",
+        });
+      }
 
     const result = await db.query(
       `
@@ -789,6 +909,14 @@ exports.filterTitikFKRTL = async (req, res) => {
 
 exports.listJenisFKTP = async (req, res) => {
   try {
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
+
     const result = await db.query(
       `
         SELECT DISTINCT fktp.jenisfaskes FROM fktp ;
@@ -812,6 +940,13 @@ exports.listJenisFKTP = async (req, res) => {
 
 exports.listJenisFKRTL = async (req, res) => {
   try {
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
     const result = await db.query(
       `
         SELECT DISTINCT fkrtl.jenisfaskes FROM fkrtl ;
@@ -835,6 +970,13 @@ exports.listJenisFKRTL = async (req, res) => {
 
 exports.listCanggih = async (req, res) => {
   try {
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
     const result = await db.query(
       `
         SELECT DISTINCT fkrtl.pelayanancanggih FROM fkrtl ;
@@ -863,6 +1005,14 @@ exports.countJenisFKRTL = async (req, res) => {
     const kec = req.params.kec === "null" ? null : req.params.kec;
     const kdkc = req.params.kdkc === "null" ? null : req.params.kdkc;
     const kddep = req.params.kddep === "null" ? null : req.params.kddep;
+
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
 
     const result = await db.query(
       
@@ -908,6 +1058,14 @@ exports.countJenisFKTP = async (req, res) => {
     const kec = req.params.kec === "null" ? null : req.params.kec;
     const kdkc = req.params.kdkc === "null" ? null : req.params.kdkc;
     const kddep = req.params.kddep === "null" ? null : req.params.kddep;
+
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
 
     const result = await db.query(
       
@@ -956,6 +1114,14 @@ exports.countFKRTL = async (req, res) => {
     const kdkc = req.params.kdkc === "null" ? null : req.params.kdkc;
     const kddep = req.params.kddep === "null" ? null : req.params.kddep;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
+
     const result = await db.query(
       
       `
@@ -1001,6 +1167,14 @@ exports.countFKTP = async (req, res) => {
     const kdkc = req.params.kdkc === "null" ? null : req.params.kdkc;
     const kddep = req.params.kddep === "null" ? null : req.params.kddep;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
+
     const result = await db.query(
       
       `
@@ -1044,6 +1218,14 @@ exports.autowilayahcadep = async (req, res) => {
     const kdkc = req.params.kdkc;
     const kddep = req.params.kddep;
     const id = req.params.id;
+
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
 
     if (!id) {
       return res.status(400).json({
@@ -1106,6 +1288,14 @@ exports.autowilayahdep = async (req, res) => {
     const kddep = req.params.kddep;
     const id = req.params.id;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
+    
     if (!id) {
       return res.status(400).json({
         code: 400,

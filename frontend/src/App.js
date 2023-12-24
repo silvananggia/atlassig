@@ -1,15 +1,13 @@
 import React from "react";
 
 import MyRouter from "./router/index.js";
-import LoadingIndicator from "./components/loading/Loading.js"
+import LoadingIndicator from "./components/loading/Loading.js";
 function App() {
   return (
     <div className="app">
-    
-        <MyRouter />
-<LoadingIndicator/>
-  </div>
-
+      <MyRouter />
+      <LoadingIndicator />
+    </div>
   );
 }
 

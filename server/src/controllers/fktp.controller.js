@@ -1,37 +1,18 @@
 const db = require("../config/database");
 
-exports.listFktp = async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
-  const offset = (page - 1) * limit;
-  try {
-   
-
-
-    const result = await db.query(`
-    SELECT * FROM fktp LIMIT $1 OFFSET $2
-    `,[limit, offset]);
-
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows,
-    });
-  } catch (error) {
-    console.error("Error executing query", error);
-    res.status(500).json({
-      code: 500,
-      status: "error",
-      data: "Internal Server Error",
-    });
-  }
-};
-
 exports.listAllFktp = async (req, res) => {
   try {
    
     const lat = req.params.lat;
     const lon = req.params.lon;
+
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
 
     if (!lat || !lon) {
       return res.status(400).json({
@@ -50,10 +31,11 @@ exports.listAllFktp = async (req, res) => {
         SELECT jsonb_build_object(
           'type', 'Feature',
           'id', id,
-          'geometry', ST_AsGeoJSON(coord)::jsonb
+          'geometry', ST_AsGeoJSON(coord)::jsonb,
+          'properties', jsonb_build_object('jenisfaskes', UPPER(jenisfaskes))
         ) AS feature
         FROM (
-          SELECT fktp.fktpid AS id, ST_Transform(ST_SetSRID(coordinat, 4326), 3857) AS coord
+          SELECT fktp.fktpid AS id, ST_Transform(ST_SetSRID(coordinat, 4326), 3857) AS coord, fktp.jenisfaskes
           FROM fktp
           WHERE st_dwithin(
             coordinat::geography::geometry,
@@ -84,6 +66,14 @@ exports.listCabangFKTP = async (req, res) => {
   try {
     const id = req.params.id;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
+
     if (!id) {
       return res.status(400).json({
         code: 400,
@@ -101,9 +91,10 @@ exports.listCabangFKTP = async (req, res) => {
     SELECT jsonb_build_object(
       'type',       'Feature',
       'id',         id,
-      'geometry',   ST_AsGeoJSON(coord)::jsonb
+      'geometry',   ST_AsGeoJSON(coord)::jsonb,
+      'properties', jsonb_build_object('jenisfaskes', UPPER(jenisfaskes))
     ) AS feature
-    FROM (SELECT fktp.fktpid AS id, ST_Transform(ST_SetSRID(coordinat, 4326), 3857) AS coord
+    FROM (SELECT fktp.fktpid AS id, ST_Transform(ST_SetSRID(coordinat, 4326), 3857) AS coord, fktp.jenisfaskes
       FROM fktp
       JOIN kabupaten ON kabupaten.kbid=fktp.kab_id
       JOIN cabang ON kabupaten.kodekc=cabang.kodecab
@@ -130,6 +121,14 @@ exports.listKedeputianFKTP = async (req, res) => {
   try {
     const id = req.params.id;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
+
     if (!id) {
       return res.status(400).json({
         code: 400,
@@ -147,9 +146,10 @@ exports.listKedeputianFKTP = async (req, res) => {
     SELECT jsonb_build_object(
       'type',       'Feature',
       'id',         id,
-      'geometry',   ST_AsGeoJSON(coord)::jsonb
+      'geometry',   ST_AsGeoJSON(coord)::jsonb,
+      'properties', jsonb_build_object('jenisfaskes', UPPER(jenisfaskes))
     ) AS feature
-    FROM (SELECT fktp.fktpid AS id, ST_Transform(ST_SetSRID(coordinat, 4326), 3857) AS coord
+    FROM (SELECT fktp.fktpid AS id, ST_Transform(ST_SetSRID(coordinat, 4326), 3857) AS coord, fktp.jenisfaskes
       FROM fktp
       JOIN kabupaten ON kabupaten.kbid=fktp.kab_id
       JOIN cabang ON kabupaten.kodekc=cabang.kodecab
@@ -176,6 +176,14 @@ exports.detailFKTP = async (req, res) => {
   try {
     const id = req.params.id;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
+    
     if (!id) {
       return res.status(400).json({
         code: 400,

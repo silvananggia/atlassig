@@ -26,7 +26,7 @@ export const checkAuth = () => async (dispatch) => {
      type: CHECK_AUTH, 
      payload: res.data });
   } catch (error) {
-    dispatch({ type: LOGIN_FAILURE, payload: error.message });
+    dispatch({ type: LOGIN_FAILURE });
   }
 };
 

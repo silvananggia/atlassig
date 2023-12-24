@@ -6,6 +6,13 @@ exports.filterTitikFKTPPublik = async (req, res) => {
     const kab = req.params.kab === "null" ? null : req.params.kab;
     const kec = req.params.kec === "null" ? null : req.params.kec;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
     const result = await db.query(
       `
         SELECT jsonb_build_object(
@@ -58,6 +65,14 @@ exports.filterFKTPPublik = async (req, res) => {
     const kab = req.params.kab === "null" ? null : req.params.kab;
     const kec = req.params.kec === "null" ? null : req.params.kec;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
+
     const result = await db.query(
       `
       SELECT fktp.fktpid AS id, ST_X(ST_SetSRID(fktp.coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(fktp.coordinat, 4326)) AS lat, faskes1id AS faskesid, kwppk, kcppk, alamatppk, nmppk, jenisfaskes
@@ -97,6 +112,14 @@ exports.filterFKRTLPublik = async (req, res) => {
     const pro = req.params.pro === "null" ? null : req.params.pro;
     const kab = req.params.kab === "null" ? null : req.params.kab;
     const kec = req.params.kec === "null" ? null : req.params.kec;
+
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
 
     const result = await db.query(
       `
@@ -140,6 +163,14 @@ exports.filterTitikFKRTLPublik = async (req, res) => {
     const kab = req.params.kab === "null" ? null : req.params.kab;
     const kec = req.params.kec === "null" ? null : req.params.kec;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
+    
     const result = await db.query(
       `
       SELECT jsonb_build_object(

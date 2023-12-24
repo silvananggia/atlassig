@@ -29,13 +29,10 @@ import MyLocationOutlinedIcon from "@mui/icons-material/MyLocationOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { fetchMarkersFKTP } from "../../actions/fktpActions";
 import { fetchMarkersFKRTL } from "../../actions/fkrtlActions";
-import {
-  setLoading,
-
-} from "../../actions/loadingActions";
+import { setLoading } from "../../actions/loadingActions";
 import GeoJSON from "ol/format/GeoJSON";
-
-const MapComponent = ({ latitude, longitude, faskes }) => {
+import Tooltip from "@mui/material/Tooltip";
+const MapComponent = ({ latitude, longitude, faskes, potensi }) => {
   const dispatch = useDispatch();
   const bingApiKey =
     "Asz37fJVIXH4CpaK90Ohf9bPbV39RCX1IQ1LP4fMm4iaDN5gD5USHfqmgdFY5BrA";
@@ -52,22 +49,22 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
   const [markerFeature, setMarkerFeature] = useState(null);
   const [markerSource, setMarkerSource] = useState(null);
   const [markerLayer, setMarkerLayer] = useState(null);
-  const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.9);
+  const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(1);
+  const [overlayLayerOpacity, setOverlayLayerOpacity] = useState(1);
   const [markersLoaded, setMarkersLoaded] = useState(false);
   const [showFKTPMark, setShowFKTPMark] = useState(false);
   const [showFKRTLMark, setShowFKRTLMark] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
 
-
   const circleRadius =
     faskes === "fktp" ? 2000 : faskes === "fkrtl" ? 5000 : "";
 
   const potentialLayerUrl =
-  faskes === "fktp"
-  ? "../tiles/fktp_tile/latest/{z}/{x}/{-y}.png"
-  : faskes === "fkrtl"
-  ? "../tiles/fkrtl_tile/latest/{z}/{x}/{-y}.png"
-  : "";
+    faskes === "fktp"
+      ? "../tiles/fktp_tile/latest/{z}/{x}/{-y}.png"
+      : faskes === "fkrtl"
+      ? "../tiles/fkrtl_tile/latest/{z}/{x}/{-y}.png"
+      : "";
 
   const centerMap = [longitude, latitude]; // Move this line above its usage
   const zoomLevel = 13;
@@ -81,9 +78,7 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
   const markerListFKRTL = useSelector((state) => state.mapfkrtl.fkrtllist);
   const isLoading = useSelector((state) => state.loading.isLoading);
 
-  useEffect(() => {
-    
-  }, [isLoading]);
+  useEffect(() => {}, [isLoading]);
 
   useEffect(() => {
     if (faskes === "fkrtl") {
@@ -107,16 +102,14 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
     }
   }, [markerListFKRTL, markerListFKTP]);
 
-
   const handleLayerSelectClick = () => {
     setShowFloatingButton((prevState) => !prevState);
   };
 
-
   const handleLegendClick = () => {
     setShowLegend((prevState) => !prevState);
   };
-  
+
   const toggleShowFKTPMark = () => {
     setShowFKTPMark((prevState) => {
       if (!prevState) {
@@ -201,15 +194,27 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
                 id: feature.getId(),
               });
 
-              // Style for the marker
-              const markerStyle = new Style({
+              // Get the jenisfaskes property value
+              const jenisfaskes = feature.getProperties().jenisfaskes;
+
+          
+              let markerStyle = new Style({
                 image: new Icon({
-                  //anchor: [0.5, 1],
                   src: "../images/m2.png",
                   scale: 0.5,
                   zIndex: 1000,
                 }),
               });
+
+              if (jenisfaskes === "DOKTER GIGI") {
+                markerStyle = new Style({
+                  image: new Icon({
+                    src: "../images/m4.png",
+                    scale: 0.5,
+                    zIndex: 1000,
+                  }),
+                });
+              }
 
               markerFeature.setStyle(markerStyle);
 
@@ -374,7 +379,6 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
     }
   };
 
-
   const basemapOptions = [
     { key: "map-switch-default", label: "Plain" },
     { key: "map-switch-basic", label: "Road" },
@@ -430,19 +434,22 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
       }
 
       const basemapGroup = map
-      .getLayers()
-      .getArray()
-      .find((layer) => layer.get("title") === "Basemap");
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Basemap");
 
- 
-      if (boundingBox && boundingBox.features && boundingBox.features.length > 0) {
+      if (
+        boundingBox &&
+        boundingBox.features &&
+        boundingBox.features.length > 0
+      ) {
         const coords = boundingBox.features[0].geometry.coordinates;
         const f = new Feature({ geometry: new Polygon(coords) });
         const crop = new Mask({
           feature: f,
           wrapX: true,
           inner: false,
-          shadowWidth : 5,
+          shadowWidth: 5,
         });
 
         basemapLayer.addFilter(crop);
@@ -467,93 +474,132 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
     }
   };
 
+  const handleOverlayOpacityChange = (event, newValue) => {
+    setOverlayLayerOpacity(newValue);
+    if (map) {
+      const overlayGroup = map
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Overlay");
+
+      const RadiusFKTPLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "RadiusFKTP");
+
+      const RadiusFKRTLLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "RadiusFKRTL");
+      if (RadiusFKTPLayer) {
+        RadiusFKTPLayer.setOpacity(newValue);
+      }
+
+      if (RadiusFKRTLLayer) {
+        RadiusFKRTLLayer.setOpacity(newValue);
+      }
+    }
+  };
+
   const centerCoordinates = fromLonLat(centerMap);
 
-    // Calculate the bounding box coordinates
-    const boundingBoxRadius = 15000; // 15 km in meters
-    const lowerLeft = [
-      centerCoordinates[0] - boundingBoxRadius,
-      centerCoordinates[1] - boundingBoxRadius,
-    ];
-    const upperRight = [
-      centerCoordinates[0] + boundingBoxRadius,
-      centerCoordinates[1] + boundingBoxRadius,
-    ];
+  // Calculate the bounding box coordinates
+  const boundingBoxRadius = 15000; // 15 km in meters
+  const lowerLeft = [
+    centerCoordinates[0] - boundingBoxRadius,
+    centerCoordinates[1] - boundingBoxRadius,
+  ];
+  const upperRight = [
+    centerCoordinates[0] + boundingBoxRadius,
+    centerCoordinates[1] + boundingBoxRadius,
+  ];
 
-    const boundingBox = {
-      type: "FeatureCollection",
-      features: [
-        {
-          type: "Feature",
-          geometry: {
-            type: "Polygon",
-            coordinates: [
-              [
-                [lowerLeft[0], lowerLeft[1]],
-                [lowerLeft[0], upperRight[1]],
-                [upperRight[0], upperRight[1]],
-                [upperRight[0], lowerLeft[1]],
-                [lowerLeft[0], lowerLeft[1]],
-              ],
+  const boundingBox = {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [lowerLeft[0], lowerLeft[1]],
+              [lowerLeft[0], upperRight[1]],
+              [upperRight[0], upperRight[1]],
+              [upperRight[0], lowerLeft[1]],
+              [lowerLeft[0], lowerLeft[1]],
             ],
-          },
+          ],
         },
-      ],
-    };
+      },
+    ],
+  };
 
-    const coords = boundingBox.features[0].geometry.coordinates;
+  const coords = boundingBox.features[0].geometry.coordinates;
   useEffect(() => {
-    const potentialLayer = new TileLayer({
-      title: "PotentialLayer",
+    let potentialLayer = null;
+    console.log(potensi);
+    if (potensi === "1") {
+      potentialLayer = new TileLayer({
+        title: "PotentialLayer",
+        source: new XYZ({
+          attributions: "",
+          minZoom: 2,
+          maxZoom: 10,
+          url: potentialLayerUrl,
+          tileSize: [384, 384],
+        }),
+      });
 
-      source: new XYZ({
-        attributions: "",
-        minZoom: 2,
-        maxZoom: 10,
-        url: potentialLayerUrl,
-        tileSize: [384, 384],
-      }),
-    });
+      const boundingBoxFeature = new Feature({ geometry: new Polygon(coords) });
 
-    
-    const boundingBoxFeature = new Feature({ geometry: new Polygon(coords) });
+      const crop = new Crop({
+        feature: boundingBoxFeature,
+        wrapX: true,
+        inner: false,
+      });
+      potentialLayer.addFilter(crop);
+    }
 
-    const crop = new Crop({
-      feature: boundingBoxFeature,
-      wrapX: true,
-      inner: false,
-    });
-    potentialLayer.addFilter(crop);
-
-    const map = new Map({
-      target: "map",
-      controls: defaultControls(),
-      layers: [
-        new LayerGroup({
-          title: "Basemap",
-          layers:  [new TileLayer({
+    const layers = [
+      new LayerGroup({
+        title: "Basemap",
+        layers: [
+          new TileLayer({
             title: "Basemap",
             source: new XYZ({
               url: "https://abcd.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
             }),
-          }),]
-        }),
-       
+          }),
+        ],
+      }),
+    ];
+
+    if (potentialLayer) {
+      layers.push(
         new LayerGroup({
           title: "PotentialLayer",
           layers: [potentialLayer],
-        }),
-        new LayerGroup({
-          title: "Overlay",
-        }),
-      ],
+        })
+      );
+    }
+
+    layers.push(
+      new LayerGroup({
+        title: "Overlay",
+      })
+    );
+
+    const map = new Map({
+      target: "map",
+      controls: defaultControls(),
+      layers: layers,
       view: new View({
         center: fromLonLat(centerMap),
         zoom: zoomLevel,
         maxZoom: 20,
       }),
     });
-
     setMap(map);
     setMarkersLoaded(true);
     // Create the circle feature with a 2-kilometer radius
@@ -744,6 +790,8 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
           changeBasemap={changeBasemap}
           potentialLayerOpacity={potentialLayerOpacity} // Pass potentialLayerOpacity
           handlePotentialLayerOpacityChange={handlePotentialLayerOpacityChange} // Pass handlePotentialLayerOpacityChange
+          overlayLayerOpacity={overlayLayerOpacity}
+          handleOverlayOpacityChange={handleOverlayOpacityChange}
           faskesType={faskes}
           showFKTPMark={showFKTPMark}
           showFKRTLMark={showFKRTLMark}
@@ -752,30 +800,23 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
         />
       </div>
 
-      
+ <Tooltip title="Legenda" placement="right">
       <div className="legend-button-embed" onClick={handleLegendClick}>
         <PermDeviceInformationOutlinedIcon fontSize="medium" />
       </div>
+</Tooltip>
 
-{showLegend && (
+      {showLegend && (
+        <div className="legend-box-embed" onClick={handleLegendClick}>
+          {faskes === "fkrtl" ? (
+            <img src="../images/legend-calon-fkrtl.png" width="100%" />
+          ) : (
+            <img src="../images/legend-calon-fktp.png" width="100%" />
+          )}
+        </div>
+      )}
 
-          <div className="legend-box-embed" onClick={handleLegendClick}>
-            {faskes === "fkrtl" ? (
-              <img
-                src="../images/legend-calon-fkrtl.png"
-                width="100%"
-              />
-            ) : (
-              <img
-                src="../images/legend-calon-fktp.png"
-                width="100%"
-              />
-            )}
-          </div>
-   
-)}
-
-      <div className="layer-select-embed3" >
+      <div className="layer-select-embed3">
         <InfoOutlinedIcon fontSize="medium" />
       </div>
 
@@ -791,9 +832,15 @@ const MapComponent = ({ latitude, longitude, faskes }) => {
           <p className="label">
             - Titik Fasilitas Kesehatan yang Ditampilkan Radius 10 Km dari Titik
             Calon Pendaftar.
-            <br /> - Peta Potensi Perluasan Fasilitas Kesehatan yang Ditampilkan
-            15 Km dari Titik Calon Pendaftar.
-            <br />
+            {potensi === "1" ?
+            <>
+          <br /> - Peta Potensi Perluasan Fasilitas Kesehatan yang Ditampilkan
+          15 Km dari Titik Calon Pendaftar.
+          <br /> 
+          </>
+          : null  
+          }
+            
           </p>
         </div>
       </div>

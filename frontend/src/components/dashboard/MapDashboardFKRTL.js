@@ -29,6 +29,7 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import MyLocationOutlinedIcon from "@mui/icons-material/MyLocationOutlined";
 import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import {
   fetchFKTPCabang,
   fetchFKTPDetail,
@@ -59,7 +60,7 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import Divider from "@mui/material/Divider";
 import ListItemText from "@mui/material/ListItemText";
-
+import Tooltip from "@mui/material/Tooltip";
 import {
   TextField,
   Autocomplete,
@@ -79,12 +80,13 @@ const MapComponent = () => {
   const dispatch = useDispatch();
   const bingApiKey =
     "Asz37fJVIXH4CpaK90Ohf9bPbV39RCX1IQ1LP4fMm4iaDN5gD5USHfqmgdFY5BrA";
-    const [faskes, setFaskes] = useState("fkrtl");
+  const [faskes, setFaskes] = useState("fkrtl");
   const [map, setMap] = useState(null);
 
   const [showFloatingButton, setShowFloatingButton] = useState(false);
   const [showFloatingButton2, setShowFloatingButton2] = useState(false);
-
+  const [isFKTPAll, setIsFKTPAll] = useState(true);
+  const [isFKRTLAll, setIsFKRTLAll] = useState(true);
   const [userLocation, setUserLocation] = useState([0, 0]);
   const [markerPosition, setMarkerPosition] = useState([0, 0]);
   const [centerMap, setCenterMap] = useState([
@@ -94,7 +96,8 @@ const MapComponent = () => {
   const [userMarkerFeature, setUserMarkerFeature] = useState(null);
   const [latitude, setLatitude] = useState(-2.5489);
   const [longitude, setLongitude] = useState(118.0149);
-  const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.9);
+  const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(1);
+  const [overlayLayerOpacity, setOverlayLayerOpacity] = useState(1);
   const [markersLoaded, setMarkersLoaded] = useState(false);
   const [showFKTPMark, setShowFKTPMark] = useState(false);
   const [showFKRTLMark, setShowFKRTLMark] = useState(false);
@@ -237,21 +240,17 @@ const MapComponent = () => {
   }, [jenisFKTP]);
 
   const handleKedeputianChange = (event, value) => {
-    if(value === null || value == ""){
+    if (value === null || value == "") {
       setInputKodeDeputi("");
-     
-    
     } else {
       setInputKodeDeputi(value);
       setselectedWilayah([]);
       setselectedCabang([]);
-     
     }
-   
   };
 
   const handleInputWilayahChange = (event, value) => {
-    if (inputKodeDeputi === null   && inputKodeCabang === null) {
+    if (inputKodeDeputi === null && inputKodeCabang === null) {
       if (value.length >= 3) {
         dispatch(fetchAutoWilayah(value));
       } else {
@@ -261,7 +260,12 @@ const MapComponent = () => {
         setSelectedKabId("null");
         setSelectedProvId("null");
       }
-    } else if (inputKodeCabang === null || inputKodeCabang === "" && inputKodeDeputi != null && inputKodeDeputi != "null"  ) {
+    } else if (
+      inputKodeCabang === null ||
+      (inputKodeCabang === "" &&
+        inputKodeDeputi != null &&
+        inputKodeDeputi != "null")
+    ) {
       dispatch(fetchAutoWilayahDeputi(inputKodeDeputi, value));
     } else {
       dispatch(fetchAutoWilayahCabang(inputKodeDeputi, inputKodeCabang, value));
@@ -269,7 +273,7 @@ const MapComponent = () => {
   };
 
   const handleInputCabangChange = (event, value) => {
-    if (inputKodeDeputi === null || inputKodeDeputi==="") {
+    if (inputKodeDeputi === null || inputKodeDeputi === "") {
       if (value.length >= 2) {
         dispatch(fetchCabang(value));
       } else {
@@ -285,33 +289,29 @@ const MapComponent = () => {
     if (selectedOption != null) {
       const { kec_id, kab_id, prov_id } = selectedOption;
 
-     setSelectedKecId(kec_id);
-     setSelectedKabId(kab_id);
-     setSelectedProvId(prov_id);
-     
-   } else {
-           setSelectedKecId("nan");
-     setSelectedKabId("nan");
-     setSelectedProvId("nan");
-   }
-   
+      setSelectedKecId(kec_id);
+      setSelectedKabId(kab_id);
+      setSelectedProvId(prov_id);
+    } else {
+      setSelectedKecId("nan");
+      setSelectedKabId("nan");
+      setSelectedProvId("nan");
+    }
   };
 
   const handleSelectCabang = (event, selectedOption) => {
-    if (selectedOption === null || selectedOption === '') {
+    if (selectedOption === null || selectedOption === "") {
       // Handle clear action
       setInputKodeCabang("null");
     } else {
       // Handle other changes
       if (selectedOption) {
         const { kodecab } = selectedOption;
-  
+
         setInputKodeCabang(kodecab);
         dispatch(fetchKodeDep(kodecab));
       }
     }
-
-   
   };
   useEffect(() => {
     if (centerMap && map) {
@@ -371,10 +371,17 @@ const MapComponent = () => {
     setSelectedProvId("null");
     setselectedCabang([]);
     setselectedWilayah([]);
-    setInputKodeDeputi('');
-    setInputAlamat('');
-    setInputNama('');
+    setInputKodeDeputi("");
+    setInputAlamat("");
+    setInputNama("");
+    setIsFKRTLAll(false);
+    setIsFKTPAll(false);
 
+    const overlayLayer = map
+    .getLayers()
+    .getArray()
+    .find((layer) => layer.get("title") === "PotentialLayer");
+  overlayLayer.setOpacity(1);
   };
   const closeDetailBox = () => {
     setShowDetailBox(false);
@@ -483,15 +490,25 @@ const MapComponent = () => {
                 id: feature.getId(),
               });
 
-              // Style for the marker
-              const markerStyle = new Style({
+              const jenisfaskes = feature.getProperties().jenisfaskes;
+
+              let markerStyle = new Style({
                 image: new Icon({
-                  //anchor: [0.5, 1],
                   src: "../images/m2.png",
                   scale: 0.5,
                   zIndex: 1000,
                 }),
               });
+
+              if (jenisfaskes === "DOKTER GIGI") {
+                markerStyle = new Style({
+                  image: new Icon({
+                    src: "../images/m4.png",
+                    scale: 0.5,
+                    zIndex: 1000,
+                  }),
+                });
+              }
 
               markerFeature.setStyle(markerStyle);
 
@@ -735,6 +752,32 @@ const MapComponent = () => {
     }
   };
 
+  const handleOverlayOpacityChange = (event, newValue) => {
+    setOverlayLayerOpacity(newValue);
+    if (map) {
+      const overlayGroup = map
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Overlay");
+
+      const RadiusFKTPLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "RadiusFKTP");
+
+      const RadiusFKRTLLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "RadiusFKRTL");
+      if (RadiusFKTPLayer) {
+        RadiusFKTPLayer.setOpacity(newValue);
+      }
+
+      if (RadiusFKRTLLayer) {
+        RadiusFKRTLLayer.setOpacity(newValue);
+      }
+    }
+  };
   useEffect(() => {
     const potentialLayer = new TileLayer({
       title: "PotentialLayer",
@@ -949,7 +992,7 @@ const MapComponent = () => {
   const addOrUpdateMarker = (lon, lat, iconSrc) => {
     setShowDetailBox(true);
     const coordinates = fromLonLat([lon, lat]);
-
+    if (map && map.getLayers()) {
     // Check if the marker layer already exists
     let markerLayer = map
       .getLayers()
@@ -993,6 +1036,7 @@ const MapComponent = () => {
       duration: 500, // Animation duration in milliseconds
       zoom: 15,
     });
+  }
   };
 
   const handleCheckAllChange = () => {
@@ -1139,36 +1183,42 @@ const MapComponent = () => {
       .getArray()
       .find((layer) => layer.get("title") === "PotentialLayer");
 
-      if (faskes === "fkrtl") {
-        if (overlayLayer) {
-          if (inputCanggih.includes("None,nan")) {
-            overlayLayer.setOpacity(1);
-          } else if (
-            selectedCanggihValues.some((value) => inputCanggih.includes(value))
-          ) {
-            overlayLayer.setOpacity(0);
-          } else {
-            overlayLayer.setOpacity(1);
-          }
+    if (faskes === "fkrtl") {
+      if (overlayLayer) {
+        if (inputCanggih.includes("None,nan")) {
+          setIsFKRTLAll(true);
+          overlayLayer.setOpacity(1);
+        } else if (
+          selectedCanggihValues.some((value) => inputCanggih.includes(value))
+        ) {
+          setIsFKRTLAll(false);
+          overlayLayer.setOpacity(0);
+        } else {
+          setIsFKRTLAll(true);
+          overlayLayer.setOpacity(1);
         }
-      } 
-
-      if (faskes === "fktp") {
-
-    if (overlayLayer) {
-      if (inputJenis.includes("Dokter gigi") && inputJenis.length === 1) {
-        overlayLayer.setOpacity(0);
-      } else {
-        overlayLayer.setOpacity(1);
       }
     }
-  }
-  
+
+    if (faskes === "fktp") {
+      if (overlayLayer) {
+        if (inputJenis.includes("Dokter gigi") && inputJenis.length === 1) {
+          setIsFKTPAll(false);
+          overlayLayer.setOpacity(0);
+        } else {
+          setIsFKTPAll(true);
+          overlayLayer.setOpacity(1);
+        }
+      }
+    }
+
     const sanitizedSelectedProvId = selectedProvId ?? "null";
     const sanitizedSelectedKabId = selectedKabId ?? "null";
     const sanitizedSelectedKecId = selectedKecId ?? "null";
-    const sanitizedKodeCabang = inputKodeCabang === "" ? "null" : inputKodeCabang;
-    const sanitizedKodeDeputi = inputKodeDeputi === "" ? "null" : inputKodeDeputi;
+    const sanitizedKodeCabang =
+      inputKodeCabang === "" ? "null" : inputKodeCabang;
+    const sanitizedKodeDeputi =
+      inputKodeDeputi === "" ? "null" : inputKodeDeputi;
 
     const sanitizedInputKelasRS =
       inputKelasRS.length > 0 ? inputKelasRS : "nan";
@@ -1296,6 +1346,8 @@ const MapComponent = () => {
           changeBasemap={changeBasemap}
           potentialLayerOpacity={potentialLayerOpacity} // Pass potentialLayerOpacity
           handlePotentialLayerOpacityChange={handlePotentialLayerOpacityChange} // Pass handlePotentialLayerOpacityChange
+          overlayLayerOpacity={overlayLayerOpacity}
+          handleOverlayOpacityChange={handleOverlayOpacityChange}
           faskesType={faskes}
           showFKTPMark={showFKTPMark}
           showFKRTLMark={showFKRTLMark}
@@ -1305,13 +1357,15 @@ const MapComponent = () => {
         />
       </div>
 
-      <div
-        className="legend-button"
-        onClick={handleLegendClick}
-        style={{ left: getLayerLeftPosition() }}
-      >
-        <PermDeviceInformationOutlinedIcon fontSize="medium" />
-      </div>
+      <Tooltip title="Legenda" placement="right">
+        <div
+          className="legend-button"
+          onClick={handleLegendClick}
+          style={{ left: getLayerLeftPosition() }}
+        >
+          <PermDeviceInformationOutlinedIcon fontSize="medium" />
+        </div>
+      </Tooltip>
 
       {showLegend && (
         <div className="legend-box" onClick={handleLegendClick}>
@@ -1323,16 +1377,17 @@ const MapComponent = () => {
         </div>
       )}
 
-      <div
-        className="filter-button"
-        onClick={handleFilterClick}
-        style={{ left: getLayerLeftPosition() }}
-      >
-        <div className="button-container">
-          <TuneOutlinedIcon fontSize="medium" />
+      <Tooltip title="Filter" placement="right">
+        <div
+          className="filter-button"
+          onClick={handleFilterClick}
+          style={{ left: getLayerLeftPosition() }}
+        >
+          <div className="button-container">
+            <TuneOutlinedIcon fontSize="medium" />
+          </div>
         </div>
-      </div>
-
+      </Tooltip>
       <div className={`sidebar-filter-dashboard ${showSidebar ? "open" : ""}`}>
         <div className="sidebar-header">
           <Typography>Filter {faskes.toUpperCase()} Kerja Sama</Typography>
@@ -1473,18 +1528,18 @@ const MapComponent = () => {
                   marginTop: -2,
                 }}
               >
- <Autocomplete
-                freeSolo
+                <Autocomplete
+                  freeSolo
                   noOptionsText={"Data Tidak Ditemukan"}
                   size={"small"}
                   fullWidth
                   id="cabang-list"
-                  value={selectedCabang?selectedCabang:null }
+                  value={selectedCabang ? selectedCabang : null}
                   onChange={handleSelectCabang}
                   inputValue={selectedCabang}
                   onInputChange={handleInputCabangChange}
                   options={listCabang || []}
-                  getOptionLabel={(option) => option.namacabang||''}
+                  getOptionLabel={(option) => option.namacabang || ""}
                   style={{ zindex: 1000000, left: 0 }}
                   renderInput={(params) => (
                     <TextField
@@ -1517,18 +1572,17 @@ const MapComponent = () => {
                 }}
               >
                 <Autocomplete
-                  
                   noOptionsText={"Data Tidak Ditemukan"}
                   size={"small"}
                   freeSolo
                   fullWidth
                   id="wilayah-list"
-                  value={selectedWilayah ? selectedWilayah : null }
+                  value={selectedWilayah ? selectedWilayah : null}
                   onChange={handleSelectWilayah}
                   inputValue={selectedWilayah}
                   onInputChange={handleInputWilayahChange}
                   options={listWilayah || []}
-                  getOptionLabel={(option) => option.disp || ''}
+                  getOptionLabel={(option) => option.disp || ""}
                   style={{ zindex: 1000000, left: 0 }}
                   renderInput={(params) => (
                     <TextField
@@ -1914,6 +1968,65 @@ const MapComponent = () => {
           closeDetailBox={closeDetailBox}
         />
       )}
+       {isFKRTLAll ? (
+        <>
+          <div
+            className="info-dashboard"
+            style={{ left: getLayerLeftPosition() }}
+          >
+            <InfoOutlinedIcon fontSize="medium" />
+          </div>
+
+          <div
+            className="basemap-select3 hidden"
+            style={{ left: getLayerLeftPosition() }}
+          >
+            <div
+              className="coordinate-box-embed"
+              style={{ left: getLayerLeftPosition() }}
+            >
+              <p className="label">
+                <strong>Keterangan :</strong> <br />
+              </p>
+              <p className="label">
+                - Menampilkan peta potensi perluasan kerja sama FKRTL (belum
+                termasuk analisis perluasan sarana pelayanan canggih di RS)
+                <br />
+              </p>
+            </div>
+          </div>
+        </>
+      ) : null}
+
+      {isFKTPAll ? (
+        <>
+          <div
+            className="info-dashboard"
+            style={{ left: getLayerLeftPosition() }}
+          >
+            <InfoOutlinedIcon fontSize="medium" />
+          </div>
+
+          <div
+            className="basemap-select3 hidden"
+            style={{ left: getLayerLeftPosition() }}
+          >
+            <div
+              className="coordinate-box-embed"
+              style={{ left: getLayerLeftPosition() }}
+            >
+              <p className="label">
+                <strong>Keterangan :</strong> <br />
+              </p>
+              <p className="label">
+                - Menampilkan peta potensi perluasan kerja sama FKTP (Belum
+                termasuk analisis perluasan kerja sama Dokter Gigi)
+                <br />
+              </p>
+            </div>
+          </div>
+        </>
+      ) : null}
     </Box>
   );
 };

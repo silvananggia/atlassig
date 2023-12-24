@@ -3,7 +3,6 @@ const fktpController = require('../controllers/fktp.controller');
 
 
 
-router.get('/fktp-list', fktpController.listFktp)
 router.get('/fktp/:lat/:lon', fktpController.listAllFktp)
 router.get('/fktp/:id', fktpController.detailFKTP);
 

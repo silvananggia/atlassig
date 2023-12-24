@@ -87,7 +87,8 @@ const MapComponent = ({ faskes }) => {
   const [userMarkerFeature, setUserMarkerFeature] = useState(null);
   const [latitude, setLatitude] = useState(-2.5489);
   const [longitude, setLongitude] = useState(118.0149);
-  const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.9);
+  const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(1);
+  const [overlayLayerOpacity, setOverlayLayerOpacity] = useState(1);
   const [markersLoaded, setMarkersLoaded] = useState(false);
   const [showFKTPMark, setShowFKTPMark] = useState(false);
   const [showFKRTLMark, setShowFKRTLMark] = useState(false);
@@ -97,6 +98,8 @@ const MapComponent = ({ faskes }) => {
   const [showSidebar, setShowSidebar] = useState(false);
   const [showSidebarData, setShowSidebarData] = useState(false);
   const [selectedWilayah, setselectedWilayah] = useState();
+  const [isFKTPAll, setIsFKTPAll] = useState(true);
+  const [isFKRTLAll, setIsFKRTLAll] = useState(true);
 
   //input
   const [inputNama, setInputNama] = useState(null);
@@ -293,6 +296,14 @@ const MapComponent = ({ faskes }) => {
     setSelectedKabId("nan");
     setSelectedProvId("nan");
     setselectedWilayah([]);
+    setIsFKRTLAll(false);
+    setIsFKTPAll(false);
+
+    const overlayLayer = map
+      .getLayers()
+      .getArray()
+      .find((layer) => layer.get("title") === "PotentialLayer");
+    overlayLayer.setOpacity(1);
   };
   const closeDetailBox = () => {
     setShowDetailBox(false);
@@ -401,15 +412,25 @@ const MapComponent = ({ faskes }) => {
                 id: feature.getId(),
               });
 
-              // Style for the marker
-              const markerStyle = new Style({
+              const jenisfaskes = feature.getProperties().jenisfaskes;
+
+              let markerStyle = new Style({
                 image: new Icon({
-                  //anchor: [0.5, 1],
                   src: "../images/m2.png",
                   scale: 0.5,
                   zIndex: 1000,
                 }),
               });
+
+              if (jenisfaskes === "DOKTER GIGI") {
+                markerStyle = new Style({
+                  image: new Icon({
+                    src: "../images/m4.png",
+                    scale: 0.5,
+                    zIndex: 1000,
+                  }),
+                });
+              }
 
               markerFeature.setStyle(markerStyle);
 
@@ -649,6 +670,33 @@ const MapComponent = ({ faskes }) => {
         .find((layer) => layer.get("title") === "PotentialLayer");
       if (overlayLayer) {
         overlayLayer.setOpacity(newValue);
+      }
+    }
+  };
+
+  const handleOverlayOpacityChange = (event, newValue) => {
+    setOverlayLayerOpacity(newValue);
+    if (map) {
+      const overlayGroup = map
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Overlay");
+
+      const RadiusFKTPLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "RadiusFKTP");
+
+      const RadiusFKRTLLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "RadiusFKRTL");
+      if (RadiusFKTPLayer) {
+        RadiusFKTPLayer.setOpacity(newValue);
+      }
+
+      if (RadiusFKRTLLayer) {
+        RadiusFKRTLLayer.setOpacity(newValue);
       }
     }
   };
@@ -1045,13 +1093,13 @@ const MapComponent = ({ faskes }) => {
       setInputRmax(0);
     }
   }, [inputRasio]);
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (
       selectedProvId != "nan" ||
       selectedKabId != "nan" ||
       selectedKecId != "nan"
     ) {
-      Swal.fire({
+      const firstDialogResult = await Swal.fire({
         confirmButtonColor: "#274C8B",
         confirmButtonText: "Ya, Saya Mengerti",
         text: "Data yang tampil merupakan Fasilitas Kesehatan kerja sama BPJS Kesehatan",
@@ -1075,18 +1123,23 @@ const MapComponent = ({ faskes }) => {
       if (faskes === "fkrtl") {
         if (overlayLayer) {
           if (inputCanggih.includes("None,nan")) {
-            Swal.fire({
-              confirmButtonColor: "#274C8B",
-              confirmButtonText: "Ya, Saya Mengerti",
-              text: "Menampilkan peta potensi perluasan kerja sama FKRTL (belum termasuk analisis perluasan sarana pelayanan canggih di RS)",
-              icon: "info",
-            });
-            overlayLayer.setOpacity(1);
+            if (firstDialogResult.isConfirmed) {
+              const secondDialogResult = await Swal.fire({
+                confirmButtonColor: "#274C8B",
+                confirmButtonText: "Ya, Saya Mengerti",
+                text: "Menampilkan peta potensi perluasan kerja sama FKRTL (belum termasuk analisis perluasan sarana pelayanan canggih di RS)",
+                icon: "info",
+              });
+              setIsFKRTLAll(true);
+              overlayLayer.setOpacity(1);
+            }
           } else if (
             selectedCanggihValues.some((value) => inputCanggih.includes(value))
           ) {
+            setIsFKRTLAll(false);
             overlayLayer.setOpacity(0);
           } else {
+            setIsFKRTLAll(true);
             overlayLayer.setOpacity(1);
           }
         }
@@ -1095,8 +1148,20 @@ const MapComponent = ({ faskes }) => {
       if (faskes === "fktp") {
         if (overlayLayer) {
           if (inputJenis.includes("Dokter gigi") && inputJenis.length === 1) {
+            setIsFKTPAll(false);
             overlayLayer.setOpacity(0);
           } else {
+            if (firstDialogResult.isConfirmed) {
+              const secondDialogResult = await Swal.fire({
+                confirmButtonColor: "#274C8B",
+                confirmButtonText: "Ya, Saya Mengerti",
+                text: "Menampilkan peta potensi perluasan kerja sama FKTP (Belum termasuk analisis perluasan kerja sama Dokter Gigi)",
+                icon: "info",
+              });
+              setIsFKTPAll(true);
+              overlayLayer.setOpacity(1);
+            }
+            setIsFKTPAll(true);
             overlayLayer.setOpacity(1);
           }
         }
@@ -1268,8 +1333,10 @@ const MapComponent = ({ faskes }) => {
           basemapOptions={basemapOptions}
           basemap={selectedBasemap}
           changeBasemap={changeBasemap}
-          potentialLayerOpacity={potentialLayerOpacity} // Pass potentialLayerOpacity
-          handlePotentialLayerOpacityChange={handlePotentialLayerOpacityChange} // Pass handlePotentialLayerOpacityChange
+          potentialLayerOpacity={potentialLayerOpacity}
+          handlePotentialLayerOpacityChange={handlePotentialLayerOpacityChange}
+          overlayLayerOpacity={overlayLayerOpacity}
+          handleOverlayOpacityChange={handleOverlayOpacityChange}
           faskesType={faskes}
           showFKTPMark={showFKTPMark}
           showFKRTLMark={showFKRTLMark}
@@ -1373,7 +1440,7 @@ const MapComponent = ({ faskes }) => {
                 }}
               >
                 <TextField
-                  id="outlined-basic"
+                  id="nama-faskes"
                   label="Nama Faskes"
                   variant="outlined"
                   size={"small"}
@@ -1392,7 +1459,7 @@ const MapComponent = ({ faskes }) => {
                 }}
               >
                 <TextField
-                  id="outlined-basic"
+                  id="alamat-faskes"
                   label="Alamat Faskes"
                   variant="outlined"
                   size={"small"}
@@ -1839,7 +1906,7 @@ const MapComponent = ({ faskes }) => {
         />
       )}
 
-      {faskes === "fkrtl" ? (
+      {isFKRTLAll ? (
         <>
           <div
             className="layer-select-embed3"
@@ -1862,6 +1929,36 @@ const MapComponent = ({ faskes }) => {
               <p className="label">
                 - Menampilkan peta potensi perluasan kerja sama FKRTL (belum
                 termasuk analisis perluasan sarana pelayanan canggih di RS)
+                <br />
+              </p>
+            </div>
+          </div>
+        </>
+      ) : null}
+
+      {isFKTPAll ? (
+        <>
+          <div
+            className="layer-select-embed3"
+            style={{ left: getLayerLeftPosition() }}
+          >
+            <InfoOutlinedIcon fontSize="medium" />
+          </div>
+
+          <div
+            className="basemap-select3 hidden"
+            style={{ left: getLayerLeftPosition() }}
+          >
+            <div
+              className="coordinate-box-embed"
+              style={{ left: getLayerLeftPosition() }}
+            >
+              <p className="label">
+                <strong>Keterangan :</strong> <br />
+              </p>
+              <p className="label">
+                - Menampilkan peta potensi perluasan kerja sama FKTP (Belum
+                termasuk analisis perluasan kerja sama Dokter Gigi)
                 <br />
               </p>
             </div>

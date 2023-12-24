@@ -12,7 +12,7 @@ import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import bpjsLogo from "../assets/images/bpjs-logo-color.svg";
-import { fetchLogin,checkAuth } from "../actions/authActions";
+import { fetchLogin, checkAuth } from "../actions/authActions";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
 import Stack from "@mui/material/Stack";
@@ -46,14 +46,13 @@ const Login = () => {
     dispatch(fetchLogin(email, password));
   };
 
-useEffect(()=>{
-  dispatch(checkAuth(email, password));
-},[])
+  useEffect(() => {
+    dispatch(checkAuth(email, password));
+  }, []);
 
   useEffect(() => {
     // If the user is already authenticated, redirect to another page
-    console.log(isAuthenticated)
-    console.log(user)
+
     if (isAuthenticated) {
       navigate("/mapfktp"); // Redirect to the home page or another appropriate page
     }
@@ -67,12 +66,9 @@ useEffect(()=>{
     }
   }, [user, isAuthenticated, navigate]);
 
-
   useEffect(() => {
     dispatch(setLoading(false));
   }, []);
-
-
 
   return (
     <ThemeProvider theme={defaultTheme}>

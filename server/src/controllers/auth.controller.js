@@ -123,3 +123,33 @@ exports.checkAuth = async (req, res) => {
       data: "Unauthorized", });
   }
 };
+
+exports.checkAuthEmbed = async (req, res) => {
+  if (req.session.user) {
+    try {
+     
+     
+
+      data = {
+        user: req.session.user,
+      };
+
+      res.json({
+        code: 200,
+        status: "success",
+        data: data,
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        code: 500,
+        status: "error",
+        data: "Internal server error",
+       });
+    }
+  } else {
+    res.status(401).json({    
+      code: 401,
+      status: "error",
+      data: "Unauthorized", });
+  }
+};

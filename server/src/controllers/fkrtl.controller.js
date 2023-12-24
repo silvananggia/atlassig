@@ -5,6 +5,13 @@ exports.listAllFkrtl = async (req, res) => {
     const lat = req.params.lat;
     const lon = req.params.lon;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
 
     if (!lat || !lon) {
       return res.status(400).json({
@@ -57,6 +64,13 @@ exports.listCabangFKRTL = async (req, res) => {
   try {
     const id = req.params.id;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
 
     if (!id) {
       return res.status(400).json({
@@ -105,6 +119,13 @@ exports.listKedeputianFKRTL = async (req, res) => {
   try {
     const id = req.params.id;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
 
     if (!id) {
       return res.status(400).json({
@@ -153,6 +174,14 @@ exports.detailFKRTL = async (req, res) => {
   try {
     const id = req.params.id;
 
+    if (!req.session.user) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
+    
     if (!id) {
       return res.status(400).json({
         code: 400,
