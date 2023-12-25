@@ -1,12 +1,35 @@
 const db = require("../config/database");
 
+const userService = process.env.USER_SERVICE;
+const userKey = process.env.USER_KEY;
 exports.listAllFktp = async (req, res) => {
   try {
-   
     const lat = req.params.lat;
     const lon = req.params.lon;
 
-    if (!req.session.user) {
+    // Retrieve headers
+    const username = req.headers["username"];
+    const userKeyHeader = req.headers["userkey"];
+    // Validate headers
+    if (!userKeyHeader) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Authentication parameters are required headers.",
+      });
+    }
+
+    // Validate headers
+    if (!username) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Invalid User parameters.",
+      });
+    }
+
+
+    if (username !== userService || userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -22,7 +45,8 @@ exports.listAllFktp = async (req, res) => {
       });
     }
 
-    const result = await db.query(`
+    const result = await db.query(
+      `
       SELECT jsonb_build_object(
         'type', 'FeatureCollection',
         'features', jsonb_agg(feature)
@@ -45,7 +69,9 @@ exports.listAllFktp = async (req, res) => {
           AND fktp.status='aktif'
         ) row
       ) features;
-    `,[lon,lat]);
+    `,
+      [lon, lat]
+    );
 
     res.json({
       code: 200,
@@ -66,7 +92,30 @@ exports.listCabangFKTP = async (req, res) => {
   try {
     const id = req.params.id;
 
-    if (!req.session.user) {
+     
+    // Retrieve headers
+    const username = req.headers["username"];
+    const userKeyHeader = req.headers["userkey"];
+    // Validate headers
+    if (!userKeyHeader) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Authentication parameters are required headers.",
+      });
+    }
+
+    // Validate headers
+    if (!username) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Invalid User parameters.",
+      });
+    }
+
+
+    if (username !== userService || userKeyHeader !== userKey){
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -82,7 +131,8 @@ exports.listCabangFKTP = async (req, res) => {
       });
     }
 
-    const result = await db.query(`
+    const result = await db.query(
+      `
     SELECT jsonb_build_object(
       'type',     'FeatureCollection',
       'features', jsonb_agg(feature)
@@ -100,7 +150,9 @@ exports.listCabangFKTP = async (req, res) => {
       JOIN cabang ON kabupaten.kodekc=cabang.kodecab
       WHERE cabang.kodecab=$1 AND fktp.status='aktif') row
     ) features;
-    `,[id]);
+    `,
+      [id]
+    );
 
     res.json({
       code: 200,
@@ -121,7 +173,30 @@ exports.listKedeputianFKTP = async (req, res) => {
   try {
     const id = req.params.id;
 
-    if (!req.session.user) {
+     
+    // Retrieve headers
+    const username = req.headers["username"];
+    const userKeyHeader = req.headers["userkey"];
+    // Validate headers
+    if (!userKeyHeader) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Authentication parameters are required headers.",
+      });
+    }
+
+    // Validate headers
+    if (!username) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Invalid User parameters.",
+      });
+    }
+
+
+    if (username !== userService || userKeyHeader !== userKey){
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -137,7 +212,8 @@ exports.listKedeputianFKTP = async (req, res) => {
       });
     }
 
-    const result = await db.query(`
+    const result = await db.query(
+      `
     SELECT jsonb_build_object(
       'type',     'FeatureCollection',
       'features', jsonb_agg(feature)
@@ -155,7 +231,9 @@ exports.listKedeputianFKTP = async (req, res) => {
       JOIN cabang ON kabupaten.kodekc=cabang.kodecab
       WHERE cabang.kodedep=$1 AND fktp.status='aktif') row
     ) features;
-    `,[id]);
+    `,
+      [id]
+    );
 
     res.json({
       code: 200,
@@ -176,14 +254,37 @@ exports.detailFKTP = async (req, res) => {
   try {
     const id = req.params.id;
 
-    if (!req.session.user) {
+     
+    // Retrieve headers
+    const username = req.headers["username"];
+    const userKeyHeader = req.headers["userkey"];
+    // Validate headers
+    if (!userKeyHeader) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Authentication parameters are required headers.",
+      });
+    }
+
+    // Validate headers
+    if (!username) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Invalid User parameters.",
+      });
+    }
+
+
+    if (username !== userService || userKeyHeader !== userKey){
       return res.status(401).json({
         code: 401,
         status: "error",
         data: "Unauthorized",
       });
     }
-    
+
     if (!id) {
       return res.status(400).json({
         code: 400,
@@ -192,11 +293,14 @@ exports.detailFKTP = async (req, res) => {
       });
     }
 
-    const result = await db.query(`
+    const result = await db.query(
+      `
     SELECT fktp.fktpid AS id, ST_X(ST_SetSRID(coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(coordinat, 4326)) AS lat, faskes1id AS faskesid, kwppk, kcppk, alamatppk, nmppk, jenisfaskes
     FROM fktp
     WHERE fktp.fktpid=$1 AND fktp.status='aktif'
-    `,[id]);
+    `,
+      [id]
+    );
 
     res.json({
       code: 200,

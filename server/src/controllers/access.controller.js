@@ -296,6 +296,7 @@ exports.getEmbed = async (req, res) => {
   try {
     const token = req.params.token;
 
+    
     if (!token) {
       return res.status(400).json({
         code: 400,
@@ -305,7 +306,30 @@ exports.getEmbed = async (req, res) => {
     }
 
 
-/*     if (!req.session.user) {
+/*      
+    // Retrieve headers
+    const username = req.headers["username"];
+    const userKeyHeader = req.headers["userkey"];
+    // Validate headers
+    if (!userKeyHeader) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Authentication parameters are required headers.",
+      });
+    }
+
+    // Validate headers
+    if (!username) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Invalid User parameters.",
+      });
+    }
+
+
+    if (username !== userService || userKeyHeader !== userKey){
       return res.status(401).json({
         code: 401,
         status: "error",

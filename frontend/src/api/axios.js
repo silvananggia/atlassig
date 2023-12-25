@@ -3,5 +3,9 @@ import axios from "axios";
 export default axios.create({
   baseURL: process.env.REACT_APP_API_URL,
   withCredentials: true,
-  headers: { "Content-Type": "application/json" },
+  headers: {
+    "Content-Type": "application/json",
+    username: process.env.REACT_APP_USER_SERVICE,
+    userkey: process.env.REACT_APP_USER_KEY,
+  },
 });

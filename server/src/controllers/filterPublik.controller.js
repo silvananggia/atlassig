@@ -1,12 +1,37 @@
 const db = require("../config/database");
 
+const userService = process.env.USER_SERVICE;
+const userKey = process.env.USER_KEY;
 exports.filterTitikFKTPPublik = async (req, res) => {
   try {
     const pro = req.params.pro === "null" ? null : req.params.pro;
     const kab = req.params.kab === "null" ? null : req.params.kab;
     const kec = req.params.kec === "null" ? null : req.params.kec;
 
-    if (!req.session.user) {
+     
+    // Retrieve headers
+    const username = req.headers["username"];
+    const userKeyHeader = req.headers["userkey"];
+    // Validate headers
+    if (!userKeyHeader) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Authentication parameters are required headers.",
+      });
+    }
+
+    // Validate headers
+    if (!username) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Invalid User parameters.",
+      });
+    }
+
+
+    if (username !== userService || userKeyHeader !== userKey){
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -65,7 +90,30 @@ exports.filterFKTPPublik = async (req, res) => {
     const kab = req.params.kab === "null" ? null : req.params.kab;
     const kec = req.params.kec === "null" ? null : req.params.kec;
 
-    if (!req.session.user) {
+     
+    // Retrieve headers
+    const username = req.headers["username"];
+    const userKeyHeader = req.headers["userkey"];
+    // Validate headers
+    if (!userKeyHeader) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Authentication parameters are required headers.",
+      });
+    }
+
+    // Validate headers
+    if (!username) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Invalid User parameters.",
+      });
+    }
+
+
+    if (username !== userService || userKeyHeader !== userKey){
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -113,7 +161,30 @@ exports.filterFKRTLPublik = async (req, res) => {
     const kab = req.params.kab === "null" ? null : req.params.kab;
     const kec = req.params.kec === "null" ? null : req.params.kec;
 
-    if (!req.session.user) {
+     
+    // Retrieve headers
+    const username = req.headers["username"];
+    const userKeyHeader = req.headers["userkey"];
+    // Validate headers
+    if (!userKeyHeader) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Authentication parameters are required headers.",
+      });
+    }
+
+    // Validate headers
+    if (!username) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Invalid User parameters.",
+      });
+    }
+
+
+    if (username !== userService || userKeyHeader !== userKey){
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -163,7 +234,30 @@ exports.filterTitikFKRTLPublik = async (req, res) => {
     const kab = req.params.kab === "null" ? null : req.params.kab;
     const kec = req.params.kec === "null" ? null : req.params.kec;
 
-    if (!req.session.user) {
+     
+    // Retrieve headers
+    const username = req.headers["username"];
+    const userKeyHeader = req.headers["userkey"];
+    // Validate headers
+    if (!userKeyHeader) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Authentication parameters are required headers.",
+      });
+    }
+
+    // Validate headers
+    if (!username) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Invalid User parameters.",
+      });
+    }
+
+
+    if (username !== userService || userKeyHeader !== userKey){
       return res.status(401).json({
         code: 401,
         status: "error",
