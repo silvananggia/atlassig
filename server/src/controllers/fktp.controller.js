@@ -19,14 +19,6 @@ exports.listAllFktp = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
 
 
     if (username !== userService || userKeyHeader !== userKey) {

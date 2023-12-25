@@ -61,7 +61,17 @@ const Login = () => {
   useEffect(() => {
     // If the user becomes authenticated after login, redirect to another page
     if (user && isAuthenticated) {
-      localStorage.setItem("user", JSON.stringify(user));
+      if (user && user.data && user.data.token) {
+        localStorage.setItem(
+          "user",
+          JSON.parse(JSON.stringify(user.data.email))
+        );
+        localStorage.setItem(
+          "token",
+          JSON.parse(JSON.stringify(user.data.token))
+        );
+      }
+
       navigate("/mapfktp");
     }
   }, [user, isAuthenticated, navigate]);

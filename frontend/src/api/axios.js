@@ -5,7 +5,7 @@ export default axios.create({
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
-    username: process.env.REACT_APP_USER_SERVICE,
-    userkey: process.env.REACT_APP_USER_KEY,
+    "username": process.env.REACT_APP_USER_SERVICE,
+    "userkey": process.env.REACT_APP_USER_KEY,
   },
 });

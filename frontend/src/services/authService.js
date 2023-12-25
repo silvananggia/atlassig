@@ -21,6 +21,7 @@ const checkAuth = () => {
 
 const logout = () => {
   localStorage.removeItem("user");
+  localStorage.removeItem("token");
 
   return axios.post(
     "/logout",

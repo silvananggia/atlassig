@@ -1,11 +1,10 @@
 import axios from "../api/axios";
+import authHeader from "./auth-header";
 
-const getFKTPList = (page,limit) => {
-  return axios.get(`/fktp/${page}/${limit}`);
-};
+
 
 const getFKTP = (lat,lon) => {
-  return axios.get(`/fktp/${lat}/${lon}`);
+  return axios.get(`/fktp/${lat}/${lon}`, { headers: authHeader() });
 };
 
 const getFKTPDetail = (id) => {
@@ -57,7 +56,6 @@ const FKTPService = {
   getFKTPDetail,
   getFKTPCabang,
   getFKTPKedeputian,
-  getFKTPList,
   getFilterFKTP,
   getFilterFKTPlist,
   countJenisFKTP,

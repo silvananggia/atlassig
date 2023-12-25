@@ -20,8 +20,10 @@ const MapComponent = () => {
   const [wait, setWait] = useState(true); // Define the 'loading' variable
 
 
+
   useEffect(() => {
     const fetchData = async () => {
+      localStorage.setItem("token",code);
       await dispatch(fetchEmbedFaskes(code));
     };
     fetchData();
