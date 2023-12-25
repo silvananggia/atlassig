@@ -1,4 +1,11 @@
 const db = require("../config/database");
+const bcrypt = require("bcrypt");
+const redis = require("ioredis");
+const crypto = require("crypto");
+const { promisify } = require("util");
+const redisClient = redis.createClient();
+const hsetAsync = promisify(redisClient.hset).bind(redisClient);
+const hgetallAsync = promisify(redisClient.hgetall).bind(redisClient);
 
 const userService = process.env.USER_SERVICE;
 const userKey = process.env.USER_KEY;
@@ -8,7 +15,6 @@ exports.listAllFktp = async (req, res) => {
     const lon = req.params.lon;
 
     // Retrieve headers
-    const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -19,9 +25,7 @@ exports.listAllFktp = async (req, res) => {
       });
     }
 
-
-
-    if (username !== userService || userKeyHeader !== userKey) {
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -36,9 +40,24 @@ exports.listAllFktp = async (req, res) => {
         data: "Latitude and longitude are required parameters.",
       });
     }
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
 
-    const result = await db.query(
-      `
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
       SELECT jsonb_build_object(
         'type', 'FeatureCollection',
         'features', jsonb_agg(feature)
@@ -62,14 +81,15 @@ exports.listAllFktp = async (req, res) => {
         ) row
       ) features;
     `,
-      [lon, lat]
-    );
+        [lon, lat]
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows[0].jsonb_build_object,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows[0].jsonb_build_object,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -84,7 +104,6 @@ exports.listCabangFKTP = async (req, res) => {
   try {
     const id = req.params.id;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -106,8 +125,7 @@ exports.listCabangFKTP = async (req, res) => {
       });
     }
 
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (username !== userService || userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -165,7 +183,6 @@ exports.listKedeputianFKTP = async (req, res) => {
   try {
     const id = req.params.id;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -187,8 +204,7 @@ exports.listKedeputianFKTP = async (req, res) => {
       });
     }
 
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (username !== userService || userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -246,7 +262,6 @@ exports.detailFKTP = async (req, res) => {
   try {
     const id = req.params.id;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -268,8 +283,7 @@ exports.detailFKTP = async (req, res) => {
       });
     }
 
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (username !== userService || userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
