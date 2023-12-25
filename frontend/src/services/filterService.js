@@ -1,4 +1,5 @@
 import axios from "../api/axios";
+import authHeader from "./auth-header";
 
 const getBBOXKabupaten = (id) => {
   return axios.get(`/bbox-kabupaten/${id}`, { headers: authHeader() });
