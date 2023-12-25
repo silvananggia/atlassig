@@ -2,7 +2,10 @@ const db = require("../config/database");
 const bcrypt = require("bcrypt");
 const redis = require("ioredis");
 const crypto = require("crypto");
+const { promisify } = require('util');
 const redisClient = redis.createClient();
+const hsetAsync = promisify(redisClient.hset).bind(redisClient);
+const hgetallAsync = promisify(redisClient.hgetall).bind(redisClient);
 
 exports.Register = async (req, res) => {
   const { email, password, nama, level, instansi, status } = req.body;
@@ -45,12 +48,23 @@ exports.Login = async (req, res) => {
       (await bcrypt.compare(password, user.rows[0].password))
     ) {
       req.session.user = user.rows[0].email;
+      const token = crypto.randomBytes(32).toString("hex");
 
       data = {
         nama: user.rows[0].nama,
         email: user.rows[0].email,
         level: user.rows[0].level,
+        token:token, 
       };
+      // Hash the token before storing it for better security
+      const hashedToken = await bcrypt.hash(token, 10);
+
+      // Store the token and associated user information in Redis
+      await hsetAsync(`token:${token}`, hashedToken, JSON.stringify(data));
+
+      // Optionally, set an expiration for the token in seconds
+      const expirationInSeconds = 3600; // 1 hour
+      await redisClient.expire("token", expirationInSeconds);
 
       res.json({
         code: 200,
@@ -74,17 +88,17 @@ exports.Logout = (req, res) => {
   req.session.destroy((err) => {
     if (err) {
       console.error("Error during logout:", err);
-      res.status(500).json({ 
+      res.status(500).json({
         code: 500,
         status: "error",
         data: "Internal server error",
-         });
+      });
     } else {
-      res.status(200).json({ 
+      res.status(200).json({
         code: 200,
         status: "success",
-        data:  "Logout successful" ,
-       });
+        data: "Logout successful",
+      });
     }
   });
 };
@@ -100,7 +114,7 @@ exports.checkAuth = async (req, res) => {
 
       data = {
         nama: req.user.nama,
-        email:  req.user.email,
+        email: req.user.email,
         level: req.user.level,
       };
 
@@ -110,26 +124,24 @@ exports.checkAuth = async (req, res) => {
         data: data,
       });
     } catch (error) {
-      res.status(500).json({ 
+      res.status(500).json({
         code: 500,
         status: "error",
         data: "Internal server error",
-       });
+      });
     }
   } else {
-    res.status(401).json({    
+    res.status(401).json({
       code: 401,
       status: "error",
-      data: "Unauthorized", });
+      data: "Unauthorized",
+    });
   }
 };
 
 exports.checkAuthEmbed = async (req, res) => {
   if (req.session.user) {
     try {
-     
-     
-
       data = {
         user: req.session.user,
       };
@@ -140,16 +152,17 @@ exports.checkAuthEmbed = async (req, res) => {
         data: data,
       });
     } catch (error) {
-      res.status(500).json({ 
+      res.status(500).json({
         code: 500,
         status: "error",
         data: "Internal server error",
-       });
+      });
     }
   } else {
-    res.status(401).json({    
+    res.status(401).json({
       code: 401,
       status: "error",
-      data: "Unauthorized", });
+      data: "Unauthorized",
+    });
   }
 };

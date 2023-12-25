@@ -1127,7 +1127,7 @@ const MapComponent = ({ faskes }) => {
               const secondDialogResult = await Swal.fire({
                 confirmButtonColor: "#274C8B",
                 confirmButtonText: "Ya, Saya Mengerti",
-                text: "Menampilkan peta potensi perluasan kerja sama FKRTL (belum termasuk analisis perluasan sarana pelayanan canggih di RS)",
+                text: "Menampilkan peta potensi perluasan kerja sama FKRTL (Belum termasuk analisis perluasan sarana pelayanan canggih di RS)",
                 icon: "info",
               });
               setIsFKRTLAll(true);
@@ -1927,7 +1927,7 @@ const MapComponent = ({ faskes }) => {
                 <strong>Keterangan :</strong> <br />
               </p>
               <p className="label">
-                - Menampilkan peta potensi perluasan kerja sama FKRTL (belum
+                - Menampilkan peta potensi perluasan kerja sama FKRTL (Belum
                 termasuk analisis perluasan sarana pelayanan canggih di RS)
                 <br />
               </p>

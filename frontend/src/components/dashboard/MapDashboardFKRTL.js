@@ -1989,7 +1989,7 @@ const MapComponent = () => {
                 <strong>Keterangan :</strong> <br />
               </p>
               <p className="label">
-                - Menampilkan peta potensi perluasan kerja sama FKRTL (belum
+                - Menampilkan peta potensi perluasan kerja sama FKRTL (Belum
                 termasuk analisis perluasan sarana pelayanan canggih di RS)
                 <br />
               </p>
