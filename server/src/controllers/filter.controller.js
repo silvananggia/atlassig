@@ -1,4 +1,11 @@
 const db = require("../config/database");
+const bcrypt = require("bcrypt");
+const redis = require("ioredis");
+const crypto = require("crypto");
+const { promisify } = require("util");
+const redisClient = redis.createClient();
+const hsetAsync = promisify(redisClient.hset).bind(redisClient);
+const hgetallAsync = promisify(redisClient.hgetall).bind(redisClient);
 
 const userService = process.env.USER_SERVICE;
 const userKey = process.env.USER_KEY;
@@ -6,7 +13,6 @@ exports.getCabang = async (req, res) => {
   try {
     const id = req.params.id;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -19,35 +25,41 @@ exports.getCabang = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
         data: "Unauthorized",
       });
     }
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
 
-    const result = await db.query(
-      `SELECT * FROM cabang WHERE LOWER(namacabang) LIKE LOWER('%' || $1 || '%') limit 10;
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `SELECT * FROM cabang WHERE LOWER(namacabang) LIKE LOWER('%' || $1 || '%') limit 10;
       `,
-      [id]
-    );
+        [id]
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -63,7 +75,6 @@ exports.getCabangDep = async (req, res) => {
     const id = req.params.id;
     const kddep = req.params.kddep;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -76,17 +87,7 @@ exports.getCabangDep = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -94,17 +95,34 @@ exports.getCabangDep = async (req, res) => {
       });
     }
 
-    const result = await db.query(
-      `SELECT * FROM cabang WHERE kodedep=$1;
-      `,
-      [ kddep]
-    );
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows,
-    });
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `SELECT * FROM cabang WHERE kodedep=$1;
+      `,
+        [kddep]
+      );
+
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -119,7 +137,6 @@ exports.getKodeDep = async (req, res) => {
   try {
     const id = req.params.kdkc;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -132,35 +149,41 @@ exports.getKodeDep = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
         data: "Unauthorized",
       });
     }
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
 
-    const result = await db.query(
-      `SELECT kodedep FROM cabang WHERE kodecab=$1
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `SELECT kodedep FROM cabang WHERE kodecab=$1
       `,
-      [id]
-    );
+        [id]
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -175,7 +198,6 @@ exports.bboxKabupaten = async (req, res) => {
   try {
     const id = req.params.id;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -188,17 +210,7 @@ exports.bboxKabupaten = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -213,9 +225,24 @@ exports.bboxKabupaten = async (req, res) => {
         data: "Code are required parameters.",
       });
     }
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
 
-    const result = await db.query(
-      `
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
       SELECT jsonb_build_object(
 		'type',     'FeatureCollection',
 		'features', jsonb_agg(feature)
@@ -229,14 +256,15 @@ exports.bboxKabupaten = async (req, res) => {
 	FROM (SELECT kbid AS id, ST_Transform(ST_Envelope(mpoly::geometry), 3857) AS bbox FROM kabupaten WHERE kbid=$1) row
 	) features;
       `,
-      [id]
-    );
+        [id]
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows[0].jsonb_build_object,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows[0].jsonb_build_object,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -251,7 +279,6 @@ exports.bboxCabang = async (req, res) => {
   try {
     const id = req.params.id;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -264,17 +291,7 @@ exports.bboxCabang = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -290,8 +307,24 @@ exports.bboxCabang = async (req, res) => {
       });
     }
 
-    const result = await db.query(
-      `
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
         SELECT jsonb_build_object(
             'type',     'FeatureCollection',
             'features', jsonb_agg(feature)
@@ -306,14 +339,15 @@ exports.bboxCabang = async (req, res) => {
                 WHERE cabang.kodecab=$1) row
         ) features;
         `,
-      [id]
-    );
+        [id]
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows[0].jsonb_build_object,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows[0].jsonb_build_object,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -328,7 +362,6 @@ exports.bboxKedeputian = async (req, res) => {
   try {
     const id = req.params.id;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -341,17 +374,7 @@ exports.bboxKedeputian = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -367,8 +390,24 @@ exports.bboxKedeputian = async (req, res) => {
       });
     }
 
-    const result = await db.query(
-      `
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
         SELECT jsonb_build_object(
           'type',     'FeatureCollection',
           'features', jsonb_agg(feature)
@@ -383,14 +422,15 @@ exports.bboxKedeputian = async (req, res) => {
               WHERE cabang.kodedep=$1) row
       ) features;
         `,
-      [id]
-    );
+        [id]
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows[0].jsonb_build_object,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows[0].jsonb_build_object,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -405,7 +445,6 @@ exports.centerCabang = async (req, res) => {
   try {
     const id = req.params.id;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -418,17 +457,7 @@ exports.centerCabang = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -444,8 +473,24 @@ exports.centerCabang = async (req, res) => {
       });
     }
 
-    const result = await db.query(
-      `
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
         SELECT jsonb_build_object(
             'type',     'FeatureCollection',
             'features', jsonb_agg(feature)
@@ -460,14 +505,15 @@ exports.centerCabang = async (req, res) => {
                 WHERE cabang.kodecab=$1) row
         ) features;
         `,
-      [id]
-    );
+        [id]
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows[0].jsonb_build_object,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows[0].jsonb_build_object,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -482,7 +528,6 @@ exports.centerKedeputian = async (req, res) => {
   try {
     const id = req.params.id;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -495,17 +540,7 @@ exports.centerKedeputian = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -521,8 +556,24 @@ exports.centerKedeputian = async (req, res) => {
       });
     }
 
-    const result = await db.query(
-      `
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
         SELECT jsonb_build_object(
           'type',     'FeatureCollection',
           'features', jsonb_agg(feature)
@@ -538,14 +589,15 @@ exports.centerKedeputian = async (req, res) => {
                 GROUP BY cabang.kodedep) row
         ) features;
         `,
-      [id]
-    );
+        [id]
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows[0].jsonb_build_object,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows[0].jsonb_build_object,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -560,7 +612,6 @@ exports.autowilayah = async (req, res) => {
   try {
     const id = req.params.id;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -573,17 +624,7 @@ exports.autowilayah = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -599,8 +640,24 @@ exports.autowilayah = async (req, res) => {
       });
     }
 
-    const result = await db.query(
-      `SELECT kecamatan.kcid::integer AS kec_id, kecamatan.kecamatan AS kec, kabupaten.kbid::integer AS kab_id, provinsi.prid::integer AS prov_id, kabupaten.kabupaten AS kab, provinsi.provinsi AS prov, UPPER(CONCAT (kecamatan.kecamatan,', ', kabupaten.kabupaten,', ', provinsi.provinsi)) AS disp FROM kecamatan
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `SELECT kecamatan.kcid::integer AS kec_id, kecamatan.kecamatan AS kec, kabupaten.kbid::integer AS kab_id, provinsi.prid::integer AS prov_id, kabupaten.kabupaten AS kab, provinsi.provinsi AS prov, UPPER(CONCAT (kecamatan.kecamatan,', ', kabupaten.kabupaten,', ', provinsi.provinsi)) AS disp FROM kecamatan
       JOIN kabupaten ON kabupaten.kbid = kecamatan.kab_id
       JOIN provinsi ON provinsi.prid = kabupaten.prov_id
       WHERE lower(kecamatan.kecamatan) LIKE LOWER('%' || $1 || '%')
@@ -612,15 +669,16 @@ exports.autowilayah = async (req, res) => {
       SELECT NULL::integer AS kec_id, NULL::char AS kec, NULL::integer AS kab_id, provinsi.prid::integer AS prov_id, NULL::char AS kab, provinsi.provinsi AS prov, UPPER(provinsi.provinsi) AS disp FROM provinsi
             WHERE lower(provinsi.provinsi) LIKE LOWER('%' || $1 || '%')
       ORDER BY kec_id DESC, kab_id DESC LIMIT 7;
-        `
-        ,[id]
-    );
+        `,
+        [id]
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -637,7 +695,6 @@ exports.wilayahadmin = async (req, res) => {
     const kab = req.params.kab === "null" ? null : req.params.kab;
     const kec = req.params.kec === "null" ? null : req.params.kec;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -650,17 +707,7 @@ exports.wilayahadmin = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -675,9 +722,24 @@ exports.wilayahadmin = async (req, res) => {
           data: "Code are required parameters.",
         });
       } */
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
 
-    const result = await db.query(
-      `
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
         SELECT jsonb_build_object(
           'type',     'FeatureCollection',
           'features', jsonb_agg(feature)
@@ -703,14 +765,15 @@ exports.wilayahadmin = async (req, res) => {
         ) features;
         
         `,
-      [pro, kab, kec]
-    );
+        [pro, kab, kec]
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows[0].jsonb_build_object,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows[0].jsonb_build_object,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -728,7 +791,6 @@ exports.wilayahadminCanggih = async (req, res) => {
     const kec = req.params.kec === "null" ? null : req.params.kec;
     const id = req.params.id;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -741,17 +803,7 @@ exports.wilayahadminCanggih = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -767,9 +819,24 @@ exports.wilayahadminCanggih = async (req, res) => {
         });
       } */
 
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
 
-    const result = await db.query(
-      `
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
         SELECT jsonb_build_object(
           'type',     'FeatureCollection',
           'features', jsonb_agg(feature)
@@ -794,14 +861,15 @@ exports.wilayahadminCanggih = async (req, res) => {
               AND ($4::integer IS NULL OR kecamatan.kcid=$4)) row
         ) features;
         `,
-      [id, pro, kab, kec]
-    );
+        [id, pro, kab, kec]
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows[0].jsonb_build_object,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows[0].jsonb_build_object,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -822,12 +890,10 @@ exports.filterTitikFKTP = async (req, res) => {
     const nmppk = req.params.nmppk === "null" ? null : req.params.nmppk;
     const alamatppk =
       req.params.alamatppk === "null" ? null : req.params.alamatppk;
-      const rmin = req.params.rmin === "null" ? null : req.params.rmin;
-      const rmax = req.params.rmax === "null" ? null : req.params.rmax
-    const jenis =
-      req.params.jenis ;
+    const rmin = req.params.rmin === "null" ? null : req.params.rmin;
+    const rmax = req.params.rmax === "null" ? null : req.params.rmax;
+    const jenis = req.params.jenis;
 
-           
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -840,17 +906,7 @@ exports.filterTitikFKTP = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -866,6 +922,22 @@ exports.filterTitikFKTP = async (req, res) => {
         });
       } */
 
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
       const result = await db.query(
         `
         SELECT jsonb_build_object(
@@ -904,25 +976,14 @@ exports.filterTitikFKTP = async (req, res) => {
           ) AS row
         ) features;
         `,
-        [
-          nmppk,
-          alamatppk,
-          pro,
-          kab,
-          kec,
-          kdkc,
-          kddep,
-          rmax,
-          rmin,
-          jenis
-          
-        ]
-      ); 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows[0].jsonb_build_object,
-    });
+        [nmppk, alamatppk, pro, kab, kec, kdkc, kddep, rmax, rmin, jenis]
+      );
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows[0].jsonb_build_object,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -943,12 +1004,10 @@ exports.filterFKTP = async (req, res) => {
     const nmppk = req.params.nmppk === "null" ? null : req.params.nmppk;
     const alamatppk =
       req.params.alamatppk === "null" ? null : req.params.alamatppk;
-      const rmin = req.params.rmin === "null" ? null : req.params.rmin;
-      const rmax = req.params.rmax === "null" ? null : req.params.rmax
-    const jenis =
-      req.params.jenis;
+    const rmin = req.params.rmin === "null" ? null : req.params.rmin;
+    const rmax = req.params.rmax === "null" ? null : req.params.rmax;
+    const jenis = req.params.jenis;
 
-       
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -961,27 +1020,32 @@ exports.filterFKTP = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
+    if (userKeyHeader !== userKey) {
+      return res.status(401).json({
+        code: 401,
         status: "error",
-        data: "Invalid User parameters.",
+        data: "Unauthorized",
       });
     }
 
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
 
-    if (username !== userService || userKeyHeader !== userKey){
-        return res.status(401).json({
-          code: 401,
-          status: "error",
-          data: "Unauthorized",
-        });
-      }
+    const hashedToken = await bcrypt.hash(token, 10);
 
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
 
-    const result = await db.query(
-      `
+    if (userData) {
+      const result = await db.query(
+        `
       SELECT fktp.fktpid AS id, ST_X(ST_SetSRID(fktp.coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(fktp.coordinat, 4326)) AS lat, faskes1id AS faskesid, kwppk, kcppk, alamatppk, nmppk, jenisfaskes
 			FROM fktp
 			INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fktp.wlid
@@ -1005,25 +1069,14 @@ exports.filterFKTP = async (req, res) => {
                     
               
         `,
-      [
-        nmppk,
-        alamatppk,
-        pro,
-        kab,
-        kec,
-        kdkc,
-        kddep,
-        rmax,
-        rmin,
-        jenis
-        
-      ]
-    );
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows,
-    });
+        [nmppk, alamatppk, pro, kab, kec, kdkc, kddep, rmax, rmin, jenis]
+      );
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -1046,10 +1099,8 @@ exports.filterFKRTL = async (req, res) => {
     const nmppk = req.params.nmppk === "null" ? null : req.params.nmppk;
     const alamatppk =
       req.params.alamatppk === "null" ? null : req.params.alamatppk;
-    const jenis =
-      req.params.jenis;
+    const jenis = req.params.jenis;
 
-       
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -1062,26 +1113,32 @@ exports.filterFKRTL = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
+    if (userKeyHeader !== userKey) {
+      return res.status(401).json({
+        code: 401,
         status: "error",
-        data: "Invalid User parameters.",
+        data: "Unauthorized",
       });
     }
 
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
 
-    if (username !== userService || userKeyHeader !== userKey){
-        return res.status(401).json({
-          code: 401,
-          status: "error",
-          data: "Unauthorized",
-        });
-      }
+    const hashedToken = await bcrypt.hash(token, 10);
 
-    const result = await db.query(
-      `
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
       SELECT fkrtl.fkrtlid AS id, ST_X(ST_SetSRID(fkrtl.coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(fkrtl.coordinat, 4326)) AS lat, faskes2id AS faskesid, kwppk, kcppk, alamatppk, nmppk, jenisfaskes
 			FROM fkrtl
 			INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fkrtl.wlid
@@ -1103,27 +1160,17 @@ exports.filterFKRTL = async (req, res) => {
          TRIM(LOWER(fkrtl.jenisfaskes)) IN (SELECT * FROM unnest(string_to_array(lower($10), ',')))
             )
         `,
-      [
-        nmppk,
-        alamatppk,
-        pro,
-        kab,
-        kec,
-        kdkc,
-        kddep,
-        krs,
-        canggih,
-        jenis
-      ]
-      /* ,
+        [nmppk, alamatppk, pro, kab, kec, kdkc, kddep, krs, canggih, jenis]
+        /* ,
         [nmppk,alamatppk,krs,canggih,pro,kab,kec,`%${nmppk}%`,`%${alamatppk}%`,] */
-    );
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -1147,8 +1194,7 @@ exports.filterTitikFKRTL = async (req, res) => {
     const nmppk = req.params.nmppk === "null" ? null : req.params.nmppk;
     const alamatppk =
       req.params.alamatppk === "null" ? null : req.params.alamatppk;
-    const jenis =
-      req.params.jenis;
+    const jenis = req.params.jenis;
     /*       if (!pro || !kab || !kec) {
         return res.status(400).json({
           code: 400,
@@ -1156,7 +1202,7 @@ exports.filterTitikFKRTL = async (req, res) => {
           data: "Code are required parameters.",
         });
       } */
-       
+
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -1169,26 +1215,32 @@ exports.filterTitikFKRTL = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
+    if (userKeyHeader !== userKey) {
+      return res.status(401).json({
+        code: 401,
         status: "error",
-        data: "Invalid User parameters.",
+        data: "Unauthorized",
       });
     }
 
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
 
-    if (username !== userService || userKeyHeader !== userKey){
-        return res.status(401).json({
-          code: 401,
-          status: "error",
-          data: "Unauthorized",
-        });
-      }
+    const hashedToken = await bcrypt.hash(token, 10);
 
-    const result = await db.query(
-      `
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
       SELECT jsonb_build_object(
         'type',     'FeatureCollection',
         'features', jsonb_agg(feature)
@@ -1225,25 +1277,15 @@ exports.filterTitikFKRTL = async (req, res) => {
               ) row
         ) features;
         `,
-        [
-          nmppk,
-          alamatppk,
-          pro,
-          kab,
-          kec,
-          kdkc,
-          kddep,
-          krs,
-          canggih,
-          jenis
-        ]
-    );
+        [nmppk, alamatppk, pro, kab, kec, kdkc, kddep, krs, canggih, jenis]
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows[0].jsonb_build_object,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows[0].jsonb_build_object,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -1256,7 +1298,6 @@ exports.filterTitikFKRTL = async (req, res) => {
 
 exports.listJenisFKTP = async (req, res) => {
   try {
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -1269,17 +1310,7 @@ exports.listJenisFKTP = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -1287,17 +1318,34 @@ exports.listJenisFKTP = async (req, res) => {
       });
     }
 
-    const result = await db.query(
-      `
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
         SELECT DISTINCT fktp.jenisfaskes FROM fktp ;
         `
-    );
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -1310,7 +1358,6 @@ exports.listJenisFKTP = async (req, res) => {
 
 exports.listJenisFKRTL = async (req, res) => {
   try {
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -1323,34 +1370,42 @@ exports.listJenisFKRTL = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
         data: "Unauthorized",
       });
     }
-    const result = await db.query(
-      `
+
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
         SELECT DISTINCT fkrtl.jenisfaskes FROM fkrtl ;
         `
-    );
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -1363,7 +1418,6 @@ exports.listJenisFKRTL = async (req, res) => {
 
 exports.listCanggih = async (req, res) => {
   try {
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -1376,34 +1430,42 @@ exports.listCanggih = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
         data: "Unauthorized",
       });
     }
-    const result = await db.query(
-      `
+
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
         SELECT DISTINCT fkrtl.pelayanancanggih FROM fkrtl ;
         `
-    );
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -1422,7 +1484,6 @@ exports.countJenisFKRTL = async (req, res) => {
     const kdkc = req.params.kdkc === "null" ? null : req.params.kdkc;
     const kddep = req.params.kddep === "null" ? null : req.params.kddep;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -1435,17 +1496,7 @@ exports.countJenisFKRTL = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -1453,9 +1504,24 @@ exports.countJenisFKRTL = async (req, res) => {
       });
     }
 
-    const result = await db.query(
-      
-      `
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
       SELECT DISTINCT jenisfaskes, COUNT(*) FROM fkrtl 
       INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fkrtl.wlid
       INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
@@ -1470,16 +1536,17 @@ exports.countJenisFKRTL = async (req, res) => {
       AND ($5::character IS NULL OR cabang.kodedep=$5)
       GROUP BY jenisfaskes;
     `,
-    [pro, kab, kec, kdkc, kddep]
-      /* ,
+        [pro, kab, kec, kdkc, kddep]
+        /* ,
         [nmppk,alamatppk,krs,canggih,pro,kab,kec,`%${nmppk}%`,`%${alamatppk}%`,] */
-    );
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -1498,7 +1565,6 @@ exports.countJenisFKTP = async (req, res) => {
     const kdkc = req.params.kdkc === "null" ? null : req.params.kdkc;
     const kddep = req.params.kddep === "null" ? null : req.params.kddep;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -1511,17 +1577,7 @@ exports.countJenisFKTP = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -1529,9 +1585,24 @@ exports.countJenisFKTP = async (req, res) => {
       });
     }
 
-    const result = await db.query(
-      
-      `
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
       SELECT DISTINCT jenisfaskes, COUNT(*) FROM fktp 
       INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fktp.wlid
       INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
@@ -1546,16 +1617,17 @@ exports.countJenisFKTP = async (req, res) => {
       AND ($5::character IS NULL OR cabang.kodedep=$5)
       GROUP BY jenisfaskes;
     `,
-    [pro, kab, kec, kdkc, kddep]
-      /* ,
+        [pro, kab, kec, kdkc, kddep]
+        /* ,
         [nmppk,alamatppk,krs,canggih,pro,kab,kec,`%${nmppk}%`,`%${alamatppk}%`,] */
-    );
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -1566,8 +1638,6 @@ exports.countJenisFKTP = async (req, res) => {
   }
 };
 
-
-
 exports.countFKRTL = async (req, res) => {
   try {
     const pro = req.params.pro === "null" ? null : req.params.pro;
@@ -1576,7 +1646,6 @@ exports.countFKRTL = async (req, res) => {
     const kdkc = req.params.kdkc === "null" ? null : req.params.kdkc;
     const kddep = req.params.kddep === "null" ? null : req.params.kddep;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -1589,17 +1658,7 @@ exports.countFKRTL = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -1607,9 +1666,24 @@ exports.countFKRTL = async (req, res) => {
       });
     }
 
-    const result = await db.query(
-      
-      `
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
       SELECT COUNT(*) FROM fkrtl 
       INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fkrtl.wlid
       INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
@@ -1624,16 +1698,17 @@ exports.countFKRTL = async (req, res) => {
       AND ($5::character IS NULL OR cabang.kodedep=$5)
      
     `,
-    [pro, kab, kec, kdkc, kddep]
-      /* ,
+        [pro, kab, kec, kdkc, kddep]
+        /* ,
         [nmppk,alamatppk,krs,canggih,pro,kab,kec,`%${nmppk}%`,`%${alamatppk}%`,] */
-    );
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -1652,7 +1727,6 @@ exports.countFKTP = async (req, res) => {
     const kdkc = req.params.kdkc === "null" ? null : req.params.kdkc;
     const kddep = req.params.kddep === "null" ? null : req.params.kddep;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -1665,17 +1739,7 @@ exports.countFKTP = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -1683,9 +1747,24 @@ exports.countFKTP = async (req, res) => {
       });
     }
 
-    const result = await db.query(
-      
-      `
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
       SELECT  COUNT(*) FROM fktp 
       INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fktp.wlid
       INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
@@ -1700,16 +1779,17 @@ exports.countFKTP = async (req, res) => {
       AND ($5::character IS NULL OR cabang.kodedep=$5)
      
     `,
-    [pro, kab, kec, kdkc, kddep]
-      /* ,
+        [pro, kab, kec, kdkc, kddep]
+        /* ,
         [nmppk,alamatppk,krs,canggih,pro,kab,kec,`%${nmppk}%`,`%${alamatppk}%`,] */
-    );
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -1720,14 +1800,12 @@ exports.countFKTP = async (req, res) => {
   }
 };
 
-
 exports.autowilayahcadep = async (req, res) => {
   try {
     const kdkc = req.params.kdkc;
     const kddep = req.params.kddep;
     const id = req.params.id;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -1740,17 +1818,7 @@ exports.autowilayahcadep = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -1766,8 +1834,24 @@ exports.autowilayahcadep = async (req, res) => {
       });
     }
 
-    const result = await db.query(
-      `
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
       SELECT
       kecamatan.kcid::integer AS kec_id,
       kecamatan.kecamatan AS kec,
@@ -1795,15 +1879,16 @@ exports.autowilayahcadep = async (req, res) => {
             AND ($2::character IS NULL OR cabang.kodecab = $2)
      
       ORDER BY kec_id DESC, kab_id DESC ;
-`  , [kddep,kdkc,id]
-       
-    );
+`,
+        [kddep, kdkc, id]
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -1819,7 +1904,6 @@ exports.autowilayahdep = async (req, res) => {
     const kddep = req.params.kddep;
     const id = req.params.id;
 
-     
     // Retrieve headers
     const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
@@ -1832,24 +1916,14 @@ exports.autowilayahdep = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-
-    if (username !== userService || userKeyHeader !== userKey){
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
         data: "Unauthorized",
       });
     }
-    
+
     if (!id) {
       return res.status(400).json({
         code: 400,
@@ -1858,8 +1932,24 @@ exports.autowilayahdep = async (req, res) => {
       });
     }
 
-    const result = await db.query(
-      `
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
       SELECT
       kecamatan.kcid::integer AS kec_id,
       kecamatan.kecamatan AS kec,
@@ -1893,15 +1983,16 @@ exports.autowilayahdep = async (req, res) => {
             WHERE lower(provinsi.provinsi) LIKE LOWER('%' || $2 || '%')
             AND ($1::character IS NULL OR cabang.kodedep = $1)
       ORDER BY kec_id DESC, kab_id DESC 
-`  , [kddep,id]
-       
-    );
+`,
+        [kddep, id]
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({

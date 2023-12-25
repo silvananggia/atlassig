@@ -125,7 +125,7 @@ exports.listCabangFKTP = async (req, res) => {
       });
     }
 
-    if (username !== userService || userKeyHeader !== userKey) {
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -141,8 +141,24 @@ exports.listCabangFKTP = async (req, res) => {
       });
     }
 
-    const result = await db.query(
-      `
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
     SELECT jsonb_build_object(
       'type',     'FeatureCollection',
       'features', jsonb_agg(feature)
@@ -161,14 +177,15 @@ exports.listCabangFKTP = async (req, res) => {
       WHERE cabang.kodecab=$1 AND fktp.status='aktif') row
     ) features;
     `,
-      [id]
-    );
+        [id]
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows[0].jsonb_build_object,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows[0].jsonb_build_object,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
@@ -195,16 +212,7 @@ exports.listKedeputianFKTP = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-    if (username !== userService || userKeyHeader !== userKey) {
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -274,16 +282,7 @@ exports.detailFKTP = async (req, res) => {
       });
     }
 
-    // Validate headers
-    if (!username) {
-      return res.status(500).json({
-        code: 500,
-        status: "error",
-        data: "Invalid User parameters.",
-      });
-    }
-
-    if (username !== userService || userKeyHeader !== userKey) {
+    if (userKeyHeader !== userKey) {
       return res.status(401).json({
         code: 401,
         status: "error",
@@ -299,20 +298,37 @@ exports.detailFKTP = async (req, res) => {
       });
     }
 
-    const result = await db.query(
-      `
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
     SELECT fktp.fktpid AS id, ST_X(ST_SetSRID(coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(coordinat, 4326)) AS lat, faskes1id AS faskesid, kwppk, kcppk, alamatppk, nmppk, jenisfaskes
     FROM fktp
     WHERE fktp.fktpid=$1 AND fktp.status='aktif'
     `,
-      [id]
-    );
+        [id]
+      );
 
-    res.json({
-      code: 200,
-      status: "success",
-      data: result.rows,
-    });
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows,
+      });
+    }
   } catch (error) {
     console.error("Error executing query", error);
     res.status(500).json({
