@@ -111,6 +111,8 @@ exports.getAccess = async (req, res) => {
           data: "Invalid value for potensi.",
         });
       }
+
+
       const token = crypto.randomBytes(32).toString("hex");
       const key = `embed:${token}`;
 
@@ -118,7 +120,7 @@ exports.getAccess = async (req, res) => {
 
       redisClient.expire(key, 30 * 60); // Expire in 30 minutes
 
-      req.session.user = username;
+      //req.session.user = username;
 
       res.json({
         code: 200,
@@ -168,7 +170,7 @@ exports.getAccess = async (req, res) => {
         redisClient.hmset(key, { level, faskes, kodeCabang });
 
         redisClient.expire(key, 30 * 60); // Expire in 3 minutes
-        req.session.user = username;
+       // req.session.user = username;
 
         return res.json({
           code: 200,
@@ -224,7 +226,7 @@ exports.getAccess = async (req, res) => {
         redisClient.hmset(key, { level, faskes, kodeKedeputian });
 
         redisClient.expire(key, 30 * 60); // Expire in 3 minutes
-        req.session.user = username;
+        //req.session.user = username;
 
         res.json({
           code: 200,
@@ -265,7 +267,7 @@ exports.getAccess = async (req, res) => {
       redisClient.hmset(key, { level, faskes });
 
       redisClient.expire(key, 30 * 60); // Expire in 3 minutes
-      req.session.user = username;
+      //req.session.user = username;
 
       res.json({
         code: 200,
@@ -303,13 +305,14 @@ exports.getEmbed = async (req, res) => {
     }
 
 
-    if (!req.session.user) {
+/*     if (!req.session.user) {
       return res.status(401).json({
         code: 401,
         status: "error",
         data: "Unauthorized",
       });
-    }
+    } */
+  
 
     redisClient.hgetall(`embed:${token}`, (err, data) => {
       if (err) {
@@ -326,6 +329,7 @@ exports.getEmbed = async (req, res) => {
           data: "Data not found for the given token.",
         });
       } else {
+        req.session.user = token;
         res.json({
           code: 200,
           status: "success",
