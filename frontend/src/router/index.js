@@ -1,56 +1,65 @@
-import React from "react";
-import { useSelector } from "react-redux";
-import { Route, Routes, useNavigate } from "react-router-dom";
+import React, { lazy, Suspense } from "react";
+import { Route, Routes } from "react-router-dom";
 
-import Layout from "../layouts/Layout";
-import LoginPage from "../components/Login";
-import MapPage from "../components/dashboard/MapDashboard";
-import MapFKRTL from "../components/dashboard/MapDashboardFKRTL";
-import EmbedPage from "../components/embed/MapEmbed";
-import StaisticsPage from "../components/statistic/StatisticsPage";
-import NotFound from "../components/NotFound";
-import PrivateRoute from "./PrivateRoute";
+import LoadingIndicator from "../components/loading/Loading";
+
+
+const LazyLoginPage = lazy(() => import("../components/Login"));
+const LazyMapPage = lazy(() => import("../components/dashboard/MapDashboard"));
+const LazyMapFKRTL = lazy(() => import("../components/dashboard/MapDashboardFKRTL"));
+const LazyEmbedPage = lazy(() => import("../components/embed/MapEmbed"));
+const LazyStatisticsPage = lazy(() => import("../components/statistic/StatisticsPage"));
+const LazyNotFound = lazy(() => import("../components/NotFound"));
+const LazyPrivateRoute = lazy(() => import("./PrivateRoute"));
 
 function MyRouter() {
   return (
     <Routes>
-      <Route path="login" element={<LoginPage />} />
-      <Route path="embed/:code" element={<EmbedPage />} />
+      <Route path="login" element={<Suspense fallback={<LoadingIndicator />}><LazyLoginPage /></Suspense>} />
+      <Route path="embed/:code" element={<Suspense fallback={<LoadingIndicator />}><LazyEmbedPage /></Suspense>} />
 
       <Route
         path="/"
         element={
-          <PrivateRoute>
-            <MapPage faskes={"fktp"} />
-          </PrivateRoute>
+          <Suspense fallback={<LoadingIndicator />}>
+            <LazyPrivateRoute>
+              <LazyMapPage faskes={"fktp"} />
+            </LazyPrivateRoute>
+          </Suspense>
         }
       ></Route>
       <Route
         path="mapfktp"
         element={
-          <PrivateRoute>
-            <MapPage faskes={"fktp"} />
-          </PrivateRoute>
+          <Suspense fallback={<LoadingIndicator />}>
+            <LazyPrivateRoute>
+              <LazyMapPage faskes={"fktp"} />
+            </LazyPrivateRoute>
+          </Suspense>
         }
       />
       <Route
         path="mapfkrtl"
         element={
-          <PrivateRoute>
-            <MapFKRTL />
-          </PrivateRoute>
+          <Suspense fallback={<LoadingIndicator />}>
+            <LazyPrivateRoute>
+              <LazyMapFKRTL />
+            </LazyPrivateRoute>
+          </Suspense>
         }
       />
       <Route
         path="statistic"
         element={
-          <PrivateRoute>
-            <StaisticsPage />
-          </PrivateRoute>
+          <Suspense fallback={<LoadingIndicator />}>
+            <LazyPrivateRoute>
+              <LazyStatisticsPage />
+            </LazyPrivateRoute>
+          </Suspense>
         }
       />
 
-      <Route path="*" element={<NotFound />} />
+      <Route path="*" element={<Suspense fallback={<LoadingIndicator />}><LazyNotFound /></Suspense>} />
     </Routes>
   );
 }

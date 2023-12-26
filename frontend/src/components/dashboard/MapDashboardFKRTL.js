@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { connect, useDispatch, useSelector } from "react-redux";
 import "ol/ol.css";
 import "ol-ext/dist/ol-ext.css";
+import './dashboard.scss'
 
 import Crop from "ol-ext/filter/Crop";
 import Mask from "ol-ext/filter/Mask";
@@ -85,8 +86,8 @@ const MapComponent = () => {
 
   const [showFloatingButton, setShowFloatingButton] = useState(false);
   const [showFloatingButton2, setShowFloatingButton2] = useState(false);
-  const [isFKTPAll, setIsFKTPAll] = useState(true);
-  const [isFKRTLAll, setIsFKRTLAll] = useState(true);
+  const [isFKTPAll, setIsFKTPAll] = useState(false);
+  const [isFKRTLAll, setIsFKRTLAll] = useState(false);
   const [userLocation, setUserLocation] = useState([0, 0]);
   const [markerPosition, setMarkerPosition] = useState([0, 0]);
   const [centerMap, setCenterMap] = useState([

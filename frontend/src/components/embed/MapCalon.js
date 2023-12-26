@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { connect, useDispatch, useSelector } from "react-redux";
 import "ol/ol.css";
 import "ol-ext/dist/ol-ext.css";
-
+import './embed.scss';
 import Crop from "ol-ext/filter/Crop";
 import Mask from "ol-ext/filter/Mask";
 import { Map, View } from "ol";

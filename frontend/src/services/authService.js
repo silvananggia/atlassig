@@ -1,5 +1,4 @@
 import axios from "../api/axios";
-import authHeader from "./auth-header";
 
 const login = (email, password) => {
   return axios.post(`/login`, {

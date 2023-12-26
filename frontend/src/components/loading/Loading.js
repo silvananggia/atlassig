@@ -9,7 +9,7 @@ const LoadingIndicator = () => {
   return isLoading ? (
     <div className="loader-container">
       <div className="loader">
-        <img src={LoaderGif} />
+        <img src={LoaderGif} alt="loading"/>
       </div>
     </div>
   ) : null;

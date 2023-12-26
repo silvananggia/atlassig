@@ -2,9 +2,7 @@ import React, { useEffect, useState } from "react";
 import { connect, useDispatch, useSelector } from "react-redux";
 import "ol/ol.css";
 import "ol-ext/dist/ol-ext.css";
-
-import Crop from "ol-ext/filter/Crop";
-import Mask from "ol-ext/filter/Mask";
+import './embed.scss';
 import { Map, View } from "ol";
 import TileLayer from "ol/layer/Tile";
 import BingMaps from "ol/source/BingMaps";
@@ -21,7 +19,7 @@ import { defaults as defaultControls } from "ol/control";
 import Icon from "ol/style/Icon";
 import Overlay from "ol/Overlay";
 import { Circle as CircleStyle, Fill, Stroke, Style } from "ol/style.js";
-import { Box, Grid, formControlClasses } from "@mui/material";
+import { Box, Grid } from "@mui/material";
 import FloatingButton from "./EmbedFloatingButton";
 import LayerGroup from "ol/layer/Group";
 import PermDeviceInformationOutlinedIcon from "@mui/icons-material/PermDeviceInformationOutlined";
@@ -98,8 +96,8 @@ const MapComponent = ({ faskes }) => {
   const [showSidebar, setShowSidebar] = useState(false);
   const [showSidebarData, setShowSidebarData] = useState(false);
   const [selectedWilayah, setselectedWilayah] = useState();
-  const [isFKTPAll, setIsFKTPAll] = useState(true);
-  const [isFKRTLAll, setIsFKRTLAll] = useState(true);
+  const [isFKTPAll, setIsFKTPAll] = useState(false);
+  const [isFKRTLAll, setIsFKRTLAll] = useState(false);
 
   //input
   const [inputNama, setInputNama] = useState(null);
@@ -1120,6 +1118,7 @@ const MapComponent = ({ faskes }) => {
         .getArray()
         .find((layer) => layer.get("title") === "PotentialLayer");
 
+        
       if (faskes === "fkrtl") {
         if (overlayLayer) {
           if (inputCanggih.includes("None,nan")) {

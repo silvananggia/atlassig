@@ -1,24 +1,27 @@
-import React from "react";
+import { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { BrowserRouter } from "react-router-dom";
 // ** Redux Imports
 import { store } from "./redux/store";
 import { Provider } from "react-redux";
+import LoadingIndicator from "./components/loading/Loading";
 
 import "./assets/scss/style.scss";
-import "@fontsource/roboto/300.css";
+/* import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
-import "@fontsource/roboto/700.css";
+import "@fontsource/roboto/700.css"; */
 
+const LazyApp = lazy(() => import("./App"));
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   //<React.StrictMode>
   <BrowserRouter>
     <Provider store={store}>
-      <App />
+      <Suspense fallback={<LoadingIndicator />}>
+        <LazyApp />
+      </Suspense>
     </Provider>
   </BrowserRouter>
 

@@ -2,12 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Button, TextField, Checkbox, FormControlLabel } from "@mui/material";
-import Avatar from "@mui/material/Avatar";
 import CssBaseline from "@mui/material/CssBaseline";
 import Link from "@mui/material/Link";
-import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -51,8 +48,6 @@ const Login = () => {
   }, []);
 
   useEffect(() => {
-    // If the user is already authenticated, redirect to another page
-
     if (isAuthenticated) {
       navigate("/mapfktp"); // Redirect to the home page or another appropriate page
     }

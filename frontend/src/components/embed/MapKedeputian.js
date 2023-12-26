@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { connect, useDispatch, useSelector } from "react-redux";
 import "ol/ol.css";
 import "ol-ext/dist/ol-ext.css";
-
+import './embed.scss';
 import Crop from "ol-ext/filter/Crop";
 import Mask from "ol-ext/filter/Mask";
 import { Map, View } from "ol";
@@ -90,8 +90,8 @@ const MapComponent = ({ faskes, kodeKedeputian }) => {
   const [showSidebar, setShowSidebar] = useState(false);
   const [showSidebarData, setShowSidebarData] = useState(false);
   const [selectedWilayah, setselectedWilayah] = useState();
-  const [isFKTPAll, setIsFKTPAll] = useState(true);
-  const [isFKRTLAll, setIsFKRTLAll] = useState(true);
+  const [isFKTPAll, setIsFKTPAll] = useState(false);
+  const [isFKRTLAll, setIsFKRTLAll] = useState(false);
 
   //input
   const [inputNama, setInputNama] = useState(null);

@@ -1,10 +1,9 @@
 // FloatingButton.js
 
 import React from "react";
-import Typography from "@mui/material/Typography";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
-import { faker } from '@faker-js/faker';
+
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 

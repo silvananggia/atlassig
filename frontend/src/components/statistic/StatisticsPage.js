@@ -1,25 +1,21 @@
-import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import React, { useEffect, useState, Suspense, lazy } from "react";
 import { connect, useDispatch, useSelector } from "react-redux";
 import Autocomplete from "@mui/material/Autocomplete";
 import {
   Card,
   CardHeader,
   CardContent,
-  CardActions,
   Button,
   Typography,
   TextField,
   Box,
   Grid,
 } from "@mui/material";
-
+import LoadingIndicator from "../loading/Loading";
 import {
   fetchAutoWilayah,
   fetchCabang,
   fetchAutoWilayahCabang,
-  fetchJenisFKRTL,
-  fetchJenisFKTP,
   fetchKodeDep,
   fetchAutoWilayahDeputi,
   fetchCabangDeputi,
@@ -30,13 +26,11 @@ import {
 } from "../../actions/fkrtlActions";
 import { fetchCountJenisFKTP, fetchCountFKTP } from "../../actions/fktpActions";
 
-import BarChart from "./ChartBar";
-import PieChart from "./ChartPie";
-
+const BarChart = lazy(() => import("./ChartBar"));
+const PieChart = lazy(() => import("./ChartPie"));
 const StatisticsPage = () => {
   const dispatch = useDispatch();
   const [selectedWilayah, setselectedWilayah] = useState();
-  const [selectedItem, setSelectedItem] = useState(null);
   const [selectedKabId, setSelectedKabId] = useState(null);
   const [selectedKecId, setSelectedKecId] = useState(null);
   const [selectedProvId, setSelectedProvId] = useState(null);
@@ -76,7 +70,6 @@ const StatisticsPage = () => {
     }
   }, [kodeDeputi]);
 
-
   useEffect(() => {
     if (!isFiltered) {
       handleResetFilter();
@@ -90,21 +83,18 @@ const StatisticsPage = () => {
   }, [dataFKTP, dataFKRTL, dataPie]);
 
   const handleKedeputianChange = (event, value) => {
-    if(value === null || value == ""){
+    if (value === null || value === "") {
       setInputKodeDeputi("");
-     
-    
     } else {
       setInputKodeDeputi(value);
       dispatch(fetchCabangDeputi([]));
       setselectedCabang([]);
       setselectedWilayah([]);
     }
-   
   };
 
   const handleInputCabangChange = (event, value) => {
-    if (inputKodeDeputi === null || inputKodeDeputi==="") {
+    if (inputKodeDeputi === null || inputKodeDeputi === "") {
       if (value.length >= 2) {
         dispatch(fetchCabang(value));
       } else {
@@ -112,35 +102,33 @@ const StatisticsPage = () => {
         setInputKodeCabang("null");
       }
     } else {
-      
       dispatch(fetchCabangDeputi(inputKodeDeputi, value));
       setselectedWilayah([]);
     }
   };
 
-
   const handleSelectCabang = (event, selectedOption) => {
-    if (selectedOption === null || selectedOption === '') {
+    if (selectedOption === null || selectedOption === "") {
       // Handle clear action
       setInputKodeCabang("null");
     } else {
       // Handle other changes
       if (selectedOption) {
         const { kodecab } = selectedOption;
-  
+
         setInputKodeCabang(kodecab);
         dispatch(fetchKodeDep(kodecab));
       }
     }
-
-   
   };
   const handleSubmit = () => {
     const sanitizedSelectedProvId = selectedProvId ?? "null";
     const sanitizedSelectedKabId = selectedKabId ?? "null";
     const sanitizedSelectedKecId = selectedKecId ?? "null";
-   const sanitizedKodeCabang = inputKodeCabang === "" ? "null" : inputKodeCabang;
-    const sanitizedKodeDeputi = inputKodeDeputi === "" ? "null" : inputKodeDeputi;
+    const sanitizedKodeCabang =
+      inputKodeCabang === "" ? "null" : inputKodeCabang;
+    const sanitizedKodeDeputi =
+      inputKodeDeputi === "" ? "null" : inputKodeDeputi;
     dispatch(
       fetchCountJenisFKRTL(
         sanitizedSelectedProvId,
@@ -208,42 +196,45 @@ const StatisticsPage = () => {
 
   const handleSelectWilayah = (event, selectedOption) => {
     // Check if the new value is null or an empty string
-    if (selectedOption === null || selectedOption === '') {
-     // Handle clear action
-     setSelectedKecId("null");
-     setSelectedKabId("null");
-     setSelectedProvId("null");
-   } else {
-     // Handle other changes
-     if (selectedOption) {
-       const { kec_id, kab_id, prov_id } = selectedOption;
- 
-       setSelectedKecId(kec_id);
-       setSelectedKabId(kab_id);
-       setSelectedProvId(prov_id);
-     }
-   }
-
-  
- };
-
- const handleInputWilayahChange = (event, value) => {
-  if (inputKodeDeputi === null   && inputKodeCabang === null) {
-    if (value.length >= 3) {
-      dispatch(fetchAutoWilayah(value));
-    } else {
-      dispatch(fetchAutoWilayah([]));
-
+    if (selectedOption === null || selectedOption === "") {
+      // Handle clear action
       setSelectedKecId("null");
       setSelectedKabId("null");
       setSelectedProvId("null");
+    } else {
+      // Handle other changes
+      if (selectedOption) {
+        const { kec_id, kab_id, prov_id } = selectedOption;
+
+        setSelectedKecId(kec_id);
+        setSelectedKabId(kab_id);
+        setSelectedProvId(prov_id);
+      }
     }
-  } else if (inputKodeCabang === null || inputKodeCabang === "" && inputKodeDeputi != null && inputKodeDeputi != "null"  ) {
-    dispatch(fetchAutoWilayahDeputi(inputKodeDeputi, value));
-  } else {
-    dispatch(fetchAutoWilayahCabang(inputKodeDeputi, inputKodeCabang, value));
-  }
-};
+  };
+
+  const handleInputWilayahChange = (event, value) => {
+    if (inputKodeDeputi === null && inputKodeCabang === null) {
+      if (value.length >= 3) {
+        dispatch(fetchAutoWilayah(value));
+      } else {
+        dispatch(fetchAutoWilayah([]));
+
+        setSelectedKecId("null");
+        setSelectedKabId("null");
+        setSelectedProvId("null");
+      }
+    } else if (
+      inputKodeCabang === null ||
+      (inputKodeCabang === "" &&
+        inputKodeDeputi !== null &&
+        inputKodeDeputi !== "null")
+    ) {
+      dispatch(fetchAutoWilayahDeputi(inputKodeDeputi, value));
+    } else {
+      dispatch(fetchAutoWilayahCabang(inputKodeDeputi, inputKodeCabang, value));
+    }
+  };
 
   const cardHeaderStyle = {
     background: "linear-gradient(to right, #0F816F, #274C8B)", // Adjust gradient colors as needed
@@ -271,7 +262,12 @@ const StatisticsPage = () => {
             value={inputKodeDeputi}
             onChange={handleKedeputianChange}
             renderInput={(params) => (
-              <TextField {...params} label="Kedeputian" size="small" autoComplete="off"/>
+              <TextField
+                {...params}
+                label="Kedeputian"
+                size="small"
+                autoComplete="off"
+              />
             )}
           />
         </Grid>
@@ -288,7 +284,7 @@ const StatisticsPage = () => {
             inputValue={selectedCabang}
             onInputChange={handleInputCabangChange}
             options={listCabang || []}
-            getOptionLabel={(option) => option.namacabang || ''}
+            getOptionLabel={(option) => option.namacabang || ""}
             style={{ zindex: 1000000, left: 0 }}
             renderInput={(params) => (
               <TextField
@@ -303,17 +299,17 @@ const StatisticsPage = () => {
 
         <Grid item xs={6} md={3}>
           <Autocomplete
-          freeSolo
+            freeSolo
             noOptionsText={"Data Tidak Ditemukan"}
             size={"small"}
             fullWidth
             id="combo-box-demo"
-            value={selectedWilayah? selectedWilayah : null}
+            value={selectedWilayah ? selectedWilayah : null}
             onChange={handleSelectWilayah}
             inputValue={selectedWilayah}
             onInputChange={handleInputWilayahChange}
             options={listWilayah || []}
-            getOptionLabel={(option) => option.disp || ''}
+            getOptionLabel={(option) => option.disp || ""}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -408,25 +404,31 @@ const StatisticsPage = () => {
           </Box>
         </Grid>
         <Grid item xs={2} md={2}>
-          <PieChart dataPie={dataPie} />
+          <Suspense fallback={<LoadingIndicator />}>
+            <PieChart dataPie={dataPie} />
+          </Suspense>
         </Grid>
       </Grid>
 
       <Grid container sx={{ paddingTop: 3 }}>
         <Grid item md={6}>
           <Box p={1}>
-            <BarChart
-              title="Jenis Fasilitas Kesehatan Tingkat Pertama"
-              apiData={dataJenisFKTP}
-            />
+            <Suspense fallback={<LoadingIndicator />}>
+              <BarChart
+                title="Jenis Fasilitas Kesehatan Tingkat Pertama"
+                apiData={dataJenisFKTP}
+              />
+            </Suspense>
           </Box>
         </Grid>
         <Grid item md={6}>
           <Box p={1}>
-            <BarChart
-              title="JenisFasilitas Kesehatan Rujukan Tingkat Lanjut"
-              apiData={dataJenisFKRTL}
-            />
+            <Suspense fallback={<LoadingIndicator />}>
+              <BarChart
+                title="JenisFasilitas Kesehatan Rujukan Tingkat Lanjut"
+                apiData={dataJenisFKRTL}
+              />
+            </Suspense>
           </Box>
         </Grid>
         {/*  <Grid item xs={2} md={2}>

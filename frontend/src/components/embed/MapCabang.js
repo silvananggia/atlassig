@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { connect, useDispatch, useSelector } from "react-redux";
 import "ol/ol.css";
 import "ol-ext/dist/ol-ext.css";
-
+import './embed.scss';
 import Crop from "ol-ext/filter/Crop";
 import Mask from "ol-ext/filter/Mask";
 import { Map, View } from "ol";
@@ -81,8 +81,8 @@ const MapComponent = ({ faskes, kodeCabang }) => {
   const [userLocation, setUserLocation] = useState([0, 0]);
   const [selectedBasemap, setSelectedBasemap] = useState("map-switch-default");
   const [userMarkerFeature, setUserMarkerFeature] = useState(null);
-  const [isFKTPAll, setIsFKTPAll] = useState(true);
-  const [isFKRTLAll, setIsFKRTLAll] = useState(true);
+  const [isFKTPAll, setIsFKTPAll] = useState(false);
+  const [isFKRTLAll, setIsFKRTLAll] = useState(false);
   const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(1);
   const [overlayLayerOpacity, setOverlayLayerOpacity] = useState(1);
   const [markersLoaded, setMarkersLoaded] = useState(false);
