@@ -7,7 +7,7 @@ const redisClient = redis.createClient();
 const hsetAsync = promisify(redisClient.hset).bind(redisClient);
 const hgetallAsync = promisify(redisClient.hgetall).bind(redisClient);
 
-const userService = process.env.USER_SERVICE;
+
 const userKey = process.env.USER_KEY;
 exports.listAllFkrtl = async (req, res) => {
   try {
@@ -15,7 +15,7 @@ exports.listAllFkrtl = async (req, res) => {
     const lon = req.params.lon;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -106,7 +106,7 @@ exports.listCabangFKRTL = async (req, res) => {
     const id = req.params.id;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -192,7 +192,7 @@ exports.listKedeputianFKRTL = async (req, res) => {
     const id = req.params.id;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -277,7 +277,7 @@ exports.detailFKRTL = async (req, res) => {
     const id = req.params.id;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {

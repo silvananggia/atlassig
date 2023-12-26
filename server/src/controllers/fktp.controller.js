@@ -7,7 +7,6 @@ const redisClient = redis.createClient();
 const hsetAsync = promisify(redisClient.hset).bind(redisClient);
 const hgetallAsync = promisify(redisClient.hgetall).bind(redisClient);
 
-const userService = process.env.USER_SERVICE;
 const userKey = process.env.USER_KEY;
 exports.listAllFktp = async (req, res) => {
   try {
@@ -105,7 +104,7 @@ exports.listCabangFKTP = async (req, res) => {
     const id = req.params.id;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -201,7 +200,7 @@ exports.listKedeputianFKTP = async (req, res) => {
     const id = req.params.id;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -271,7 +270,7 @@ exports.detailFKTP = async (req, res) => {
     const id = req.params.id;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {

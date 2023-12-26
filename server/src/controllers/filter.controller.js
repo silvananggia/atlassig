@@ -7,14 +7,12 @@ const redisClient = redis.createClient();
 const hsetAsync = promisify(redisClient.hset).bind(redisClient);
 const hgetallAsync = promisify(redisClient.hgetall).bind(redisClient);
 
-const userService = process.env.USER_SERVICE;
 const userKey = process.env.USER_KEY;
 exports.getCabang = async (req, res) => {
   try {
     const id = req.params.id;
 
     // Retrieve headers
-    const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -76,7 +74,6 @@ exports.getCabangDep = async (req, res) => {
     const kddep = req.params.kddep;
 
     // Retrieve headers
-    const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -138,7 +135,6 @@ exports.getKodeDep = async (req, res) => {
     const id = req.params.kdkc;
 
     // Retrieve headers
-    const username = req.headers["username"];
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -199,7 +195,7 @@ exports.bboxKabupaten = async (req, res) => {
     const id = req.params.id;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -280,7 +276,7 @@ exports.bboxCabang = async (req, res) => {
     const id = req.params.id;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -363,7 +359,7 @@ exports.bboxKedeputian = async (req, res) => {
     const id = req.params.id;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -446,7 +442,7 @@ exports.centerCabang = async (req, res) => {
     const id = req.params.id;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -529,7 +525,7 @@ exports.centerKedeputian = async (req, res) => {
     const id = req.params.id;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -613,7 +609,7 @@ exports.autowilayah = async (req, res) => {
     const id = req.params.id;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -696,7 +692,7 @@ exports.wilayahadmin = async (req, res) => {
     const kec = req.params.kec === "null" ? null : req.params.kec;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -792,7 +788,7 @@ exports.wilayahadminCanggih = async (req, res) => {
     const id = req.params.id;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -895,7 +891,7 @@ exports.filterTitikFKTP = async (req, res) => {
     const jenis = req.params.jenis;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -1009,7 +1005,7 @@ exports.filterFKTP = async (req, res) => {
     const jenis = req.params.jenis;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -1102,7 +1098,7 @@ exports.filterFKRTL = async (req, res) => {
     const jenis = req.params.jenis;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -1204,7 +1200,7 @@ exports.filterTitikFKRTL = async (req, res) => {
       } */
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -1299,7 +1295,7 @@ exports.filterTitikFKRTL = async (req, res) => {
 exports.listJenisFKTP = async (req, res) => {
   try {
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -1359,7 +1355,7 @@ exports.listJenisFKTP = async (req, res) => {
 exports.listJenisFKRTL = async (req, res) => {
   try {
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -1419,7 +1415,7 @@ exports.listJenisFKRTL = async (req, res) => {
 exports.listCanggih = async (req, res) => {
   try {
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -1485,7 +1481,7 @@ exports.countJenisFKRTL = async (req, res) => {
     const kddep = req.params.kddep === "null" ? null : req.params.kddep;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -1566,7 +1562,7 @@ exports.countJenisFKTP = async (req, res) => {
     const kddep = req.params.kddep === "null" ? null : req.params.kddep;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -1647,7 +1643,7 @@ exports.countFKRTL = async (req, res) => {
     const kddep = req.params.kddep === "null" ? null : req.params.kddep;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -1728,7 +1724,7 @@ exports.countFKTP = async (req, res) => {
     const kddep = req.params.kddep === "null" ? null : req.params.kddep;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -1807,7 +1803,7 @@ exports.autowilayahcadep = async (req, res) => {
     const id = req.params.id;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
@@ -1905,7 +1901,7 @@ exports.autowilayahdep = async (req, res) => {
     const id = req.params.id;
 
     // Retrieve headers
-    const username = req.headers["username"];
+
     const userKeyHeader = req.headers["userkey"];
     // Validate headers
     if (!userKeyHeader) {
