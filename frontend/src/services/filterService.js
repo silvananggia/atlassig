@@ -23,6 +23,11 @@ const getCenterKedeputian = (id) => {
   return axios.get(`/center-kedeputian/${id}`, { headers: authHeader() });
 };
 
+const getCenterWilayah = (pro,kab) => {
+  return axios.get(`/center-wilayah/${pro}/${kab}`, { headers: authHeader() });
+};
+
+
 const getAutoWilayah = (id) => {
   return axios.get(`/autowilayah/${id}`, { headers: authHeader() });
 };
@@ -72,6 +77,7 @@ const FilterService = {
   getCenterCabang,
   getBBOXKedeputian,
   getCenterKedeputian,
+  getCenterWilayah,
   getAutoWilayah,
   getWilayahAdmin,
   getWilayahCanggih,

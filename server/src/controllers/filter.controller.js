@@ -604,6 +604,85 @@ exports.centerKedeputian = async (req, res) => {
   }
 };
 
+exports.centerWilayah = async (req, res) => {
+  try {
+    const pro = req.params.pro === "null" ? null : req.params.pro;
+    const kab = req.params.kab === "null" ? null : req.params.kab;
+
+    // Retrieve headers
+
+    const userKeyHeader = req.headers["userkey"];
+    // Validate headers
+    if (!userKeyHeader) {
+      return res.status(500).json({
+        code: 500,
+        status: "error",
+        data: "Authentication parameters are required headers.",
+      });
+    }
+
+    if (userKeyHeader !== userKey) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized",
+      });
+    }
+
+    // Validate the token
+    const token = req.headers["token"];
+    if (!token) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        data: "Unauthorized - Token missing",
+      });
+    }
+
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    // Check if the token exists in Redis
+    const userData = await hgetallAsync(`token:${token}`);
+
+    if (userData) {
+      const result = await db.query(
+        `
+        SELECT jsonb_build_object(
+          'type',     'FeatureCollection',
+          'features', jsonb_agg(feature)
+        )
+        FROM (
+        SELECT jsonb_build_object(
+          'type',       'Feature',
+          'geometry',   ST_AsGeoJSON(bbox)::jsonb
+        ) AS feature
+        FROM (SELECT ST_Transform(ST_Centroid(ST_Union(mpoly::geometry)), 3857) AS bbox FROM kabupaten 
+             JOIN provinsi ON kabupaten.prov_id=provinsi.prid
+               
+              WHERE ($1::integer IS NULL OR provinsi.prid=$1)
+              AND ($2::integer IS NULL OR kabupaten.kbid=$2)) row
+        ) features;
+        
+        `,
+        [pro, kab]
+      );
+
+      res.json({
+        code: 200,
+        status: "success",
+        data: result.rows[0].jsonb_build_object,
+      });
+    }
+  } catch (error) {
+    console.error("Error executing query", error);
+    res.status(500).json({
+      code: 500,
+      status: "error",
+      data: "Internal Server Error",
+    });
+  }
+};
+
 exports.autowilayah = async (req, res) => {
   try {
     const id = req.params.id;

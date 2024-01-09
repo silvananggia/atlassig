@@ -4,6 +4,7 @@ import {
   FETCH_BBOX_CABANG,
   FETCH_BBOX_KEDEPUTIAN,
   FETCH_CENTER_KEDEPUTIAN,
+  FETCH_CENTER_WILAYAH,
   FETCH_AUTO_WILAYAH,
   FETCH_JENIS_FKRTL,
   FETCH_JENIS_FKTP,
@@ -69,6 +70,18 @@ export const fetchBBOXKedeputian = (id) => async (dispatch) => {
   }
 };
 
+export const fetchCenterWilayah = (pro,kab) => async (dispatch) => {
+  try {
+    const res = await FilterService.getCenterWilayah(pro,kab);
+
+    dispatch({
+      type: FETCH_CENTER_WILAYAH,
+      payload: res.data.data.features[0].geometry.coordinates,
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
 export const fetchAutoWilayah = (id) => async (dispatch) => {
   try {
     const res = await FilterService.getAutoWilayah(id);

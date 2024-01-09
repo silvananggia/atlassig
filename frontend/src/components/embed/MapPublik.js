@@ -45,6 +45,7 @@ import {
   fetchAutoWilayah,
   fetchJenisFKRTL,
   fetchJenisFKTP,
+  fetchCenterWilayah,
 } from "../../actions/filterActions";
 import { setLoading } from "../../actions/loadingActions";
 import GeoJSON from "ol/format/GeoJSON";
@@ -79,8 +80,10 @@ const MapComponent = ({ faskes }) => {
   const [userLocation, setUserLocation] = useState([0, 0]);
   const [markerPosition, setMarkerPosition] = useState([0, 0]);
   const [centerMap, setCenterMap] = useState([
-    13124075.715923082, -277949.29803053016,
+    13124075.715923082, -277949.29803053016
   ]);
+  const [zoomLevel, setZoomLevel] = useState(5);
+
   const [selectedBasemap, setSelectedBasemap] = useState("map-switch-default");
   const [userMarkerFeature, setUserMarkerFeature] = useState(null);
   const [latitude, setLatitude] = useState(-2.5489);
@@ -125,7 +128,6 @@ const MapComponent = ({ faskes }) => {
   const [selectedProvId, setSelectedProvId] = useState("nan");
   //endinput
 
-  const zoomLevel = 10;
   const listKelasRS = ["A", "B", "C", "D"];
   const listCanggih = [
     { name: "Cathlab", value: "Cathlab" },
@@ -163,6 +165,7 @@ const MapComponent = ({ faskes }) => {
   const listWilayah = useSelector((state) => state.mapfilter.wilayahlist);
   const listFilterFKTP = useSelector((state) => state.mapfktp.fktpdatalist);
   const listFilterFKRTL = useSelector((state) => state.mapfkrtl.fkrtldatalist);
+  const centerWilayah = useSelector((state) => state.mapfilter.coordinate);
   const isLoading = useSelector((state) => state.loading.isLoading);
 
   useEffect(() => {}, [isLoading]);
@@ -187,6 +190,13 @@ const MapComponent = ({ faskes }) => {
       }
     }
   }, [markerListFKRTL, markerListFKTP]);
+
+  useEffect(() => {
+    if (centerWilayah) {
+      setCenterMap(centerWilayah);
+      setZoomLevel(9);
+    }
+  }, [centerWilayah]); 
 
   useEffect(() => {
     if (jenisFKRTL) {
@@ -237,8 +247,8 @@ const MapComponent = ({ faskes }) => {
     if (centerMap && map) {
       map.getView().animate({
         center: centerMap,
-        duration: 1000,
-        zoom: 9,
+        duration: 500,
+        zoom: zoomLevel,
       });
     }
   }, [centerMap, map]);
@@ -265,7 +275,6 @@ const MapComponent = ({ faskes }) => {
   };
 
   const handleResetFilter = () => {
-    console.log(selectedWilayah);
 
     if (faskes === "fkrtl") {
       dispatch(fetchMarkersFKRTL(latitude, longitude));
@@ -302,6 +311,8 @@ const MapComponent = ({ faskes }) => {
       .getArray()
       .find((layer) => layer.get("title") === "PotentialLayer");
     overlayLayer.setOpacity(1);
+    setCenterMap([ 13124075.715923082, -277949.29803053016]);
+    setZoomLevel(5);
   };
   const closeDetailBox = () => {
     setShowDetailBox(false);
@@ -320,9 +331,10 @@ const MapComponent = ({ faskes }) => {
 
       map.getView().animate({
         center: centerMap,
-        duratin: 1000, // Animation duration in milliseconds
-        zoom: 5,
+        duration: 1000, // Animation duration in milliseconds
+        zoom: zoomLevel,
       });
+
     }
   };
 
@@ -1179,6 +1191,9 @@ const MapComponent = ({ faskes }) => {
       const sanitizedInputRmin = inputrmin ?? "null";
       const sanitizedInputRmax = inputrmax ?? "null";
 
+      dispatch(fetchCenterWilayah( sanitizedSelectedProvId,
+        sanitizedSelectedKabId))
+
       if (faskes === "fkrtl") {
         dispatch(
           fetchFilterFKRTLList(
@@ -1275,6 +1290,12 @@ const MapComponent = ({ faskes }) => {
 
         removeFKTPPointMarkerLayers();
       }
+
+
+
+       
+      
+
       closeDetailBox();
       toggleSidebar(true);
       setIsFiltered(true);
@@ -1302,7 +1323,7 @@ const MapComponent = ({ faskes }) => {
   };
 
   const getLayerLeftPosition = () => {
-    return showSidebar ? "420px" : "20px"; // Adjust this value based on your layout
+    return showSidebar ? "370px" : "20px"; // Adjust this value based on your layout
   };
   return (
     <Box className="contentRoot">

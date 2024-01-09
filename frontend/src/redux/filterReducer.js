@@ -4,6 +4,7 @@ import {
   FETCH_BBOX_CABANG,
   FETCH_CENTER_KEDEPUTIAN,
   FETCH_BBOX_KEDEPUTIAN,
+  FETCH_CENTER_WILAYAH,
   FETCH_AUTO_WILAYAH,
   FETCH_JENIS_FKRTL,
   FETCH_JENIS_FKTP,
@@ -68,6 +69,13 @@ function fktpReducer(state = initialState, action) {
         errmessage: "",
         dataobj: payload,
       };
+      case FETCH_CENTER_WILAYAH:
+        return {
+          ...state,
+          loading: false,
+          errmessage: "",
+          coordinate: payload,
+        };
     case FETCH_AUTO_WILAYAH:
       return {
         ...state,

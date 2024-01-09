@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { connect, useDispatch, useSelector } from "react-redux";
 import "ol/ol.css";
 import "ol-ext/dist/ol-ext.css";
-import './dashboard.scss'
+import "./dashboard.scss";
 import Crop from "ol-ext/filter/Crop";
 import Mask from "ol-ext/filter/Mask";
 import { Map, View } from "ol";
@@ -30,6 +30,9 @@ import Button from "@mui/material/Button";
 import MyLocationOutlinedIcon from "@mui/icons-material/MyLocationOutlined";
 import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import AddLocationAltOutlinedIcon from "@mui/icons-material/AddLocationAltOutlined";
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
 import {
   fetchFKTPCabang,
   fetchFKTPDetail,
@@ -53,6 +56,7 @@ import {
   fetchAutoWilayahDeputi,
   fetchCabang,
   fetchCabangDeputi,
+  fetchCenterWilayah,
 } from "../../actions/filterActions";
 import { setLoading } from "../../actions/loadingActions";
 import GeoJSON from "ol/format/GeoJSON";
@@ -60,7 +64,7 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import Divider from "@mui/material/Divider";
 import ListItemText from "@mui/material/ListItemText";
-
+import Swal from "sweetalert2";
 import {
   TextField,
   Autocomplete,
@@ -92,6 +96,7 @@ const MapComponent = ({ faskes }) => {
   const [centerMap, setCenterMap] = useState([
     13124075.715923082, -277949.29803053016,
   ]);
+  const [zoomLevel, setZoomLevel] = useState(5);
   const [selectedBasemap, setSelectedBasemap] = useState("map-switch-default");
   const [userMarkerFeature, setUserMarkerFeature] = useState(null);
   const [latitude, setLatitude] = useState(-2.5489);
@@ -108,7 +113,7 @@ const MapComponent = ({ faskes }) => {
   const [showSidebarData, setShowSidebarData] = useState(false);
   const [selectedWilayah, setselectedWilayah] = useState();
   const [selectedCabang, setselectedCabang] = useState();
-
+  const [showKoordinat, setShowKoordinat] = useState(false);
   //input
   const [inputNama, setInputNama] = useState(null);
   const [inputAlamat, setInputAlamat] = useState(null);
@@ -136,7 +141,7 @@ const MapComponent = ({ faskes }) => {
   const [selectedProvId, setSelectedProvId] = useState(null);
   //endinput
 
-  const zoomLevel = 6;
+
   const listKedeputian = [
     "01",
     "02",
@@ -160,6 +165,16 @@ const MapComponent = ({ faskes }) => {
   ];
 
   const listRasio = ["< 5000", ">= 5000"];
+  const [lat, setLat] = useState("");
+  const [long, setLong] = useState("");
+
+  const handleLatitudeChange = (event) => {
+    setLat(event.target.value);
+  };
+
+  const handleLongitudeChange = (event) => {
+    setLong(event.target.value);
+  };
 
   const potentialLayerUrl =
     faskes === "fktp"
@@ -193,6 +208,14 @@ const MapComponent = ({ faskes }) => {
   const listFilterFKRTL = useSelector((state) => state.mapfkrtl.fkrtldatalist);
   const isLoading = useSelector((state) => state.loading.isLoading);
   const kodeDeputi = useSelector((state) => state.mapfilter.kodedep);
+  const centerWilayah = useSelector((state) => state.mapfilter.coordinate);
+
+  useEffect(() => {
+    if (centerWilayah) {
+      setCenterMap(centerWilayah);
+      setZoomLevel(9);
+    }
+  }, [centerWilayah]); 
 
   useEffect(() => {
     if (kodeDeputi) {
@@ -317,8 +340,8 @@ const MapComponent = ({ faskes }) => {
     if (centerMap && map) {
       map.getView().animate({
         center: centerMap,
-        duration: 1000,
-        zoom: 6,
+        duration: 500,
+        zoom: zoomLevel,
       });
     }
   }, [centerMap, map]);
@@ -333,6 +356,10 @@ const MapComponent = ({ faskes }) => {
 
   const handleLayerSelectClick2 = () => {
     setShowFloatingButton2((prevState) => !prevState);
+  };
+
+  const handleKoordinatClick = () => {
+    setShowKoordinat((prevState) => !prevState);
   };
 
   const handleLegendClick = () => {
@@ -378,10 +405,12 @@ const MapComponent = ({ faskes }) => {
     setIsFKTPAll(false);
 
     const overlayLayer = map
-    .getLayers()
-    .getArray()
-    .find((layer) => layer.get("title") === "PotentialLayer");
-  overlayLayer.setOpacity(1);
+      .getLayers()
+      .getArray()
+      .find((layer) => layer.get("title") === "PotentialLayer");
+    overlayLayer.setOpacity(1);
+    setCenterMap([ 13124075.715923082, -277949.29803053016]);
+    setZoomLevel(5);
   };
   const closeDetailBox = () => {
     setShowDetailBox(false);
@@ -933,7 +962,7 @@ const MapComponent = ({ faskes }) => {
         map.getView().animate({
           center: coordinates,
           duration: 1000, // Animation duration in milliseconds
-          zoom: zoomLevel,
+          zoom: 12,
         });
 
         userMarkerFeature.getGeometry().setCoordinates(coordinates);
@@ -958,7 +987,7 @@ const MapComponent = ({ faskes }) => {
         map.getView().animate({
           center: coordinates,
           duration: 1000, // Animation duration in milliseconds
-          zoom: zoomLevel,
+          zoom: 12,
         });
 
         userMarkerFeature.getGeometry().setCoordinates(coordinates);
@@ -994,50 +1023,50 @@ const MapComponent = ({ faskes }) => {
     setShowDetailBox(true);
     const coordinates = fromLonLat([lon, lat]);
     if (map && map.getLayers()) {
-    // Check if the marker layer already exists
-    let markerLayer = map
-      .getLayers()
-      .getArray()
-      .find((layer) => layer.get("title") === "Marker");
+      // Check if the marker layer already exists
+      let markerLayer = map
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Marker");
 
-    // If the marker layer doesn't exist, create a new one
-    if (!markerLayer) {
-      const markerSource = new VectorSource();
-      markerLayer = new VectorLayer({
-        source: markerSource,
-        zIndex: 4,
-        title: "Marker",
+      // If the marker layer doesn't exist, create a new one
+      if (!markerLayer) {
+        const markerSource = new VectorSource();
+        markerLayer = new VectorLayer({
+          source: markerSource,
+          zIndex: 4,
+          title: "Marker",
+        });
+        map.addLayer(markerLayer);
+      }
+
+      // Clear existing features from the marker layer
+      markerLayer.getSource().clear();
+
+      // Add a new marker with updated coordinates and specified icon
+      const markerFeature = new Feature({
+        geometry: new Point(coordinates),
       });
-      map.addLayer(markerLayer);
+      const markerStyle = new Style({
+        image: new Icon({
+          anchor: [0.5, 1],
+          src: iconSrc,
+          scale: 0.8,
+          zIndex: 10000,
+        }),
+      });
+
+      markerFeature.setStyle(markerStyle);
+      markerLayer.getSource().addFeature(markerFeature);
+      markerLayer.setZIndex(100000);
+
+      // Animate the map to the new coordinates
+      map.getView().animate({
+        center: coordinates,
+        duration: 500, // Animation duration in milliseconds
+        zoom: 15,
+      });
     }
-
-    // Clear existing features from the marker layer
-    markerLayer.getSource().clear();
-
-    // Add a new marker with updated coordinates and specified icon
-    const markerFeature = new Feature({
-      geometry: new Point(coordinates),
-    });
-    const markerStyle = new Style({
-      image: new Icon({
-        anchor: [0.5, 1],
-        src: iconSrc,
-        scale: 0.8,
-        zIndex: 10000,
-      }),
-    });
-
-    markerFeature.setStyle(markerStyle);
-    markerLayer.getSource().addFeature(markerFeature);
-    markerLayer.setZIndex(100000);
-
-    // Animate the map to the new coordinates
-    map.getView().animate({
-      center: coordinates,
-      duration: 500, // Animation duration in milliseconds
-      zoom: 15,
-    });
-  }
   };
 
   const handleCheckAllChange = () => {
@@ -1231,6 +1260,10 @@ const MapComponent = ({ faskes }) => {
     const sanitizedInputRmin = inputrmin ?? "null";
     const sanitizedInputRmax = inputrmax ?? "null";
 
+    dispatch(fetchCenterWilayah( sanitizedSelectedProvId,
+      sanitizedSelectedKabId))
+
+
     if (faskes === "fkrtl") {
       dispatch(
         fetchFilterFKRTLList(
@@ -1316,6 +1349,101 @@ const MapComponent = ({ faskes }) => {
     const sanitizedInputAlamat = "null";
   };
 
+  const isValidLatitude = (latitude) => {
+    const lat = parseFloat(latitude);
+    return !isNaN(lat) && lat >= -90 && lat <= 90;
+  };
+  
+  const isValidLongitude = (longitude) => {
+    const lon = parseFloat(longitude);
+    return !isNaN(lon) && lon >= -180 && lon <= 180;
+  };
+  
+  const isValidCoordinate = (latitude, longitude) => {
+    return isValidLatitude(latitude) && isValidLongitude(longitude);
+  };
+  
+  const handleSubmitKoordinat = () => {
+    if (isValidCoordinate(lat, long)) {
+      removePointMarkerLayers();
+      PointMarker();
+    } else {
+      Swal.fire({
+        confirmButtonColor: "#274C8B",
+        confirmButtonText: "OKE",
+        text: "Mohon isi koordinat yang valid terlebih dahulu (Latitude: -90 to 90, Longitude: -180 to 180)",
+        icon: "error",
+      });
+    }
+  };
+
+  const PointMarker = () => {
+    if (map) {
+      const overlayGroup = map
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Overlay");
+
+      const markerLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Marker");
+
+      const vectorSource = new VectorSource();
+      const newMarkerLayer = new VectorLayer({
+        source: vectorSource,
+        title: "Marker",
+      });
+
+      // Create a marker feature
+      const markerFeature = new Feature({
+        geometry: new Point(fromLonLat([long, lat])),
+      });
+
+      // Style for the marker
+      const markerStyle = new Style({
+        image: new Icon({
+          anchor: [0.5, 1],
+          src: "../images/p0.png",
+        //  scale: 0.5,
+          zIndex: 1000,
+        }),
+      });
+
+      markerFeature.setStyle(markerStyle);
+
+      vectorSource.addFeatures([markerFeature]);
+
+      overlayGroup.getLayers().push(newMarkerLayer);
+      newMarkerLayer.setZIndex(1000);
+    }
+  };
+
+  const removePointMarkerLayers = () => {
+    if (map) {
+      const overlayGroup = map
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Overlay");
+
+      const markerLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Marker");
+
+      // Remove the potential layers from the overlay group if they exist
+      if (markerLayer) {
+        overlayGroup.getLayers().remove(markerLayer);
+      }
+    }
+  };
+
+const handleResetKordinat = ()=>{
+  handleKoordinatClick();
+  removePointMarkerLayers();
+  setLat("");
+  setLong("");
+};
   const getLayerLeftPosition = () => {
     return showSidebar ? "380px" : "20px"; // Adjust this value based on your layout
   };
@@ -1970,7 +2098,7 @@ const MapComponent = ({ faskes }) => {
           closeDetailBox={closeDetailBox}
         />
       )}
-       {isFKRTLAll ? (
+      {isFKRTLAll ? (
         <>
           <div
             className="info-dashboard"
@@ -1999,6 +2127,61 @@ const MapComponent = ({ faskes }) => {
           </div>
         </>
       ) : null}
+
+      <Tooltip title="Titik Koordinat" placement="right">
+        <div
+          className="koordinat-button"
+          onClick={handleKoordinatClick}
+          style={{ left: getLayerLeftPosition() }}
+        >
+          <AddLocationAltOutlinedIcon fontSize="medium" />
+        </div>
+      </Tooltip>
+
+      {showKoordinat && (
+        <div className="box-koordinat" >
+          <TextField
+            label="Latitude"
+            variant="outlined"
+            value={lat}
+            onChange={handleLatitudeChange}
+            fullWidth
+            margin="normal"
+            size="small"
+            style={{ fontSize: "10px" }}
+            required
+          />
+          <TextField
+            label="Longitude"
+            variant="outlined"
+            value={long}
+            onChange={handleLongitudeChange}
+            fullWidth
+            margin="normal"
+            size="small"
+            style={{ fontSize: "10px" }}
+            required
+          />
+          <Button
+            variant="contained"
+            fullWidth
+            size="medium"
+            onClick={() => {
+              handleSubmitKoordinat(); // Call the submission function
+            }}
+          >
+            Terapkan
+          </Button>
+          <IconButton
+        size="small"
+        onClick={() => {
+        handleResetKordinat();
+        }}
+      >
+        <CloseIcon /> {/* Add the CloseIcon component or use another icon */}
+      </IconButton>
+        </div>
+      )}
 
       {isFKTPAll ? (
         <>

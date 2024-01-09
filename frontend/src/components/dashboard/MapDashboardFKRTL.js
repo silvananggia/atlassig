@@ -31,6 +31,10 @@ import Button from "@mui/material/Button";
 import MyLocationOutlinedIcon from "@mui/icons-material/MyLocationOutlined";
 import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import AddLocationAltOutlinedIcon from "@mui/icons-material/AddLocationAltOutlined";
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import Swal from "sweetalert2";
 import {
   fetchFKTPCabang,
   fetchFKTPDetail,
@@ -54,6 +58,7 @@ import {
   fetchAutoWilayahDeputi,
   fetchCabang,
   fetchCabangDeputi,
+  fetchCenterWilayah,
 } from "../../actions/filterActions";
 import { setLoading } from "../../actions/loadingActions";
 import GeoJSON from "ol/format/GeoJSON";
@@ -62,6 +67,7 @@ import ListItem from "@mui/material/ListItem";
 import Divider from "@mui/material/Divider";
 import ListItemText from "@mui/material/ListItemText";
 import Tooltip from "@mui/material/Tooltip";
+
 import {
   TextField,
   Autocomplete,
@@ -75,7 +81,6 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
-
 import CardFaskes from "../embed/CardFaskes";
 const MapComponent = () => {
   const dispatch = useDispatch();
@@ -93,6 +98,7 @@ const MapComponent = () => {
   const [centerMap, setCenterMap] = useState([
     13124075.715923082, -277949.29803053016,
   ]);
+  const [zoomLevel, setZoomLevel] = useState(5);
   const [selectedBasemap, setSelectedBasemap] = useState("map-switch-default");
   const [userMarkerFeature, setUserMarkerFeature] = useState(null);
   const [latitude, setLatitude] = useState(-2.5489);
@@ -137,7 +143,7 @@ const MapComponent = () => {
   const [selectedProvId, setSelectedProvId] = useState(null);
   //endinput
 
-  const zoomLevel = 6;
+
   const listKedeputian = [
     "01",
     "02",
@@ -161,7 +167,20 @@ const MapComponent = () => {
   ];
 
   const listRasio = ["< 5000", ">= 5000"];
+  const [showKoordinat, setShowKoordinat] = useState(false);
+  const [lat, setLat] = useState("");
+  const [long, setLong] = useState("");
 
+  const handleLatitudeChange = (event) => {
+    setLat(event.target.value);
+  };
+
+  const handleLongitudeChange = (event) => {
+    setLong(event.target.value);
+  };
+  const handleKoordinatClick = () => {
+    setShowKoordinat((prevState) => !prevState);
+  };
   const potentialLayerUrl =
     faskes === "fktp"
       ? "../tiles/fktp_tile/latest/{z}/{x}/{-y}.png"
@@ -194,6 +213,14 @@ const MapComponent = () => {
   const listFilterFKRTL = useSelector((state) => state.mapfkrtl.fkrtldatalist);
   const isLoading = useSelector((state) => state.loading.isLoading);
   const kodeDeputi = useSelector((state) => state.mapfilter.kodedep);
+  const centerWilayah = useSelector((state) => state.mapfilter.coordinate);
+
+  useEffect(() => {
+    if (centerWilayah) {
+      setCenterMap(centerWilayah);
+      setZoomLevel(9);
+    }
+  }, [centerWilayah]); 
 
   useEffect(() => {
     if (kodeDeputi) {
@@ -318,8 +345,8 @@ const MapComponent = () => {
     if (centerMap && map) {
       map.getView().animate({
         center: centerMap,
-        duration: 1000,
-        zoom: 6,
+        duration: 500,
+        zoom: zoomLevel,
       });
     }
   }, [centerMap, map]);
@@ -383,6 +410,8 @@ const MapComponent = () => {
     .getArray()
     .find((layer) => layer.get("title") === "PotentialLayer");
   overlayLayer.setOpacity(1);
+  setCenterMap([ 13124075.715923082, -277949.29803053016]);
+  setZoomLevel(5);
   };
   const closeDetailBox = () => {
     setShowDetailBox(false);
@@ -1231,6 +1260,10 @@ const MapComponent = () => {
     const sanitizedInputRmin = inputrmin ?? "null";
     const sanitizedInputRmax = inputrmax ?? "null";
 
+    dispatch(fetchCenterWilayah( sanitizedSelectedProvId,
+      sanitizedSelectedKabId))
+
+
     if (faskes === "fkrtl") {
       dispatch(
         fetchFilterFKRTLList(
@@ -1315,6 +1348,103 @@ const MapComponent = () => {
     const sanitizedInputNama = "null";
     const sanitizedInputAlamat = "null";
   };
+
+
+  const isValidLatitude = (latitude) => {
+    const lat = parseFloat(latitude);
+    return !isNaN(lat) && lat >= -90 && lat <= 90;
+  };
+  
+  const isValidLongitude = (longitude) => {
+    const lon = parseFloat(longitude);
+    return !isNaN(lon) && lon >= -180 && lon <= 180;
+  };
+  
+  const isValidCoordinate = (latitude, longitude) => {
+    return isValidLatitude(latitude) && isValidLongitude(longitude);
+  };
+  
+  const handleSubmitKoordinat = () => {
+    if (isValidCoordinate(lat, long)) {
+      removePointMarkerLayers();
+      PointMarker();
+    } else {
+      Swal.fire({
+        confirmButtonColor: "#274C8B",
+        confirmButtonText: "OKE",
+        text: "Mohon isi koordinat yang valid terlebih dahulu (Latitude: -90 to 90, Longitude: -180 to 180)",
+        icon: "error",
+      });
+    }
+  };
+
+  const PointMarker = () => {
+    if (map) {
+      const overlayGroup = map
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Overlay");
+
+      const markerLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Marker");
+
+      const vectorSource = new VectorSource();
+      const newMarkerLayer = new VectorLayer({
+        source: vectorSource,
+        title: "Marker",
+      });
+
+      // Create a marker feature
+      const markerFeature = new Feature({
+        geometry: new Point(fromLonLat([long, lat])),
+      });
+
+      // Style for the marker
+      const markerStyle = new Style({
+        image: new Icon({
+          anchor: [0.5, 1],
+          src: "../images/p0.png",
+        //  scale: 0.5,
+          zIndex: 1000,
+        }),
+      });
+
+      markerFeature.setStyle(markerStyle);
+
+      vectorSource.addFeatures([markerFeature]);
+
+      overlayGroup.getLayers().push(newMarkerLayer);
+      newMarkerLayer.setZIndex(1000);
+    }
+  };
+
+  const removePointMarkerLayers = () => {
+    if (map) {
+      const overlayGroup = map
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Overlay");
+
+      const markerLayer = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Marker");
+
+      // Remove the potential layers from the overlay group if they exist
+      if (markerLayer) {
+        overlayGroup.getLayers().remove(markerLayer);
+      }
+    }
+  };
+
+const handleResetKordinat = ()=>{
+  handleKoordinatClick();
+  removePointMarkerLayers();
+  setLat("");
+  setLong("");
+};
 
   const getLayerLeftPosition = () => {
     return showSidebar ? "380px" : "20px"; // Adjust this value based on your layout
@@ -1998,7 +2128,60 @@ const MapComponent = () => {
           </div>
         </>
       ) : null}
+ <Tooltip title="Titik Koordinat" placement="right">
+        <div
+          className="koordinat-button"
+          onClick={handleKoordinatClick}
+          style={{ left: getLayerLeftPosition() }}
+        >
+          <AddLocationAltOutlinedIcon fontSize="medium" />
+        </div>
+      </Tooltip>
 
+      {showKoordinat && (
+        <div className="box-koordinat" >
+          <TextField
+            label="Latitude"
+            variant="outlined"
+            value={lat}
+            onChange={handleLatitudeChange}
+            fullWidth
+            margin="normal"
+            size="small"
+            style={{ fontSize: "10px" }}
+            required
+          />
+          <TextField
+            label="Longitude"
+            variant="outlined"
+            value={long}
+            onChange={handleLongitudeChange}
+            fullWidth
+            margin="normal"
+            size="small"
+            style={{ fontSize: "10px" }}
+            required
+          />
+          <Button
+            variant="contained"
+            fullWidth
+            size="medium"
+            onClick={() => {
+              handleSubmitKoordinat(); // Call the submission function
+            }}
+          >
+            Terapkan
+          </Button>
+          <IconButton
+        size="small"
+        onClick={() => {
+        handleResetKordinat();
+        }}
+      >
+        <CloseIcon /> {/* Add the CloseIcon component or use another icon */}
+      </IconButton>
+        </div>
+      )}
       {isFKTPAll ? (
         <>
           <div
