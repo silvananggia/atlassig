@@ -29,8 +29,8 @@ router.get('/filter-fktp/:pro/:kab/:kec/:kdkc/:kddep/:rmax/:rmin/:jenis/:nmppk/:
 router.get('/filter-fkrtl/:pro/:kab/:kec/:kdkc/:kddep/:krs/:canggih/:jenis/:nmppk/:alamatppk', filterController.filterTitikFKRTL);
  
 
-router.get('/filter-fktp-list/:pro/:kab/:kec/:kdkc/:kddep/:rmax/:rmin/:jenis/:nmppk/:alamatppk', filterController.filterFKTP);
-router.get('/filter-fkrtl-list/:pro/:kab/:kec/:kdkc/:kddep/:krs/:canggih/:jenis/:nmppk/:alamatppk', filterController.filterFKRTL);
+router.get('/filter-fktp-list/:pro/:kab/:kec/:kdkc/:kddep/:rmax/:rmin/:jenis/:nmppk/:alamatppk/:page', filterController.filterFKTP);
+router.get('/filter-fkrtl-list/:pro/:kab/:kec/:kdkc/:kddep/:krs/:canggih/:jenis/:nmppk/:alamatppk/:page', filterController.filterFKRTL);
 
 //countJenisFKRTL
 router.get('/count-jenis-fkrtl/:pro/:kab/:kec/:kdkc/:kddep', filterController.countJenisFKRTL);

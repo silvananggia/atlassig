@@ -1,5 +1,6 @@
 // mapActions.js
 import {
+  FETCH_FKTP_REQUEST,
   FETCH_MARKER_FKTP,
   FETCH_FKTP_CABANG,
   FETCH_FKTP_KEDEPUTIAN,
@@ -11,7 +12,8 @@ import {
   FETCH_FILTER_FKTP,
   FETCH_FILTER_FKTP_LIST_PUBLIK,
   FETCH_FILTER_FKTP_PUBLIK,
-SHOW_LOADING
+  SHOW_LOADING,
+  CLEAR_DATA_FKTP
 } from "./types";
 
 import FKTPService from "../services/fktpService";
@@ -136,33 +138,25 @@ export const fetchFKTPDetail = (id) => async (dispatch) => {
 
 
 
-export const fetchFilterFKTPList= (pro,kab,kec,kdkc,kddep,krs,canggih,jenis,nmppk,alamatppk) => async (dispatch) => {
+export const fetchFilterFKTPList= (pro,kab,kec,kdkc,kddep,krs,canggih,jenis,nmppk,alamatppk,page) => async (dispatch) => {
+  dispatch({
+    type: FETCH_FKTP_REQUEST,
+    payload: true,
+  });
+
   try {
-    dispatch({
-      type: SHOW_LOADING,
-      payload: true,
-    });
-
-
-    const res = await FKTPService.getFilterFKTPlist(pro,kab,kec,kdkc,kddep,krs,canggih,jenis,nmppk,alamatppk);
+    const res = await FKTPService.getFilterFKTPlist(pro,kab,kec,kdkc,kddep,krs,canggih,jenis,nmppk,alamatppk,page);
 
     dispatch({
       type: FETCH_FILTER_FKTP_LIST,
-      payload: res.data.data,
+      payload: {
+        data: res.data.data,
+        metadata: res.data.metadata,
+      },
     });
-    dispatch({
-      type: SHOW_LOADING,
-      payload: false,
-    });
-
   } catch (err) {
     console.error(err);
 
-
-    dispatch({
-      type: SHOW_LOADING,
-      payload: false,
-    });
   }
   
 };
@@ -194,8 +188,6 @@ export const fetchFilterFKTP= (pro,kab,kec,kdkc,kddep,krs,canggih,jenis,nmppk,al
     });
   }
 };
-
-
 
 export const fetchFilterFKTPListPublik= (pro,kab,kec) => async (dispatch) => {
   try {
@@ -311,3 +303,6 @@ export const fetchCountFKTP=(pro,kab,kec,kdkc,kddep) => async (dispatch) => {
   }
 };
 
+export const clearDataFKTP = () => ({
+  type: CLEAR_DATA_FKTP,
+});

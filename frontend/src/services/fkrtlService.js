@@ -25,8 +25,8 @@ const getFilterFKRTL = (pro,kab,kec,kdkc,kddep,krs,canggih,jenis,nmppk,alamatppk
   return axios.get(`/filter-fkrtl/${pro}/${kab}/${kec}/${kdkc}/${kddep}/${krs}/${canggih}/${jenis}/${nmppk}/${alamatppk}`, { headers: authHeader() });
 };
 
-  const getFilterFKRTLlist = (pro,kab,kec,kdkc,kddep,krs,canggih,jenis,nmppk,alamatppk) => {
-    return axios.get(`/filter-fkrtl-list/${pro}/${kab}/${kec}/${kdkc}/${kddep}/${krs}/${canggih}/${jenis}/${nmppk}/${alamatppk}`, { headers: authHeader() });
+  const getFilterFKRTLlist = (pro,kab,kec,kdkc,kddep,krs,canggih,jenis,nmppk,alamatppk,page) => {
+    return axios.get(`/filter-fkrtl-list/${pro}/${kab}/${kec}/${kdkc}/${kddep}/${krs}/${canggih}/${jenis}/${nmppk}/${alamatppk}/${page}`, { headers: authHeader() });
   };
 
   const getFilterFKRTLPublik = (pro,kab,kec) => {

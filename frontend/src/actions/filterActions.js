@@ -13,7 +13,7 @@ import {
   FETCH_WILAYAH_CABANG,
   FETCH_KODE_DEPUTI,
   FETCH_CABANG_DEPUTI,
- 
+  SHOW_LOADING,
 } from "./types";
 
 import FilterService from "../services/filterService";
@@ -46,14 +46,26 @@ export const fetchBBOXCabang = (id) => async (dispatch) => {
 
 export const fetchCenterKedeputian = (id) => async (dispatch) => {
   try {
+    dispatch({
+      type: SHOW_LOADING,
+      payload: true,
+    });
     const res = await FilterService.getCenterKedeputian(id);
 
     dispatch({
       type: FETCH_CENTER_KEDEPUTIAN,
       payload: res.data.data.features[0].geometry.coordinates,
     });
+    dispatch({
+      type: SHOW_LOADING,
+      payload: false,
+    });
   } catch (err) {
     console.error(err);
+    dispatch({
+      type: SHOW_LOADING,
+      payload: false,
+    });
   }
 };
 

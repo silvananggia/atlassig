@@ -9,6 +9,8 @@ import {
   FETCH_FILTER_FKRTL,
   FETCH_FILTER_FKRTL_PUBLIK,
   FETCH_FILTER_FKRTL_LIST_PUBLIK,
+  FETCH_FKTP_REQUEST,
+  CLEAR_DATA_FKRTL,
 } from "../actions/types";
 
 const initialState = {
@@ -18,7 +20,9 @@ const initialState = {
   datalistfkrtl: [],
   totalfkrtl:{},
   fkrtlobj: {},
+  metadata:{},
   errmessage: "",
+  page: 1,
 };
 
 function fkrtlReducer(state = initialState, action) {
@@ -75,7 +79,9 @@ function fkrtlReducer(state = initialState, action) {
         ...state,
         loading: false,
         errmessage: "",
-        fkrtldatalist: payload,
+        fkrtldatalist: [...state.fkrtldatalist, ...payload.data],
+        page: state.page + 1,
+        metadata: payload.metadata,
       };
     case FETCH_FILTER_FKRTL_PUBLIK:
       return {
@@ -91,6 +97,10 @@ function fkrtlReducer(state = initialState, action) {
         errmessage: "",
         fkrtldatalist: payload,
       };
+      case CLEAR_DATA_FKRTL:
+        return {
+          ...initialState,
+        };
     default:
       return state;
   }

@@ -1119,37 +1119,73 @@ exports.filterFKTP = async (req, res) => {
     const userData = await hgetallAsync(`token:${token}`);
 
     if (userData) {
-      const result = await db.query(
-        `
-      SELECT fktp.fktpid AS id, ST_X(ST_SetSRID(fktp.coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(fktp.coordinat, 4326)) AS lat, faskes1id AS faskesid, kwppk, kcppk, alamatppk, nmppk, jenisfaskes
-			FROM fktp
-			INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fktp.wlid
-			INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
-			INNER JOIN kabupaten ON wilayahadmindesa.kab_id=kabupaten.kbid
-			INNER JOIN provinsi ON wilayahadmindesa.prov_id=provinsi.prid
-            INNER JOIN cabang ON cabang.kodecab=kabupaten.kodekc
-			WHERE fktp.status='aktif' 
-      AND ($1::character IS NULL OR LOWER(fktp.nmppk) LIKE LOWER('%' || $1 || '%'))
-      AND ($2::character IS NULL OR LOWER(fktp.alamatppk) LIKE LOWER('%' || $2 || '%'))     
-			AND ($3::integer IS NULL OR provinsi.prid=$3)
-			AND ($4::integer IS NULL OR kabupaten.kbid=$4)
-			AND ($5::integer IS NULL OR kecamatan.kcid=$5)
-      AND ($6::character IS NULL OR cabang.kodecab=$6)
-			AND ($7::character IS NULL OR cabang.kodedep=$7)
-      AND COALESCE(fktp.npeserta/NULLIF(fktp.ndokter,0),0) <$8
-      AND COALESCE(fktp.npeserta/NULLIF(fktp.ndokter,0),0)>=$9
-      AND ($10::character IS NULL OR 
-        TRIM(LOWER(fktp.jenisfaskes)) IN (SELECT * FROM unnest(string_to_array(lower($10), ',')))
-           )
-                    
-              
-        `,
-        [nmppk, alamatppk, pro, kab, kec, kdkc, kddep, rmax, rmin, jenis]
-      );
+      const page = parseInt(req.params.page) || 1;
+      const pageSize = 20;
+      const offset = (page - 1) * pageSize;
+
+      const countQuery = `
+        SELECT COUNT(*) AS total FROM fktp
+        INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fktp.wlid
+        INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
+        INNER JOIN kabupaten ON wilayahadmindesa.kab_id=kabupaten.kbid
+        INNER JOIN provinsi ON wilayahadmindesa.prov_id=provinsi.prid
+        INNER JOIN cabang ON cabang.kodecab=kabupaten.kodekc
+        WHERE fktp.status='aktif' 
+          AND ($1::character IS NULL OR LOWER(fktp.nmppk) LIKE LOWER('%' || $1 || '%'))
+          AND ($2::character IS NULL OR LOWER(fktp.alamatppk) LIKE LOWER('%' || $2 || '%'))     
+          AND ($3::integer IS NULL OR provinsi.prid=$3)
+          AND ($4::integer IS NULL OR kabupaten.kbid=$4)
+          AND ($5::integer IS NULL OR kecamatan.kcid=$5)
+          AND ($6::character IS NULL OR cabang.kodecab=$6)
+          AND ($7::character IS NULL OR cabang.kodedep=$7)
+          AND COALESCE(fktp.npeserta/NULLIF(fktp.ndokter,0),0) <$8
+          AND COALESCE(fktp.npeserta/NULLIF(fktp.ndokter,0),0)>=$9
+          AND ($10::character IS NULL OR 
+            TRIM(LOWER(fktp.jenisfaskes)) IN (SELECT * FROM unnest(string_to_array(lower($10), ',')))
+          )`;
+
+      const countResult = await db.query(countQuery, [nmppk, alamatppk, pro, kab, kec, kdkc, kddep, rmax, rmin, jenis]);
+
+      const totalData = parseInt(countResult.rows[0].total);
+      const totalPages = Math.ceil(totalData / pageSize);
+
+      const resultQuery = `
+        SELECT fktp.fktpid AS id, ST_X(ST_SetSRID(fktp.coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(fktp.coordinat, 4326)) AS lat, faskes1id AS faskesid, kwppk, kcppk, alamatppk, nmppk, jenisfaskes
+        FROM fktp
+        INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fktp.wlid
+        INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
+        INNER JOIN kabupaten ON wilayahadmindesa.kab_id=kabupaten.kbid
+        INNER JOIN provinsi ON wilayahadmindesa.prov_id=provinsi.prid
+        INNER JOIN cabang ON cabang.kodecab=kabupaten.kodekc
+        WHERE fktp.status='aktif' 
+          AND ($1::character IS NULL OR LOWER(fktp.nmppk) LIKE LOWER('%' || $1 || '%'))
+          AND ($2::character IS NULL OR LOWER(fktp.alamatppk) LIKE LOWER('%' || $2 || '%'))     
+          AND ($3::integer IS NULL OR provinsi.prid=$3)
+          AND ($4::integer IS NULL OR kabupaten.kbid=$4)
+          AND ($5::integer IS NULL OR kecamatan.kcid=$5)
+          AND ($6::character IS NULL OR cabang.kodecab=$6)
+          AND ($7::character IS NULL OR cabang.kodedep=$7)
+          AND COALESCE(fktp.npeserta/NULLIF(fktp.ndokter,0),0) <$8
+          AND COALESCE(fktp.npeserta/NULLIF(fktp.ndokter,0),0)>=$9
+          AND ($10::character IS NULL OR 
+            TRIM(LOWER(fktp.jenisfaskes)) IN (SELECT * FROM unnest(string_to_array(lower($10), ',')))
+          )
+        ORDER BY fktp.fktpid
+        LIMIT $11
+        OFFSET $12`;
+
+      const result = await db.query(resultQuery, [nmppk, alamatppk, pro, kab, kec, kdkc, kddep, rmax, rmin, jenis, pageSize, offset]);
+
       res.json({
         code: 200,
         status: "success",
-        data: result.rows,
+        data:result.rows,
+        metadata: {
+          totalData,
+          totalPages,
+          currentPage: page,
+          pageSize,
+        },
       });
     }
   } catch (error) {
@@ -1212,7 +1248,39 @@ exports.filterFKRTL = async (req, res) => {
     const userData = await hgetallAsync(`token:${token}`);
 
     if (userData) {
-      const result = await db.query(
+      const page = parseInt(req.params.page) || 1;
+      const pageSize = 20;
+      const offset = (page - 1) * pageSize;
+
+      const countQuery = `
+        SELECT COUNT(*) AS total 
+        FROM fkrtl
+        INNER JOIN wilayahadmindesa ON wilayahadmindesa.wid=fkrtl.wlid
+        INNER JOIN kecamatan ON wilayahadmindesa.kec_id=kecamatan.kcid
+        INNER JOIN kabupaten ON wilayahadmindesa.kab_id=kabupaten.kbid
+        INNER JOIN provinsi ON wilayahadmindesa.prov_id=provinsi.prid
+              INNER JOIN cabang ON cabang.kodecab=kabupaten.kodekc
+        WHERE fkrtl.status='aktif' 
+        AND ($1::character IS NULL OR LOWER(fkrtl.nmppk) LIKE LOWER('%' || $1 || '%'))
+        AND ($2::character IS NULL OR LOWER(fkrtl.alamatppk) LIKE LOWER('%' || $2 || '%'))
+        AND ($3::integer IS NULL OR provinsi.prid=$3)
+        AND ($4::integer IS NULL OR kabupaten.kbid=$4)
+        AND ($5::integer IS NULL OR kecamatan.kcid=$5)
+        AND ($6::character IS NULL OR cabang.kodecab=$6)
+        AND ($7::character IS NULL OR cabang.kodedep=$7)
+        AND fkrtl.kelasrs IN (SELECT * FROM unnest(string_to_array($8, ',')))
+        AND string_to_array(lower(fkrtl.PelayananCanggih), ';') && string_to_array(lower($9), ',')
+        AND ($10::character IS NULL OR 
+           TRIM(LOWER(fkrtl.jenisfaskes)) IN (SELECT * FROM unnest(string_to_array(lower($10), ',')))
+              )
+          `;
+
+      const countResult = await db.query(countQuery, [nmppk, alamatppk, pro, kab, kec, kdkc, kddep, krs, canggih, jenis]);
+
+      const totalData = parseInt(countResult.rows[0].total);
+      const totalPages = Math.ceil(totalData / pageSize);
+
+      const resultQuery = 
         `
       SELECT fkrtl.fkrtlid AS id, ST_X(ST_SetSRID(fkrtl.coordinat, 4326)) AS lon, ST_Y(ST_SetSRID(fkrtl.coordinat, 4326)) AS lat, faskes2id AS faskesid, kwppk, kcppk, alamatppk, nmppk, jenisfaskes
 			FROM fkrtl
@@ -1234,16 +1302,24 @@ exports.filterFKRTL = async (req, res) => {
       AND ($10::character IS NULL OR 
          TRIM(LOWER(fkrtl.jenisfaskes)) IN (SELECT * FROM unnest(string_to_array(lower($10), ',')))
             )
-        `,
-        [nmppk, alamatppk, pro, kab, kec, kdkc, kddep, krs, canggih, jenis]
-        /* ,
-        [nmppk,alamatppk,krs,canggih,pro,kab,kec,`%${nmppk}%`,`%${alamatppk}%`,] */
-      );
+            ORDER BY fkrtl.fkrtlid
+            LIMIT $11
+            OFFSET $12`;
+       
+       
+
+      const result = await db.query(resultQuery, [nmppk, alamatppk, pro, kab, kec, kdkc, kddep, krs, canggih, jenis, pageSize, offset]);
 
       res.json({
         code: 200,
         status: "success",
         data: result.rows,
+        metadata: {
+          totalData,
+          totalPages,
+          currentPage: page,
+          pageSize,
+        },
       });
     }
   } catch (error) {

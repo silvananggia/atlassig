@@ -1,4 +1,5 @@
 import {
+  FETCH_FKRTL_REQUEST,
   FETCH_MARKER_FKRTL,
   FETCH_FKRTL_CABANG,
   FETCH_FKRTL_KEDEPUTIAN,
@@ -10,7 +11,8 @@ import {
   FETCH_FILTER_FKRTL,
   FETCH_FILTER_FKRTL_PUBLIK,
   FETCH_FILTER_FKRTL_LIST_PUBLIK,
-  SHOW_LOADING
+  SHOW_LOADING,
+  CLEAR_DATA_FKRTL
 } from "./types";
 
 import FKRTLService from "../services/fkrtlService";
@@ -155,34 +157,30 @@ export const fetchFilterFKRTL= (pro,kab,kec,kdkc,kddep,krs,canggih,jenis,nmppk,a
 
 
 
-export const fetchFilterFKRTLList= (pro,kab,kec,kdkc,kddep,krs,canggih,jenis,nmppk,alamatppk) => async (dispatch) => {
+export const fetchFilterFKRTLList= (pro,kab,kec,kdkc,kddep,krs,canggih,jenis,nmppk,alamatppk,page) => async (dispatch) => {
+  dispatch({
+    type: FETCH_FKRTL_REQUEST,
+    payload: true,
+  });
   try {
-    dispatch({
-      type: SHOW_LOADING,
-      payload: true,
-    });
 
-    const res = await FKRTLService.getFilterFKRTLlist(pro,kab,kec,kdkc,kddep,krs,canggih,jenis,nmppk,alamatppk);
+    const res = await FKRTLService.getFilterFKRTLlist(pro,kab,kec,kdkc,kddep,krs,canggih,jenis,nmppk,alamatppk,page);
 
     dispatch({
       type: FETCH_FILTER_FKRTL_LIST,
-      payload: res.data.data,
+      payload: {
+        data: res.data.data,
+        metadata: res.data.metadata,
+      },
     });
 
-    dispatch({
-      type: SHOW_LOADING,
-      payload: false,
-    });
+  
   } catch (err) {
     console.error(err);
 
-    dispatch({
-      type: SHOW_LOADING,
-      payload: false,
-    });
+   
   }
 };
-
 
 
 export const fetchFilterFKRTLPublik= (pro,kab,kec) => async (dispatch) => {
@@ -298,3 +296,9 @@ export const fetchCountFKRTL=(pro,kab,kec,kdkc,kddep) => async (dispatch) => {
     });
   }
 };
+
+
+
+export const clearDataFKRTL = () => ({
+  type: CLEAR_DATA_FKRTL,
+});

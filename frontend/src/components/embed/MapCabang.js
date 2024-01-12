@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { connect, useDispatch, useSelector } from "react-redux";
 import "ol/ol.css";
 import "ol-ext/dist/ol-ext.css";
-import './embed.scss';
+import "./embed.scss";
 import Crop from "ol-ext/filter/Crop";
 import Mask from "ol-ext/filter/Mask";
 import { Map, View } from "ol";
@@ -31,20 +31,22 @@ import MyLocationOutlinedIcon from "@mui/icons-material/MyLocationOutlined";
 import AddLocationAltOutlinedIcon from "@mui/icons-material/AddLocationAltOutlined";
 import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 import Swal from "sweetalert2";
 import {
   fetchFKTPCabang,
   fetchFKTPDetail,
   fetchFilterFKTP,
   fetchFilterFKTPList,
+  clearDataFKTP,
 } from "../../actions/fktpActions";
 import {
   fetchFKRTLCabang,
   fetchFKRTLDetail,
   fetchFilterFKRTLList,
   fetchFilterFKRTL,
+  clearDataFKRTL,
 } from "../../actions/fkrtlActions";
 import {
   fetchCenterCabang,
@@ -53,6 +55,7 @@ import {
   fetchJenisFKRTL,
   fetchJenisFKTP,
   fetchKodeDep,
+  fetchCenterWilayah,
 } from "../../actions/filterActions";
 import { setLoading } from "../../actions/loadingActions";
 import GeoJSON from "ol/format/GeoJSON";
@@ -71,7 +74,7 @@ import Alert from "@mui/material/Alert";
 import Stack from "@mui/material/Stack";
 import CardFaskes from "./CardFaskes";
 import Tooltip from "@mui/material/Tooltip";
-
+import InfiniteScroll from "react-infinite-scroll-component";
 const MapComponent = ({ faskes, kodeCabang }) => {
   const dispatch = useDispatch();
   const bingApiKey =
@@ -125,8 +128,10 @@ const MapComponent = ({ faskes, kodeCabang }) => {
   const [selectedProvId, setSelectedProvId] = useState(null);
   //endinput
 
-  const centerMap = [13124075.715923082, -277949.29803053016];
-  const zoomLevel = 10;
+  const [centerMap, setCenterMap] = useState([
+    13124075.715923082, -277949.29803053016,
+  ]);
+  const [zoomLevel, setZoomLevel] = useState(10);
   const listKelasRS = ["A", "B", "C", "D"];
   const listCanggih = [
     { name: "Cathlab", value: "Cathlab" },
@@ -186,6 +191,27 @@ const MapComponent = ({ faskes, kodeCabang }) => {
   const listFilterFKTP = useSelector((state) => state.mapfktp.fktpdatalist);
   const listFilterFKRTL = useSelector((state) => state.mapfkrtl.fkrtldatalist);
   const isLoading = useSelector((state) => state.loading.isLoading);
+  const loadingFKTP = useSelector((state) => state.mapfktp.loading);
+  const metadataFKTP = useSelector((state) => state.mapfktp.metadata);
+  const loadingFKRTL = useSelector((state) => state.mapfkrtl.loading);
+  const metadataFKRTL = useSelector((state) => state.mapfkrtl.metadata);
+  const centerWilayah = useSelector((state) => state.mapfilter.coordinate);
+
+  useEffect(() => {
+    if (centerWilayah) {
+      setCenterMap(centerWilayah);
+     
+    }
+  }, [centerWilayah]);
+  useEffect(() => {
+    if (centerMap && map) {
+      map.getView().animate({
+        center: centerMap,
+        duration: 500,
+        zoom: zoomLevel,
+      });
+    }
+  }, [centerMap, map]);
 
   useEffect(() => {
     if (kodeDeputi) {
@@ -252,15 +278,6 @@ const MapComponent = ({ faskes, kodeCabang }) => {
       setSelectedProvId(prov_id);
     }
   };
-  useEffect(() => {
-    if (centerCabang && map) {
-      map.getView().animate({
-        center: centerCabang,
-        duration: 1000,
-        zoom: 9,
-      });
-    }
-  }, [centerCabang, map]);
 
   const handleLayerSelectClick = () => {
     setShowFloatingButton((prevState) => !prevState);
@@ -315,10 +332,12 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     setIsFKTPAll(false);
 
     const overlayLayer = map
-    .getLayers()
-    .getArray()
-    .find((layer) => layer.get("title") === "PotentialLayer");
-  overlayLayer.setOpacity(1);
+      .getLayers()
+      .getArray()
+      .find((layer) => layer.get("title") === "PotentialLayer");
+    overlayLayer.setOpacity(1);
+    dispatch(fetchCenterCabang(kodeCabang));
+    setZoomLevel(10);
   };
   const closeDetailBox = () => {
     setShowDetailBox(false);
@@ -338,7 +357,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
       map.getView().animate({
         center: centerCabang,
         duration: 1000, // Animation duration in milliseconds
-        zoom: zoomLevel,
+        zoom: 10,
       });
     }
   };
@@ -1206,7 +1225,23 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     const sanitizedInputRmin = inputrmin ?? "null";
     const sanitizedInputRmax = inputrmax ?? "null";
 
+    if (
+      sanitizedSelectedProvId === "null" &&
+      sanitizedSelectedKabId === "null" &&
+      sanitizedSelectedKecId === "null"
+    ) {
+      dispatch(fetchCenterCabang(sanitizedKodeCabang));
+      
+    } else {
+      dispatch(
+        fetchCenterWilayah(sanitizedSelectedProvId, sanitizedSelectedKabId)
+      );
+      setZoomLevel(11);
+    }
+
     if (faskes === "fkrtl") {
+      dispatch(clearDataFKRTL());
+      dispatch(clearDataFKTP());
       dispatch(
         fetchFilterFKRTLList(
           sanitizedSelectedProvId,
@@ -1239,6 +1274,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
 
       removeFKRTLPointMarkerLayers();
     } else {
+      dispatch(clearDataFKTP());
       dispatch(
         fetchFilterFKTPList(
           sanitizedSelectedProvId,
@@ -1277,7 +1313,64 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     setIsFiltered(true);
     resetInput();
   };
+  const handleFetchMoreData = () => {
+    const sanitizedSelectedProvId = selectedProvId ?? "null";
+    const sanitizedSelectedKabId = selectedKabId ?? "null";
+    const sanitizedSelectedKecId = selectedKecId ?? "null";
+    const sanitizedKodeCabang = kodeCabang ?? "null";
+    const sanitizedInputKelasRS =
+      inputKelasRS.length > 0 ? inputKelasRS : "nan";
+    const sanitizedInputCanggih =
+      inputCanggih.length > 0 ? inputCanggih : listCanggih;
+    const sanitizedInputJenis = inputJenis.length > 0 ? inputJenis : "null";
+    const sanitizedInputNama = inputNama === "" ? "null" : inputNama;
+    const sanitizedInputAlamat = inputAlamat === "" ? "null" : inputAlamat;
+    const sanitizedInputRmin = inputrmin ?? "null";
+    const sanitizedInputRmax = inputrmax ?? "null";
 
+    if (faskes === "fkrtl") {
+      const nextPage = metadataFKRTL.currentPage + 1;
+      if (
+        metadataFKRTL.currentPage < metadataFKRTL.totalPages &&
+        !loadingFKRTL
+      ) {
+        dispatch(
+          fetchFilterFKRTLList(
+            sanitizedSelectedProvId,
+            sanitizedSelectedKabId,
+            sanitizedSelectedKecId,
+            sanitizedKodeCabang,
+            "null",
+            sanitizedInputKelasRS,
+            sanitizedInputCanggih,
+            sanitizedInputJenis,
+            sanitizedInputNama,
+            sanitizedInputAlamat,
+            nextPage
+          )
+        );
+      }
+    } else {
+      const nextPage = metadataFKTP.currentPage + 1;
+      if (metadataFKTP.currentPage < metadataFKTP.totalPages && !loadingFKTP) {
+        dispatch(
+          fetchFilterFKTPList(
+            sanitizedSelectedProvId,
+            sanitizedSelectedKabId,
+            sanitizedSelectedKecId,
+            sanitizedKodeCabang,
+            "null",
+            sanitizedInputRmax,
+            sanitizedInputRmin,
+            sanitizedInputJenis,
+            sanitizedInputNama,
+            sanitizedInputAlamat,
+            nextPage
+          )
+        );
+      }
+    }
+  };
   const resetInput = () => {
     const sanitizedSelectedProvId = "null";
     const sanitizedSelectedKabId = "null";
@@ -1289,25 +1382,26 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     const sanitizedInputAlamat = "null";
   };
 
-
   const isValidLatitude = (latitude) => {
     const lat = parseFloat(latitude);
     return !isNaN(lat) && lat >= -90 && lat <= 90;
   };
-  
+
   const isValidLongitude = (longitude) => {
     const lon = parseFloat(longitude);
     return !isNaN(lon) && lon >= -180 && lon <= 180;
   };
-  
+
   const isValidCoordinate = (latitude, longitude) => {
     return isValidLatitude(latitude) && isValidLongitude(longitude);
   };
-  
+
   const handleSubmitKoordinat = () => {
     if (isValidCoordinate(lat, long)) {
       removePointMarkerLayers();
       PointMarker();
+      setCenterMap(fromLonLat([long, lat]));
+      setZoomLevel(12);
     } else {
       Swal.fire({
         confirmButtonColor: "#274C8B",
@@ -1346,7 +1440,7 @@ const MapComponent = ({ faskes, kodeCabang }) => {
         image: new Icon({
           anchor: [0.5, 1],
           src: "../images/p0.png",
-        //  scale: 0.5,
+          //  scale: 0.5,
           zIndex: 1000,
         }),
       });
@@ -1379,12 +1473,12 @@ const MapComponent = ({ faskes, kodeCabang }) => {
     }
   };
 
-const handleResetKordinat = ()=>{
-  handleKoordinatClick();
-  removePointMarkerLayers();
-  setLat("");
-  setLong("");
-};
+  const handleResetKordinat = () => {
+    handleKoordinatClick();
+    removePointMarkerLayers();
+    setLat("");
+    setLong("");
+  };
 
   const getLayerLeftPosition = () => {
     return showSidebar ? "370px" : "20px"; // Adjust this value based on your layout
@@ -1826,55 +1920,71 @@ const handleResetKordinat = ()=>{
                   <Stack sx={{ width: "100%" }} spacing={2}>
                     <Alert severity="success">
                       <Typography>
-                        Total : {listFilterFKRTL.length} Data Ditemukan
+                        Total : {metadataFKRTL.totalData} Data Ditemukan
                       </Typography>
                     </Alert>
                   </Stack>
                 </div>
 
-                <div className="sidebar-content">
-                  <List sx={{ width: "100%", bgcolor: "background.paper" }}>
-                    {listFilterFKRTL.map((item, index) => (
-                      <React.Fragment key={index}>
-                        <ListItem
-                          alignItems="flex-start"
-                          sx={{
-                            height: 100,
-                            transition: "background-color 0.3s",
-                            backgroundColor:
-                              selectedItem === index
-                                ? "lightgrey"
-                                : "transparent",
-                            "&:hover": {
-                              backgroundColor: "lightgrey",
-                            },
-                          }}
-                          onClick={() => handleListClick(index)}
-                        >
-                          <ListItemText
-                            primary={item.nmppk}
-                            secondary={
-                              <React.Fragment>
-                                <Typography
-                                  sx={{ display: "inline" }}
-                                  component="span"
-                                  variant="body2"
-                                  color="text.primary"
-                                >
-                                  {item.jenisfaskes} | Kode Faskes{" "}
-                                  {item.faskesid}
-                                </Typography>
-                                <Typography fontSize={10}>
-                                  {item.alamatppk}
-                                </Typography>
-                              </React.Fragment>
-                            }
-                          />
-                        </ListItem>
-                        {index < listFilterFKRTL.length - 1 && <Divider />}{" "}
-                      </React.Fragment>
-                    ))}
-                  </List>
+                <div className="sidebar-content" id="listdata">
+                  <InfiniteScroll
+                    dataLength={listFilterFKRTL.length}
+                    next={handleFetchMoreData}
+                    hasMore={
+                      metadataFKRTL.currentPage < metadataFKRTL.totalPages &&
+                      !loadingFKRTL
+                    }
+                    scrollableTarget="listdata"
+                    loader={
+                      <Stack sx={{ width: "100%" }} spacing={2}>
+                        <Alert severity="info">
+                          <Typography>Mengambil Data ...</Typography>
+                        </Alert>
+                      </Stack>
+                    }
+                  >
+                    <List sx={{ width: "100%", bgcolor: "background.paper" }}>
+                      {listFilterFKRTL.map((item, index) => (
+                        <React.Fragment key={index}>
+                          <ListItem
+                            alignItems="flex-start"
+                            sx={{
+                              height: 100,
+                              transition: "background-color 0.3s",
+                              backgroundColor:
+                                selectedItem === index
+                                  ? "lightgrey"
+                                  : "transparent",
+                              "&:hover": {
+                                backgroundColor: "lightgrey",
+                              },
+                            }}
+                            onClick={() => handleListClick(index)}
+                          >
+                            <ListItemText
+                              primary={item.nmppk}
+                              secondary={
+                                <React.Fragment>
+                                  <Typography
+                                    sx={{ display: "inline" }}
+                                    component="span"
+                                    variant="body2"
+                                    color="text.primary"
+                                  >
+                                    {item.jenisfaskes}{" "}
+                                  </Typography>
+                                  <Typography fontSize={10}>
+                                    {item.alamatppk}
+                                  </Typography>
+                                </React.Fragment>
+                              }
+                            />
+                          </ListItem>
+                          {index < listFilterFKRTL.length - 1 && <Divider />}{" "}
+                        </React.Fragment>
+                      ))}
+                    </List>
+                  </InfiniteScroll>
                 </div>
               </>
             ) : (
@@ -1914,55 +2024,71 @@ const handleResetKordinat = ()=>{
                   <Stack sx={{ width: "100%" }} spacing={2}>
                     <Alert severity="success">
                       <Typography>
-                        Total : {listFilterFKTP.length} Data Ditemukan
+                        Total : {metadataFKTP.totalData} Data Ditemukan
                       </Typography>
                     </Alert>
                   </Stack>
                 </div>
 
-                <div className="sidebar-content">
-                  <List sx={{ width: "100%", bgcolor: "background.paper" }}>
-                    {listFilterFKTP.map((item, index) => (
-                      <React.Fragment key={index}>
-                        <ListItem
-                          alignItems="flex-start"
-                          sx={{
-                            height: 100,
-                            transition: "background-color 0.3s",
-                            backgroundColor:
-                              selectedItem === index
-                                ? "lightgrey"
-                                : "transparent",
-                            "&:hover": {
-                              backgroundColor: "lightgrey",
-                            },
-                          }}
-                          onClick={() => handleListClick(index)}
-                        >
-                          <ListItemText
-                            primary={item.nmppk}
-                            secondary={
-                              <React.Fragment>
-                                <Typography
-                                  sx={{ display: "inline" }}
-                                  component="span"
-                                  variant="body2"
-                                  color="text.primary"
-                                >
-                                  {item.jenisfaskes} | Kode Faskes{" "}
-                                  {item.faskesid}
-                                </Typography>
-                                <Typography fontSize={10}>
-                                  {item.alamatppk}
-                                </Typography>
-                              </React.Fragment>
-                            }
-                          />
-                        </ListItem>
-                        {index < listFilterFKTP.length - 1 && <Divider />}{" "}
-                      </React.Fragment>
-                    ))}
-                  </List>
+                <div className="sidebar-content" id="listdata">
+                  <InfiniteScroll
+                    dataLength={listFilterFKTP.length}
+                    next={handleFetchMoreData}
+                    hasMore={
+                      metadataFKTP.currentPage < metadataFKTP.totalPages &&
+                      !loadingFKTP
+                    }
+                    scrollableTarget="listdata"
+                    loader={
+                      <Stack sx={{ width: "100%" }} spacing={2}>
+                        <Alert severity="info">
+                          <Typography>Mengambil Data ...</Typography>
+                        </Alert>
+                      </Stack>
+                    }
+                  >
+                    <List sx={{ width: "100%", bgcolor: "background.paper" }}>
+                      {listFilterFKTP.map((item, index) => (
+                        <React.Fragment key={index}>
+                          <ListItem
+                            alignItems="flex-start"
+                            sx={{
+                              height: 100,
+                              transition: "background-color 0.3s",
+                              backgroundColor:
+                                selectedItem === index
+                                  ? "lightgrey"
+                                  : "transparent",
+                              "&:hover": {
+                                backgroundColor: "lightgrey",
+                              },
+                            }}
+                            onClick={() => handleListClick(index)}
+                          >
+                            <ListItemText
+                              primary={item.nmppk}
+                              secondary={
+                                <React.Fragment>
+                                  <Typography
+                                    sx={{ display: "inline" }}
+                                    component="span"
+                                    variant="body2"
+                                    color="text.primary"
+                                  >
+                                    {item.jenisfaskes}
+                                  </Typography>
+                                  <Typography fontSize={10}>
+                                    {item.alamatppk}
+                                  </Typography>
+                                </React.Fragment>
+                              }
+                            />
+                          </ListItem>
+                          {index < listFilterFKTP.length - 1 && <Divider />}{" "}
+                        </React.Fragment>
+                      ))}
+                    </List>
+                  </InfiniteScroll>
                 </div>
               </>
             ) : (
@@ -1984,7 +2110,7 @@ const handleResetKordinat = ()=>{
           closeDetailBox={closeDetailBox}
         />
       )}
- {isFKRTLAll ? (
+      {isFKRTLAll ? (
         <>
           <div
             className="layer-select-embed3"
@@ -2014,7 +2140,7 @@ const handleResetKordinat = ()=>{
         </>
       ) : null}
 
- <Tooltip title="Titik Koordinat" placement="right">
+      <Tooltip title="Titik Koordinat" placement="right">
         <div
           className="koordinat-button-embed"
           onClick={handleKoordinatClick}
@@ -2025,7 +2151,7 @@ const handleResetKordinat = ()=>{
       </Tooltip>
 
       {showKoordinat && (
-        <div className="box-koordinat" >
+        <div className="box-koordinat">
           <TextField
             label="Latitude"
             variant="outlined"
@@ -2059,13 +2185,14 @@ const handleResetKordinat = ()=>{
             Terapkan
           </Button>
           <IconButton
-        size="small"
-        onClick={() => {
-        handleResetKordinat();
-        }}
-      >
-        <CloseIcon /> {/* Add the CloseIcon component or use another icon */}
-      </IconButton>
+            size="small"
+            onClick={() => {
+              handleResetKordinat();
+            }}
+          >
+            <CloseIcon />{" "}
+            {/* Add the CloseIcon component or use another icon */}
+          </IconButton>
         </div>
       )}
       {isFKTPAll ? (

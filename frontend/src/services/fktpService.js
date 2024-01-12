@@ -25,8 +25,8 @@ const getFilterFKTP = (pro,kab,kec,kdkc,kddep,rmax,rmin,jenis,nmppk,alamatppk) =
 };
 
 
-const getFilterFKTPlist = (pro,kab,kec,kdkc,kddep,krs,canggih,jenis,nmppk,alamatppk) => {
-  return axios.get(`/filter-fktp-list/${pro}/${kab}/${kec}/${kdkc}/${kddep}/${krs}/${canggih}/${jenis}/${nmppk}/${alamatppk}`, { headers: authHeader() });
+const getFilterFKTPlist = (pro,kab,kec,kdkc,kddep,krs,canggih,jenis,nmppk,alamatppk,page) => {
+  return axios.get(`/filter-fktp-list/${pro}/${kab}/${kec}/${kdkc}/${kddep}/${krs}/${canggih}/${jenis}/${nmppk}/${alamatppk}/${page}`, { headers: authHeader() });
 };
 
 const getFilterFKTPPublik = (pro,kab,kec) => {

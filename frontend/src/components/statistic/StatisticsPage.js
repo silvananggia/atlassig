@@ -105,6 +105,7 @@ const StatisticsPage = () => {
       dispatch(fetchCabangDeputi(inputKodeDeputi, value));
       setselectedWilayah([]);
     }
+    
   };
 
   const handleSelectCabang = (event, selectedOption) => {
@@ -214,7 +215,9 @@ const StatisticsPage = () => {
   };
 
   const handleInputWilayahChange = (event, value) => {
-    if (inputKodeDeputi === null && inputKodeCabang === null) {
+    
+
+    if (inputKodeDeputi === null || inputKodeDeputi === "" || inputKodeDeputi === "null" && inputKodeCabang === null) {
       if (value.length >= 3) {
         dispatch(fetchAutoWilayah(value));
       } else {
@@ -225,14 +228,11 @@ const StatisticsPage = () => {
         setSelectedProvId("null");
       }
     } else if (
-      inputKodeCabang === null ||
-      (inputKodeCabang === "" &&
-        inputKodeDeputi !== null &&
-        inputKodeDeputi !== "null")
+      inputKodeCabang === null ||  (inputKodeCabang === "" || inputKodeCabang === "null" && inputKodeDeputi != null && inputKodeDeputi != "null")
     ) {
-      dispatch(fetchAutoWilayahDeputi(inputKodeDeputi, value));
+      dispatch(fetchAutoWilayahDeputi(inputKodeDeputi, value  ?? "null"));
     } else {
-      dispatch(fetchAutoWilayahCabang(inputKodeDeputi, inputKodeCabang, value));
+      dispatch(fetchAutoWilayahCabang(inputKodeDeputi, inputKodeCabang, value ?? "null"));
     }
   };
 
