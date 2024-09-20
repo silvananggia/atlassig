@@ -858,7 +858,7 @@ const MapComponent = ({ faskes }) => {
       view: new View({
         center: centerMap,
         zoom: zoomLevel,
-        maxZoom: 14,
+        maxZoom: 20,
       }),
     });
 

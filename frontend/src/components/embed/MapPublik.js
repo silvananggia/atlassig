@@ -334,11 +334,14 @@ const MapComponent = ({ faskes }) => {
         markerLayer.getSource().clear();
       }
 
-      map.getView().animate({
+      setCenterMap(centerMap);
+      setZoomLevel(9);
+
+    /*   map.getView().animate({
         center: centerMap,
         duration: 1000, // Animation duration in milliseconds
         zoom: zoomLevel,
-      });
+      }); */
     }
   };
 
@@ -867,11 +870,11 @@ const MapComponent = ({ faskes }) => {
       navigator.geolocation.getCurrentPosition((position) => {
         const lonLat = [position.coords.longitude, position.coords.latitude];
         const coordinates = fromLonLat(lonLat);
-        map.getView().animate({
+       /*  map.getView().animate({
           center: coordinates,
           duration: 1000, // Animation duration in milliseconds
           zoom: 12,
-        });
+        }); */
 
         userMarkerFeature.getGeometry().setCoordinates(coordinates);
         //markerFeature.getGeometry().setCoordinates(coordinates);
@@ -892,19 +895,19 @@ const MapComponent = ({ faskes }) => {
         const lonLat = [position.coords.longitude, position.coords.latitude];
         const coordinates = fromLonLat(lonLat);
 
-        map.getView().animate({
+       /*  map.getView().animate({
           center: coordinates,
           duration: 1000, // Animation duration in milliseconds
           zoom: 12,
         });
-
+ */
         userMarkerFeature.getGeometry().setCoordinates(coordinates);
 
         setUserLocation(lonLat);
-        setUserLocation(lonLat);
         setCenterMap(coordinates);
-        setLatitude(position.coords.latitude);
-        setLongitude(position.coords.longitude);
+        setZoomLevel(13);
+         setLatitude(position.coords.latitude);
+        setLongitude(position.coords.longitude); 
       });
     }
   };
