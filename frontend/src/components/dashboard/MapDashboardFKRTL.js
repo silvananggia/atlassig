@@ -146,6 +146,8 @@ const MapComponent = () => {
   const [selectedKabId, setSelectedKabId] = useState(null);
   const [selectedKecId, setSelectedKecId] = useState(null);
   const [selectedProvId, setSelectedProvId] = useState(null);
+
+  const [inputJenisFKTP, setInputJenisFKTP] = useState([]);
   //endinput
 
 
@@ -164,6 +166,7 @@ const MapComponent = () => {
     "12",
   ];
   const listKelasRS = ["A", "B", "C", "D"];
+  const listJenisFKTP = ["Dokter Gigi", "Dokter Umum", "Puskesmas", "Klinik Pratama"];
   const listCanggih = [
     { name: "Cathlab", value: "Cathlab" },
     { name: "Sarana Radioterapi", value: "Sarana Radioterapi" },
@@ -384,6 +387,7 @@ const MapComponent = () => {
     if (faskes === "fkrtl") {
       dispatch(fetchMarkersFKRTL(latitude, longitude));
       removeFKRTLPointMarkerLayers();
+      removeFKTPPointMarkerLayers();
     } else {
       dispatch(fetchMarkersFKTP(latitude, longitude));
       removeFKTPPointMarkerLayers();
@@ -823,7 +827,7 @@ const MapComponent = () => {
       source: new XYZ({
         attributions: "",
         minZoom: 2,
-        maxZoom: 10,
+        maxZoom: 20,
         url: potentialLayerUrl,
         tileSize: [384, 384],
       }),
@@ -1321,7 +1325,23 @@ const MapComponent = () => {
         )
       );
 
+       dispatch(
+          fetchFilterFKTP(
+            sanitizedSelectedProvId,
+            sanitizedSelectedKabId,
+            sanitizedSelectedKecId,
+            "null",
+            "null",
+            "1000000",
+            "0",
+            listJenisFKTP,
+            sanitizedInputNama,
+            sanitizedInputAlamat
+          )
+        );
+
       removeFKRTLPointMarkerLayers();
+      removeFKTPPointMarkerLayers();
     } else {
       dispatch(clearDataFKTP());
       dispatch(

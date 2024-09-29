@@ -823,7 +823,7 @@ const MapComponent = ({ faskes }) => {
       source: new XYZ({
         attributions: "",
         minZoom: 2,
-        maxZoom: 10,
+        maxZoom: 20,
         url: potentialLayerUrl,
         tileSize: [384, 384],
       }),
